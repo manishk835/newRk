@@ -29,7 +29,7 @@ export default function CheckoutPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     if (
       !form.name ||
       !form.phone ||
@@ -40,23 +40,36 @@ export default function CheckoutPage() {
       alert("Please fill all details");
       return;
     }
-
-    // 🔮 Future: send order to backend
-    const orderPayload = {
+  
+    const newOrder = {
+      id: Date.now().toString(),
       customer: form,
-      items: state.items,
-      total: totalAmount,
+      items: state.items.map((item) => ({
+        productId: item.product.id,
+        title: item.product.title,
+        price: item.product.price,
+        quantity: item.quantity,
+      })),
+      totalAmount,
       paymentMethod: "COD",
+      status: "Pending",
+      createdAt: new Date().toISOString(),
     };
-
-    console.log("ORDER PLACED:", orderPayload);
-
-    alert("Order placed successfully (Cash on Delivery)");
-
+  
+    const existingOrders = JSON.parse(
+      localStorage.getItem("orders") || "[]"
+    );
+  
+    localStorage.setItem(
+      "orders",
+      JSON.stringify([newOrder, ...existingOrders])
+    );
+  
     dispatch({ type: "SET_CART", payload: { items: [] } });
-
-    router.push("/");
+  
+    router.push("/order-success");
   };
+  
 
   if (state.items.length === 0) {
     return (
