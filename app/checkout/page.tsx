@@ -27,7 +27,7 @@ export default function CheckoutPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
   
     if (
@@ -41,8 +41,7 @@ export default function CheckoutPage() {
       return;
     }
   
-    const newOrder = {
-      id: Date.now().toString(),
+    const orderPayload = {
       customer: form,
       items: state.items.map((item) => ({
         productId: item.product.id,
@@ -52,23 +51,32 @@ export default function CheckoutPage() {
       })),
       totalAmount,
       paymentMethod: "COD",
-      status: "Pending",
-      createdAt: new Date().toISOString(),
     };
   
-    const existingOrders = JSON.parse(
-      localStorage.getItem("orders") || "[]"
-    );
+    try {
+      const res = await fetch(
+        "http://localhost:5000/api/orders",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(orderPayload),
+        }
+      );
   
-    localStorage.setItem(
-      "orders",
-      JSON.stringify([newOrder, ...existingOrders])
-    );
+      if (!res.ok) {
+        throw new Error("Order failed");
+      }
   
-    dispatch({ type: "SET_CART", payload: { items: [] } });
+      dispatch({ type: "SET_CART", payload: { items: [] } });
   
-    router.push("/order-success");
+      router.push("/order-success");
+    } catch (err) {
+      alert("Something went wrong while placing order");
+    }
   };
+  
   
 
   if (state.items.length === 0) {

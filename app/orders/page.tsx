@@ -1,11 +1,31 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 export default function OrdersPage() {
-  const orders = JSON.parse(
-    typeof window !== "undefined"
-      ? localStorage.getItem("orders") || "[]"
-      : "[]"
-  );
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      const res = await fetch(
+        "http://localhost:5000/api/orders"
+      );
+      const data = await res.json();
+      setOrders(data);
+      setLoading(false);
+    };
+
+    fetchOrders();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 pt-28">
+        Loading orders...
+      </div>
+    );
+  }
 
   if (orders.length === 0) {
     return (
@@ -24,14 +44,14 @@ export default function OrdersPage() {
       </h1>
 
       <div className="space-y-6">
-        {orders.map((order: any) => (
+        {orders.map((order) => (
           <div
-            key={order.id}
+            key={order._id}
             className="border rounded-lg p-4"
           >
             <div className="flex justify-between mb-2">
               <span className="font-medium">
-                Order #{order.id}
+                Order #{order._id}
               </span>
               <span className="text-sm text-gray-600">
                 {new Date(order.createdAt).toLocaleDateString()}
@@ -40,26 +60,22 @@ export default function OrdersPage() {
 
             <p className="text-sm mb-2">
               Status:{" "}
-              <span className="font-semibold">
-                {order.status}
-              </span>
+              <b>{order.status}</b>
             </p>
 
-            <div className="text-sm text-gray-700">
-              {order.items.map((item: any) => (
-                <div
-                  key={item.productId}
-                  className="flex justify-between"
-                >
-                  <span>
-                    {item.title} × {item.quantity}
-                  </span>
-                  <span>
-                    ₹{item.price * item.quantity}
-                  </span>
-                </div>
-              ))}
-            </div>
+            {order.items.map((item: any) => (
+              <div
+                key={item.productId}
+                className="flex justify-between text-sm"
+              >
+                <span>
+                  {item.title} × {item.quantity}
+                </span>
+                <span>
+                  ₹{item.price * item.quantity}
+                </span>
+              </div>
+            ))}
 
             <div className="mt-3 font-semibold">
               Total: ₹{order.totalAmount}

@@ -8,26 +8,42 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
 
   useEffect(() => {
-    // 🔐 Protect route
     if (localStorage.getItem("isAdmin") !== "true") {
       router.push("/admin/login");
       return;
     }
-
-    const stored = JSON.parse(
-      localStorage.getItem("orders") || "[]"
-    );
-    setOrders(stored);
+  
+    const fetchOrders = async () => {
+      const res = await fetch(
+        "http://localhost:5000/api/orders"
+      );
+      const data = await res.json();
+      setOrders(data);
+    };
+  
+    fetchOrders();
   }, [router]);
+  
 
-  const updateStatus = (id: string, status: string) => {
-    const updated = orders.map((order) =>
-      order.id === id ? { ...order, status } : order
+  const updateStatus = async (id: string, status: string) => {
+    await fetch(
+      `http://localhost:5000/api/orders/${id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status }),
+      }
     );
-
-    setOrders(updated);
-    localStorage.setItem("orders", JSON.stringify(updated));
+  
+    setOrders((prev) =>
+      prev.map((o) =>
+        o._id === id ? { ...o, status } : o
+      )
+    );
   };
+  
 
   if (orders.length === 0) {
     return (
