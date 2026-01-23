@@ -1,42 +1,48 @@
-import { Suspense } from "react";
+import ProductCard from "@/components/product/ProductCard";
+import { Product } from "@/components/product/product.types";
 
-type SearchPageProps = {
-  searchParams: {
-    q?: string;
-  };
+type SearchParams = {
+  q?: string | string[];
 };
 
-function SearchResults({ query }: { query: string }) {
-  // 🔮 Future mein yahin API call aayegi
-  // const results = await fetch(`/api/search?q=${query}`)
+type SearchPageProps = {
+  searchParams: Promise<SearchParams>;
+};
 
-  return (
-    <div className="mt-6">
-      <p className="text-gray-600 mb-4">
-        Showing results for <span className="font-semibold">"{query}"</span>
-      </p>
+const DUMMY_PRODUCTS: Product[] = [
+  {
+    id: "1",
+    title: "Men Cotton Kurta",
+    slug: "men-cotton-kurta",
+    price: 899,
+    originalPrice: 1299,
+    image: "https://via.placeholder.com/400",
+    category: "men",
+    inStock: true,
+  },
+  {
+    id: "2",
+    title: "Women Floral Kurti",
+    slug: "women-floral-kurti",
+    price: 1099,
+    image: "https://via.placeholder.com/400",
+    category: "women",
+    inStock: true,
+  },
+];
 
-      {/* Dummy Results */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {[1, 2, 3, 4].map((item) => (
-          <div
-            key={item}
-            className="border rounded-lg p-4 hover:shadow-md transition"
-          >
-            <div className="h-40 bg-gray-100 rounded mb-3"></div>
-            <h3 className="font-medium text-gray-800">
-              Sample Product {item}
-            </h3>
-            <p className="text-sm text-gray-600">₹999</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+export default async function SearchPage({
+  searchParams,
+}: SearchPageProps) {
+  // ✅ UNWRAP PROMISE (THIS IS THE FIX)
+  const { q } = await searchParams;
 
-export default function SearchPage({ searchParams }: SearchPageProps) {
-  const query = searchParams.q?.trim() || "";
+  const query =
+    typeof q === "string"
+      ? q.trim()
+      : Array.isArray(q)
+      ? q[0]?.trim()
+      : "";
 
   return (
     <div className="container mx-auto px-4 pt-28 pb-12">
@@ -49,9 +55,18 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
           Please enter a search term to see results.
         </p>
       ) : (
-        <Suspense fallback={<p className="mt-6">Loading results...</p>}>
-          <SearchResults query={query} />
-        </Suspense>
+        <>
+          <p className="mt-4 text-gray-600">
+            Showing results for{" "}
+            <span className="font-semibold">"{query}"</span>
+          </p>
+
+          <div className="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {DUMMY_PRODUCTS.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
