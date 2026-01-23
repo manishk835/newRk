@@ -1,4 +1,3 @@
-// context/cart/cart.types.ts
 import { Product } from "@/components/product/product.types";
 
 export type CartItem = {
@@ -12,5 +11,7 @@ export type CartState = {
 
 export type CartAction =
   | { type: "ADD_TO_CART"; payload: Product }
-  | { type: "REMOVE_FROM_CART"; payload: string } // product id
-  | { type: "CLEAR_CART" };
+  | { type: "INCREASE_QTY"; payload: string }
+  | { type: "DECREASE_QTY"; payload: string }
+  | { type: "REMOVE_FROM_CART"; payload: string }
+  | { type: "SET_CART"; payload: CartState };

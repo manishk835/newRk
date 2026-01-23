@@ -1,4 +1,3 @@
-// context/cart/cart.reducer.ts
 import { CartState, CartAction } from "./cart.types";
 
 export const initialCartState: CartState = {
@@ -26,12 +25,29 @@ export function cartReducer(
       }
 
       return {
-        items: [
-          ...state.items,
-          { product: action.payload, quantity: 1 },
-        ],
+        items: [...state.items, { product: action.payload, quantity: 1 }],
       };
     }
+
+    case "INCREASE_QTY":
+      return {
+        items: state.items.map((item) =>
+          item.product.id === action.payload
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        ),
+      };
+
+    case "DECREASE_QTY":
+      return {
+        items: state.items
+          .map((item) =>
+            item.product.id === action.payload
+              ? { ...item, quantity: item.quantity - 1 }
+              : item
+          )
+          .filter((item) => item.quantity > 0),
+      };
 
     case "REMOVE_FROM_CART":
       return {
@@ -40,8 +56,8 @@ export function cartReducer(
         ),
       };
 
-    case "CLEAR_CART":
-      return initialCartState;
+    case "SET_CART":
+      return action.payload;
 
     default:
       return state;

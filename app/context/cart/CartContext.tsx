@@ -1,33 +1,31 @@
 "use client";
 
-import { createContext, useContext, useReducer } from "react";
-import {
-  CartState,
-  CartAction,
-} from "./cart.types";
-import {
-  cartReducer,
-  initialCartState,
-} from "./cart.reducer";
+import { createContext, useContext, useEffect, useReducer } from "react";
+import { cartReducer, initialCartState } from "./cart.reducer";
+import { CartAction, CartState } from "./cart.types";
 
 type CartContextType = {
   state: CartState;
   dispatch: React.Dispatch<CartAction>;
 };
 
-const CartContext = createContext<CartContextType | undefined>(
-  undefined
-);
+const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export function CartProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const [state, dispatch] = useReducer(
-    cartReducer,
-    initialCartState
-  );
+export function CartProvider({ children }: { children: React.ReactNode }) {
+  const [state, dispatch] = useReducer(cartReducer, initialCartState);
+
+  // Load cart from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem("cart");
+    if (stored) {
+      dispatch({ type: "SET_CART", payload: JSON.parse(stored) });
+    }
+  }, []);
+
+  // Save cart to localStorage
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(state));
+  }, [state]);
 
   return (
     <CartContext.Provider value={{ state, dispatch }}>
@@ -37,9 +35,7 @@ export function CartProvider({
 }
 
 export function useCart() {
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error("useCart must be used within CartProvider");
-  }
-  return context;
+  const ctx = useContext(CartContext);
+  if (!ctx) throw new Error("useCart must be used inside CartProvider");
+  return ctx;
 }
