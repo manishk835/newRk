@@ -18,14 +18,16 @@ export default function NavItem({ item }: Props) {
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
+      {/* MAIN CATEGORY */}
       <Link
-        href={`/${item.slug}`}
+        href={`/category/${item.slug}`}
         className="flex items-center gap-1 hover:text-black transition"
       >
         {item.label}
         {item.children && <span className="text-xs">▾</span>}
       </Link>
 
+      {/* DROPDOWN */}
       {open && item.children && (
         <Dropdown parentSlug={item.slug} items={item.children} />
       )}
