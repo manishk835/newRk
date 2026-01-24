@@ -11,6 +11,8 @@ export default function AdminProductsPage() {
       : null;
 
   const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
   const [form, setForm] = useState({
     title: "",
     slug: "",
@@ -18,6 +20,7 @@ export default function AdminProductsPage() {
     originalPrice: "",
     image: "",
     category: "men",
+    inStock: true,
   });
 
   useEffect(() => {
@@ -25,20 +28,34 @@ export default function AdminProductsPage() {
       router.push("/admin/login");
       return;
     }
-
     fetchProducts();
-  }, [router, token]);
+  }, [token]);
 
   const fetchProducts = async () => {
-    const res = await fetch("http://localhost:5000/api/products", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await fetch("http://localhost:5000/api/products");
     const data = await res.json();
     setProducts(data);
   };
 
+  const uploadImage = async (file: File) => {
+    const fd = new FormData();
+    fd.append("image", file);
+
+    const res = await fetch("http://localhost:5000/api/upload", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: fd,
+    });
+
+    const data = await res.json();
+    return data.url;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
     await fetch("http://localhost:5000/api/products", {
       method: "POST",
@@ -49,7 +66,9 @@ export default function AdminProductsPage() {
       body: JSON.stringify({
         ...form,
         price: Number(form.price),
-        originalPrice: Number(form.originalPrice),
+        originalPrice: form.originalPrice
+          ? Number(form.originalPrice)
+          : undefined,
       }),
     });
 
@@ -60,8 +79,10 @@ export default function AdminProductsPage() {
       originalPrice: "",
       image: "",
       category: "men",
+      inStock: true,
     });
 
+    setLoading(false);
     fetchProducts();
   };
 
@@ -85,29 +106,57 @@ export default function AdminProductsPage() {
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 border p-4 rounded"
       >
-        <input placeholder="Title" value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
-          className="border px-3 py-2" />
+        <input
+          placeholder="Title"
+          value={form.title}
+          onChange={(e) =>
+            setForm({ ...form, title: e.target.value })
+          }
+          className="border px-3 py-2"
+        />
 
-        <input placeholder="Slug" value={form.slug}
-          onChange={(e) => setForm({ ...form, slug: e.target.value })}
-          className="border px-3 py-2" />
+        <input
+          placeholder="Slug"
+          value={form.slug}
+          onChange={(e) =>
+            setForm({ ...form, slug: e.target.value })
+          }
+          className="border px-3 py-2"
+        />
 
-        <input placeholder="Price" value={form.price}
-          onChange={(e) => setForm({ ...form, price: e.target.value })}
-          className="border px-3 py-2" />
+        <input
+          placeholder="Price"
+          value={form.price}
+          onChange={(e) =>
+            setForm({ ...form, price: e.target.value })
+          }
+          className="border px-3 py-2"
+        />
 
-        <input placeholder="Original Price" value={form.originalPrice}
-          onChange={(e) => setForm({ ...form, originalPrice: e.target.value })}
-          className="border px-3 py-2" />
+        <input
+          placeholder="Original Price"
+          value={form.originalPrice}
+          onChange={(e) =>
+            setForm({ ...form, originalPrice: e.target.value })
+          }
+          className="border px-3 py-2"
+        />
 
-        <input placeholder="Image URL" value={form.image}
-          onChange={(e) => setForm({ ...form, image: e.target.value })}
-          className="border px-3 py-2" />
+        <input
+          type="file"
+          onChange={async (e) => {
+            if (!e.target.files?.[0]) return;
+            const url = await uploadImage(e.target.files[0]);
+            setForm({ ...form, image: url });
+          }}
+          className="border px-3 py-2"
+        />
 
         <select
           value={form.category}
-          onChange={(e) => setForm({ ...form, category: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, category: e.target.value })
+          }
           className="border px-3 py-2"
         >
           <option value="men">Men</option>
@@ -116,15 +165,21 @@ export default function AdminProductsPage() {
           <option value="footwear">Footwear</option>
         </select>
 
-        <button className="bg-black text-white py-2 rounded col-span-full">
-          Add Product
+        <button
+          disabled={loading}
+          className="bg-black text-white py-2 rounded col-span-full"
+        >
+          {loading ? "Saving..." : "Add Product"}
         </button>
       </form>
 
       {/* PRODUCT LIST */}
       <div className="space-y-4">
         {products.map((p) => (
-          <div key={p._id} className="border p-4 flex justify-between">
+          <div
+            key={p._id}
+            className="border p-4 flex justify-between"
+          >
             <div>
               <b>{p.title}</b>
               <p className="text-sm">₹{p.price}</p>
