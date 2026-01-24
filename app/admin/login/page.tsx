@@ -5,43 +5,70 @@ import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
-    // 🔒 Simple admin gate (frontend only)
-    if (password === "admin123") {
-      localStorage.setItem("isAdmin", "true");
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Login failed");
+        setLoading(false);
+        return;
+      }
+
+      // ✅ SAVE TOKEN
+      localStorage.setItem("adminToken", data.token);
+
       router.push("/admin/orders");
-    } else {
-      alert("Wrong password");
+    } catch (err) {
+      alert("Server error");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="container mx-auto px-4 pt-28 max-w-md">
-      <h1 className="text-2xl font-bold mb-6">
-        Admin Login
-      </h1>
+      <h1 className="text-2xl font-bold mb-6">Admin Login</h1>
 
       <form
         onSubmit={handleLogin}
         className="space-y-4 border p-6 rounded-lg"
       >
         <input
+          type="email"
+          placeholder="Email"
+          className="w-full border px-4 py-2 rounded"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <input
           type="password"
-          placeholder="Admin Password"
+          placeholder="Password"
+          className="w-full border px-4 py-2 rounded"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full border px-4 py-2 rounded"
         />
 
         <button
           type="submit"
+          disabled={loading}
           className="w-full bg-black text-white py-3 rounded-lg"
         >
-          Login
+          {loading ? "Logging in..." : "Login"}
         </button>
       </form>
     </div>
