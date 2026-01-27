@@ -24,21 +24,24 @@ export default function OrdersPage() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
+        // 👇 user phone (jo checkout ke time use hua)
+        const phone = localStorage.getItem("userPhone");
+  
+        if (!phone) {
+          setOrders([]);
+          setLoading(false);
+          return;
+        }
+  
         const res = await fetch(
-          "http://localhost:5000/api/orders",
+          `http://localhost:5000/api/orders/my?phone=${phone}`,
           { cache: "no-store" }
         );
-
+  
         const data = await res.json();
-
-        // ✅ SAFETY: backend array OR { orders: [] }
-        if (Array.isArray(data)) {
-          setOrders(data);
-        } else if (Array.isArray(data.orders)) {
-          setOrders(data.orders);
-        } else {
-          setOrders([]);
-        }
+  
+        // ✅ Backend always returns ARRAY
+        setOrders(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Failed to fetch orders", err);
         setOrders([]);
@@ -46,9 +49,10 @@ export default function OrdersPage() {
         setLoading(false);
       }
     };
-
+  
     fetchOrders();
   }, []);
+  
 
   if (loading) {
     return (

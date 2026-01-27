@@ -69,12 +69,12 @@ export default function CheckoutPage() {
         }
       );
 
-      if (!res.ok) {
-        throw new Error("Order failed");
-      }
+      if (!res.ok) throw new Error();
 
-      dispatch({ type: "SET_CART", payload: { items: [] } });
-      router.push("/order-success");
+localStorage.setItem("userPhone", form.phone); // ✅ ADD THIS
+dispatch({ type: "SET_CART", payload: { items: [] } });
+router.push("/order-success");
+
     } catch (err) {
       alert("Failed to place order. Please try again.");
     } finally {

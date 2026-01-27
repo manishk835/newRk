@@ -69,7 +69,7 @@ export default function Header() {
           {/* SEARCH */}
           <form
             onSubmit={handleSearch}
-            className="hidden md:flex items-center gap-2 bg-white border rounded-full px-4 py-2 focus-within:ring-2 focus-within:ring-[#F5A623]"
+            className="hidden md:flex items-center gap-2 bg-white  rounded-full px-4 py-2 focus-within:ring-2 focus-within:ring-[#F5A623]"
           >
             <input
               type="text"
