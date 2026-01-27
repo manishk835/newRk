@@ -70,7 +70,9 @@ export default function CheckoutPage() {
       }
   
       dispatch({ type: "SET_CART", payload: { items: [] } });
-  
+      
+      localStorage.setItem("lastOrderPhone", form.phone);
+
       router.push("/order-success");
     } catch (err) {
       alert("Something went wrong while placing order");
