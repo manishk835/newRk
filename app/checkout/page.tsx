@@ -8,6 +8,8 @@ export default function CheckoutPage() {
   const { state, dispatch } = useCart();
   const router = useRouter();
 
+  const [loading, setLoading] = useState(false);
+
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -29,7 +31,7 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     if (
       !form.name ||
       !form.phone ||
@@ -37,10 +39,12 @@ export default function CheckoutPage() {
       !form.city ||
       !form.pincode
     ) {
-      alert("Please fill all details");
+      alert("Please fill all delivery details");
       return;
     }
-  
+
+    setLoading(true);
+
     const orderPayload = {
       customer: form,
       items: state.items.map((item) => ({
@@ -52,7 +56,7 @@ export default function CheckoutPage() {
       totalAmount,
       paymentMethod: "COD",
     };
-  
+
     try {
       const res = await fetch(
         "http://localhost:5000/api/orders",
@@ -64,40 +68,41 @@ export default function CheckoutPage() {
           body: JSON.stringify(orderPayload),
         }
       );
-  
+
       if (!res.ok) {
         throw new Error("Order failed");
       }
-  
-      dispatch({ type: "SET_CART", payload: { items: [] } });
-      
-      localStorage.setItem("lastOrderPhone", form.phone);
 
+      dispatch({ type: "SET_CART", payload: { items: [] } });
       router.push("/order-success");
     } catch (err) {
-      alert("Something went wrong while placing order");
+      alert("Failed to place order. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
-  
-  
 
   if (state.items.length === 0) {
     return (
-      <div className="container mx-auto px-4 pt-28 text-center">
-        <h1 className="text-2xl font-bold">Cart is empty</h1>
+      <div className="container mx-auto px-6 pt-28 text-center">
+        <h1 className="text-2xl font-bold">
+          Your cart is empty
+        </h1>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 pt-28 pb-12">
-      <h1 className="text-2xl font-bold mb-6">Checkout</h1>
+    <div className="container mx-auto px-6 pt-28 pb-16">
+      <h1 className="text-3xl font-bold mb-8">
+        Secure Checkout
+      </h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        {/* ADDRESS FORM */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        {/* DELIVERY FORM */}
         <form
           onSubmit={handleSubmit}
-          className="space-y-4 border rounded-lg p-6"
+          className="border rounded-xl p-6 space-y-4"
         >
           <h2 className="text-lg font-semibold mb-2">
             Delivery Details
@@ -109,7 +114,7 @@ export default function CheckoutPage() {
             placeholder="Full Name"
             value={form.name}
             onChange={handleChange}
-            className="w-full border px-4 py-2 rounded"
+            className="w-full border px-4 py-3 rounded-lg"
           />
 
           <input
@@ -118,7 +123,7 @@ export default function CheckoutPage() {
             placeholder="Phone Number"
             value={form.phone}
             onChange={handleChange}
-            className="w-full border px-4 py-2 rounded"
+            className="w-full border px-4 py-3 rounded-lg"
           />
 
           <textarea
@@ -126,37 +131,46 @@ export default function CheckoutPage() {
             placeholder="Full Address"
             value={form.address}
             onChange={handleChange}
-            className="w-full border px-4 py-2 rounded"
+            className="w-full border px-4 py-3 rounded-lg"
           />
 
-          <input
-            type="text"
-            name="city"
-            placeholder="City"
-            value={form.city}
-            onChange={handleChange}
-            className="w-full border px-4 py-2 rounded"
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <input
+              type="text"
+              name="city"
+              placeholder="City"
+              value={form.city}
+              onChange={handleChange}
+              className="w-full border px-4 py-3 rounded-lg"
+            />
 
-          <input
-            type="text"
-            name="pincode"
-            placeholder="Pincode"
-            value={form.pincode}
-            onChange={handleChange}
-            className="w-full border px-4 py-2 rounded"
-          />
+            <input
+              type="text"
+              name="pincode"
+              placeholder="Pincode"
+              value={form.pincode}
+              onChange={handleChange}
+              className="w-full border px-4 py-3 rounded-lg"
+            />
+          </div>
 
           <button
             type="submit"
-            className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition"
+            disabled={loading}
+            className="w-full bg-black text-white py-4 rounded-xl font-semibold hover:bg-gray-800 transition disabled:opacity-60"
           >
-            Place Order (Cash on Delivery)
+            {loading
+              ? "Placing Order..."
+              : "Place Order (Cash on Delivery)"}
           </button>
+
+          <p className="text-xs text-gray-500 text-center">
+            100% secure checkout • COD available
+          </p>
         </form>
 
         {/* ORDER SUMMARY */}
-        <div className="border rounded-lg p-6 h-fit">
+        <div className="border rounded-xl p-6 h-fit">
           <h2 className="text-lg font-semibold mb-4">
             Order Summary
           </h2>
@@ -177,7 +191,7 @@ export default function CheckoutPage() {
 
           <hr className="my-4" />
 
-          <div className="flex justify-between font-semibold text-lg">
+          <div className="flex justify-between font-bold text-lg">
             <span>Total</span>
             <span>₹{totalAmount}</span>
           </div>
