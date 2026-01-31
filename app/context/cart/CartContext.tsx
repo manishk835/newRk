@@ -1,28 +1,54 @@
 "use client";
 
-import { createContext, useContext, useEffect, useReducer } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useReducer,
+} from "react";
 import { cartReducer, initialCartState } from "./cart.reducer";
 import { CartAction, CartState } from "./cart.types";
+
+/* ================= CONTEXT TYPE ================= */
 
 type CartContextType = {
   state: CartState;
   dispatch: React.Dispatch<CartAction>;
 };
 
-const CartContext = createContext<CartContextType | undefined>(undefined);
+/* ================= CONTEXT ================= */
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(cartReducer, initialCartState);
+const CartContext = createContext<CartContextType | undefined>(
+  undefined
+);
 
-  // Load cart from localStorage
+/* ================= PROVIDER ================= */
+
+export function CartProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [state, dispatch] = useReducer(
+    cartReducer,
+    initialCartState
+  );
+
+  /* -------- LOAD CART FROM LOCAL STORAGE -------- */
   useEffect(() => {
-    const stored = localStorage.getItem("cart");
-    if (stored) {
-      dispatch({ type: "SET_CART", payload: JSON.parse(stored) });
+    try {
+      const storedCart = localStorage.getItem("cart");
+
+      if (storedCart) {
+        const parsed: CartState = JSON.parse(storedCart);
+        dispatch({ type: "SET_CART", payload: parsed });
+      }
+    } catch (err) {
+      console.error("Failed to load cart from storage");
     }
   }, []);
 
-  // Save cart to localStorage
+  /* -------- SAVE CART TO LOCAL STORAGE -------- */
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(state));
   }, [state]);
@@ -34,8 +60,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+/* ================= HOOK ================= */
+
 export function useCart() {
-  const ctx = useContext(CartContext);
-  if (!ctx) throw new Error("useCart must be used inside CartProvider");
-  return ctx;
+  const context = useContext(CartContext);
+
+  if (!context) {
+    throw new Error(
+      "useCart must be used inside CartProvider"
+    );
+  }
+
+  return context;
 }

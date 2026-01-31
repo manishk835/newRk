@@ -1,23 +1,28 @@
-import { CartState, CartAction } from "./cart.types";
+import { CartAction, CartState } from "./cart.types";
+
+/* ================= INITIAL STATE ================= */
 
 export const initialCartState: CartState = {
   items: [],
 };
+
+/* ================= REDUCER ================= */
 
 export function cartReducer(
   state: CartState,
   action: CartAction
 ): CartState {
   switch (action.type) {
+    /* -------- ADD TO CART -------- */
     case "ADD_TO_CART": {
-      const existing = state.items.find(
-        (i) => i.product.id === action.payload.id
+      const existingItem = state.items.find(
+        (item) => item.product._id === action.payload._id
       );
 
-      if (existing) {
+      if (existingItem) {
         return {
           items: state.items.map((item) =>
-            item.product.id === action.payload.id
+            item.product._id === action.payload._id
               ? { ...item, quantity: item.quantity + 1 }
               : item
           ),
@@ -25,39 +30,50 @@ export function cartReducer(
       }
 
       return {
-        items: [...state.items, { product: action.payload, quantity: 1 }],
+        items: [
+          ...state.items,
+          { product: action.payload, quantity: 1 },
+        ],
       };
     }
 
-    case "INCREASE_QTY":
+    /* -------- INCREASE QTY -------- */
+    case "INCREASE_QTY": {
       return {
         items: state.items.map((item) =>
-          item.product.id === action.payload
+          item.product._id === action.payload
             ? { ...item, quantity: item.quantity + 1 }
             : item
         ),
       };
+    }
 
-    case "DECREASE_QTY":
+    /* -------- DECREASE QTY -------- */
+    case "DECREASE_QTY": {
       return {
         items: state.items
           .map((item) =>
-            item.product.id === action.payload
+            item.product._id === action.payload
               ? { ...item, quantity: item.quantity - 1 }
               : item
           )
           .filter((item) => item.quantity > 0),
       };
+    }
 
-    case "REMOVE_FROM_CART":
+    /* -------- REMOVE FROM CART -------- */
+    case "REMOVE_FROM_CART": {
       return {
         items: state.items.filter(
-          (item) => item.product.id !== action.payload
+          (item) => item.product._id !== action.payload
         ),
       };
+    }
 
-    case "SET_CART":
+    /* -------- SET CART (LOCAL STORAGE / RESET) -------- */
+    case "SET_CART": {
       return action.payload;
+    }
 
     default:
       return state;

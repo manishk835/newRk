@@ -1,17 +1,37 @@
 "use client";
 
+import { useState } from "react";
 import { useCart } from "@/app/context/cart/CartContext";
+import { fetchProductBySlug } from "@/lib/api";
 import { Product } from "@/components/product/product.types";
 
-export default function ProductClient({
-  product,
-}: {
-  product: Product;
-}) {
+type ProductPageProps = {
+  params: {
+    slug: string;
+  };
+};
+
+export default async function ProductPage({
+  params,
+}: ProductPageProps) {
+  const product: Product = await fetchProductBySlug(params.slug);
+
+  return <ProductClient product={product} />;
+}
+
+/* ======================================================
+   CLIENT COMPONENT
+   ====================================================== */
+
+function ProductClient({ product }: { product: Product }) {
   const { dispatch } = useCart();
+  const [activeImage, setActiveImage] = useState(
+    product.images?.[0] || "/placeholder.png"
+  );
 
   const hasDiscount =
-    product.originalPrice && product.originalPrice > product.price;
+    product.originalPrice &&
+    product.originalPrice > product.price;
 
   const discountPercent =
     hasDiscount && product.originalPrice
@@ -23,170 +43,146 @@ export default function ProductClient({
       : null;
 
   return (
-    <div className="container mx-auto px-6 pt-28 pb-16">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-14">
-        {/* IMAGE SECTION */}
-        <div className="bg-gray-100 rounded-2xl overflow-hidden">
-          <img
-            src={product.image}
-            alt={product.title}
-            className="w-full h-full object-cover"
-          />
-        </div>
+    <main className="pt-24">
+      <div className="container mx-auto px-6 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
 
-        {/* DETAILS */}
-        <div>
-          {/* TITLE */}
-          <h1 className="text-3xl font-bold text-[#111111] mb-3">
-            {product.title}
-          </h1>
+          {/* ================= IMAGES ================= */}
+          <div>
+            <div className="bg-gray-100 rounded-2xl overflow-hidden mb-4">
+              <img
+                src={activeImage}
+                alt={product.title}
+                className="w-full h-105 object-cover"
+              />
+            </div>
 
-          {/* PRICE */}
-          <div className="flex items-center gap-4 mb-3">
-            <span className="text-2xl font-extrabold text-[#111111]">
-              ₹{product.price}
-            </span>
-
-            {hasDiscount && (
-              <>
-                <span className="text-lg text-gray-500 line-through">
-                  ₹{product.originalPrice}
-                </span>
-                <span className="text-sm font-semibold text-[#D32F2F]">
-                  {discountPercent}% OFF
-                </span>
-              </>
+            {/* THUMBNAILS */}
+            {product.images && product.images.length > 1 && (
+              <div className="flex gap-3">
+                {product.images.map((img) => (
+                  <button
+                    key={img}
+                    onClick={() => setActiveImage(img)}
+                    className={`w-20 h-20 rounded-lg overflow-hidden border ${
+                      activeImage === img
+                        ? "border-black"
+                        : "border-gray-200"
+                    }`}
+                  >
+                    <img
+                      src={img}
+                      alt="thumbnail"
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
             )}
           </div>
 
-          {/* STOCK */}
-          <p
-            className={`text-sm font-medium mb-5 ${
-              product.inStock
-                ? "text-green-600"
-                : "text-red-600"
-            }`}
-          >
-            {product.inStock
-              ? "✔ In Stock — Ready to ship"
-              : "✖ Out of Stock"}
-          </p>
+          {/* ================= DETAILS ================= */}
+          <div>
+            {/* BRAND */}
+            {product.brand && (
+              <p className="text-sm uppercase tracking-wide text-gray-500 mb-2">
+                {product.brand}
+              </p>
+            )}
 
-          {/* DESCRIPTION */}
-          <p className="text-gray-700 leading-relaxed mb-6">
-            Premium quality fabric with a comfortable fit.
-            Perfect for daily wear as well as special occasions.
-          </p>
+            {/* TITLE */}
+            <h1 className="text-3xl font-bold text-[#111111] mb-4">
+              {product.title}
+            </h1>
 
-          {/* CTA */}
-          <button
-            disabled={!product.inStock}
-            onClick={() =>
-              dispatch({
-                type: "ADD_TO_CART",
-                payload: product,
-              })
-            }
-            className={`w-full md:w-auto px-10 py-4 rounded-xl text-white font-semibold text-base transition ${
-              product.inStock
-                ? "bg-[#111111] hover:bg-gray-800"
-                : "bg-gray-400 cursor-not-allowed"
-            }`}
-          >
-            Add to Cart
-          </button>
+            {/* RATING */}
+            {product.rating && (
+              <p className="text-sm text-gray-600 mb-3">
+                ⭐ {product.rating.average} (
+                {product.rating.count} reviews)
+              </p>
+            )}
 
-          {/* TRUST INFO */}
-          <div className="mt-8 space-y-2 text-sm text-gray-600">
-            <p>✔ Cash on Delivery available</p>
-            <p>✔ Quality checked products</p>
-            <p>✔ Fast & reliable delivery</p>
+            {/* PRICE */}
+            <div className="flex items-center gap-4 mb-4">
+              <span className="text-3xl font-extrabold text-[#111111]">
+                ₹{product.price}
+              </span>
+
+              {hasDiscount && (
+                <>
+                  <span className="text-lg text-gray-500 line-through">
+                    ₹{product.originalPrice}
+                  </span>
+                  <span className="text-sm font-semibold text-[#D32F2F]">
+                    {discountPercent}% OFF
+                  </span>
+                </>
+              )}
+            </div>
+
+            {/* STOCK */}
+            <p
+              className={`text-sm font-medium mb-6 ${
+                product.inStock
+                  ? "text-green-600"
+                  : "text-red-600"
+              }`}
+            >
+              {product.inStock
+                ? "✔ In Stock — Ready to ship"
+                : "✖ Out of Stock"}
+            </p>
+
+            {/* HIGHLIGHTS */}
+            {product.highlights && product.highlights.length > 0 && (
+              <ul className="list-disc pl-5 text-sm text-gray-700 mb-6 space-y-1">
+                {product.highlights.map((point) => (
+                  <li key={point}>{point}</li>
+                ))}
+              </ul>
+            )}
+
+            {/* ADD TO CART */}
+            <button
+              disabled={!product.inStock}
+              onClick={() =>
+                dispatch({
+                  type: "ADD_TO_CART",
+                  payload: product,
+                })
+              }
+              className={`w-full md:w-auto px-10 py-4 rounded-xl text-white font-semibold text-base transition ${
+                product.inStock
+                  ? "bg-black hover:bg-gray-800"
+                  : "bg-gray-400 cursor-not-allowed"
+              }`}
+            >
+              Add to Cart
+            </button>
+
+            {/* TRUST INFO */}
+            <div className="mt-10 space-y-2 text-sm text-gray-600">
+              <p>✔ Cash on Delivery available</p>
+              <p>✔ Quality checked products</p>
+              <p>✔ Fast & reliable delivery</p>
+              <p>✔ Easy returns & support</p>
+            </div>
           </div>
         </div>
+
+        {/* ================= DESCRIPTION ================= */}
+        {product.description && (
+          <div className="mt-20 max-w-3xl">
+            <h2 className="text-2xl font-bold mb-4">
+              Product Description
+            </h2>
+            <p className="text-gray-700 leading-relaxed">
+              {product.description}
+            </p>
+          </div>
+        )}
       </div>
-    </div>
+    </main>
   );
 }
-
-
-// "use client";
-
-// import { useCart } from "@/app/context/cart/CartContext";
-// import { Product } from "@/components/product/product.types";
-
-// export default function ProductClient({
-//   product,
-// }: {
-//   product: Product;
-// }) {
-//   const { dispatch } = useCart();
-
-//   const hasDiscount =
-//     product.originalPrice && product.originalPrice > product.price;
-
-//   return (
-//     <div className="container mx-auto px-4 pt-28 pb-12">
-//       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-//         {/* IMAGE */}
-//         <div className="bg-gray-100 rounded-lg overflow-hidden">
-//           <img
-//             src={product.image}
-//             alt={product.title}
-//             className="w-full h-full object-cover"
-//           />
-//         </div>
-
-//         {/* DETAILS */}
-//         <div>
-//           <h1 className="text-2xl font-bold text-gray-800">
-//             {product.title}
-//           </h1>
-
-//           <div className="mt-3 flex items-center gap-3">
-//             <span className="text-xl font-semibold text-gray-900">
-//               ₹{product.price}
-//             </span>
-
-//             {hasDiscount && (
-//               <span className="text-gray-500 line-through">
-//                 ₹{product.originalPrice}
-//               </span>
-//             )}
-//           </div>
-
-//           <p
-//             className={`mt-2 text-sm ${
-//               product.inStock
-//                 ? "text-green-600"
-//                 : "text-red-600"
-//             }`}
-//           >
-//             {product.inStock ? "In Stock" : "Out of Stock"}
-//           </p>
-
-//           <p className="mt-6 text-gray-700">
-//             High-quality fabric, comfortable fit, suitable for daily
-//             and festive wear.
-//           </p>
-
-//           <button
-//             disabled={!product.inStock}
-//             onClick={() =>
-//               dispatch({
-//                 type: "ADD_TO_CART",
-//                 payload: product,
-//               })
-//             }
-//             className={`mt-6 px-6 py-3 rounded-lg text-white ${
-//               product.inStock
-//                 ? "bg-black hover:bg-gray-800"
-//                 : "bg-gray-400 cursor-not-allowed"
-//             }`}
-//           >
-//             Add to Cart
-//           </button>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }

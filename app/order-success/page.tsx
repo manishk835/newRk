@@ -4,39 +4,50 @@ import Link from "next/link";
 
 export default function OrderSuccessPage() {
   return (
-    <div className="container mx-auto px-6 pt-32 pb-20 text-center">
-      <div className="max-w-xl mx-auto">
-        <div className="text-5xl mb-4">🎉</div>
+    <main className="pt-24">
+      <div className="container mx-auto px-6 py-20 text-center">
+        <div className="max-w-xl mx-auto">
+          {/* ICON */}
+          <div className="text-6xl mb-6">🎉</div>
 
-        <h1 className="text-3xl font-bold mb-3 text-[#111111]">
-          Order Placed Successfully
-        </h1>
+          {/* TITLE */}
+          <h1 className="text-3xl font-bold text-[#111111] mb-4">
+            Order Placed Successfully
+          </h1>
 
-        <p className="text-gray-600 mb-8">
-          Thank you for shopping with RK Fashion House.  
-          Your order has been received and will be delivered soon.
-        </p>
+          {/* MESSAGE */}
+          <p className="text-gray-600 mb-8 leading-relaxed">
+            Thank you for shopping with <b>RK Fashion House</b>.
+            Your order has been received and is now being processed.
+            You will receive your order very soon.
+          </p>
 
-        <div className="flex justify-center gap-4">
-          <Link
-            href="/orders"
-            className="bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition"
-          >
-            View My Orders
-          </Link>
+          {/* ACTIONS */}
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <Link
+              href="/orders"
+              className="px-8 py-4 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 transition"
+            >
+              View My Orders
+            </Link>
 
-          <Link
-            href="/"
-            className="border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition"
-          >
-            Continue Shopping
-          </Link>
+            <Link
+              href="/"
+              className="px-8 py-4 border border-gray-300 rounded-xl font-semibold hover:bg-gray-50 transition"
+            >
+              Continue Shopping
+            </Link>
+          </div>
+
+          {/* TRUST INFO */}
+          <div className="mt-10 text-sm text-gray-500 space-y-1">
+            <p>📦 Cash on Delivery available</p>
+            <p>🚚 Fast & reliable delivery</p>
+            <p>🧵 Premium quality products</p>
+            <p>📞 Support available for any assistance</p>
+          </div>
         </div>
-
-        <p className="mt-8 text-sm text-gray-500">
-          📦 Cash on Delivery • 🚚 Fast Delivery • 🧵 Premium Quality
-        </p>
       </div>
-    </div>
+    </main>
   );
 }

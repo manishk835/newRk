@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { notFound } from "next/navigation";
+import { fetchProductBySlug } from "@/lib/api";
 import { Product } from "@/components/product/product.types";
 import { useCart } from "@/app/context/cart/CartContext";
 
@@ -13,111 +14,133 @@ type PageProps = {
   params: Promise<Params>;
 };
 
-// Dummy products (baad me API/DB se aayega)
-const DUMMY_PRODUCTS: Product[] = [
-  {
-    id: "1",
-    title: "Men Cotton Kurta",
-    slug: "men-cotton-kurta",
-    price: 899,
-    originalPrice: 1299,
-    image: "https://via.placeholder.com/600",
-    category: "men",
-    inStock: true,
-  },
-  {
-    id: "2",
-    title: "Women Floral Kurti",
-    slug: "women-floral-kurti",
-    price: 1099,
-    image: "https://via.placeholder.com/600",
-    category: "women",
-    inStock: true,
-  },
-];
-
 export default function ProductDetailPage({ params }: PageProps) {
   const { dispatch } = useCart();
-  const [slug, setSlug] = useState<string | null>(null);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // ✅ params Promise unwrap (latest Next.js safe way)
+  /* ================= FETCH PRODUCT ================= */
   useEffect(() => {
-    params.then((p) => setSlug(p.slug));
+    params.then(async ({ slug }) => {
+      try {
+        const data = await fetchProductBySlug(slug);
+        setProduct(data);
+      } catch {
+        notFound();
+      } finally {
+        setLoading(false);
+      }
+    });
   }, [params]);
 
-  if (!slug) return null;
-
-  const product = DUMMY_PRODUCTS.find((p) => p.slug === slug);
-
-  if (!product) {
-    notFound();
+  if (loading) {
+    return (
+      <div className="pt-28 text-center text-gray-600">
+        Loading product...
+      </div>
+    );
   }
 
+  if (!product) return null;
+
   const hasDiscount =
-    product.originalPrice && product.originalPrice > product.price;
+    product.originalPrice &&
+    product.originalPrice > product.price;
+
+  const mainImage =
+    product.images?.[0] ||
+    product.thumbnail || // backend compatibility
+    "/placeholder.png";
 
   return (
-    <div className="container mx-auto px-4 pt-28 pb-12">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        {/* IMAGE */}
-        <div className="bg-gray-100 rounded-lg overflow-hidden">
-          <img
-            src={product.image}
-            alt={product.title}
-            className="w-full h-full object-cover"
-          />
-        </div>
+    <main className="pt-28">
+      <div className="container mx-auto px-6 pb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
 
-        {/* DETAILS */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">
-            {product.title}
-          </h1>
-
-          {/* PRICE */}
-          <div className="mt-3 flex items-center gap-3">
-            <span className="text-xl font-semibold text-gray-900">
-              ₹{product.price}
-            </span>
-
-            {hasDiscount && (
-              <span className="text-gray-500 line-through">
-                ₹{product.originalPrice}
-              </span>
-            )}
+          {/* IMAGE */}
+          <div className="bg-gray-100 rounded-2xl overflow-hidden">
+            <img
+              src={mainImage}
+              alt={product.title}
+              className="w-full h-full object-cover"
+            />
           </div>
 
-          {/* STOCK */}
-          <p
-            className={`mt-2 text-sm ${
-              product.inStock ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            {product.inStock ? "In Stock" : "Out of Stock"}
-          </p>
+          {/* DETAILS */}
+          <div>
+            <h1 className="text-3xl font-bold mb-3">
+              {product.title}
+            </h1>
 
-          {/* DESCRIPTION */}
-          <p className="mt-6 text-gray-700 leading-relaxed">
-            High-quality fabric, comfortable fit, suitable for daily
-            and festive wear.
-          </p>
+            {/* PRICE */}
+            <div className="flex items-center gap-4 mb-3">
+              <span className="text-2xl font-extrabold">
+                ₹{product.price}
+              </span>
 
-          {/* ADD TO CART */}
-          <button
-            disabled={!product.inStock}
-            onClick={() =>
-              dispatch({ type: "ADD_TO_CART", payload: product })
-            }
-            className={`mt-6 px-6 py-3 rounded-lg text-white font-medium transition ${
-              product.inStock
-                ? "bg-black hover:bg-gray-800"
-                : "bg-gray-400 cursor-not-allowed"
-            }`}
-          >
-            Add to Cart
-          </button>
+              {hasDiscount && (
+                <>
+                  <span className="text-lg text-gray-500 line-through">
+                    ₹{product.originalPrice}
+                  </span>
+                  <span className="text-sm font-semibold text-red-600">
+                    {Math.round(
+                      ((product.originalPrice! - product.price) /
+                        product.originalPrice!) *
+                        100
+                    )}
+                    % OFF
+                  </span>
+                </>
+              )}
+            </div>
+
+            {/* STOCK */}
+            <p
+              className={`text-sm font-medium mb-5 ${
+                product.inStock
+                  ? "text-green-600"
+                  : "text-red-600"
+              }`}
+            >
+              {product.inStock
+                ? "✔ In Stock — Ready to ship"
+                : "✖ Out of Stock"}
+            </p>
+
+            {/* DESCRIPTION */}
+            <p className="text-gray-700 leading-relaxed mb-6">
+              Premium quality fabric with a comfortable fit.
+              Perfect for daily wear as well as festive occasions.
+            </p>
+
+            {/* ADD TO CART */}
+            <button
+              disabled={!product.inStock}
+              onClick={() =>
+                dispatch({
+                  type: "ADD_TO_CART",
+                  payload: product,
+                })
+              }
+              className={`px-10 py-4 rounded-xl text-white font-semibold transition ${
+                product.inStock
+                  ? "bg-black hover:bg-gray-800"
+                  : "bg-gray-400 cursor-not-allowed"
+              }`}
+            >
+              Add to Cart
+            </button>
+
+            {/* TRUST */}
+            <div className="mt-8 space-y-2 text-sm text-gray-600">
+              <p>✔ Cash on Delivery available</p>
+              <p>✔ Quality checked product</p>
+              <p>✔ Fast & reliable delivery</p>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

@@ -42,6 +42,7 @@ export default function Dropdown({ parentSlug, items }: Props) {
             →
           </span>
         </Link>
+        
       ))}
     </div>
   );

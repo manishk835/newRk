@@ -9,7 +9,8 @@ type Props = {
 
 export default function ProductCard({ product }: Props) {
   const hasDiscount =
-    product.originalPrice && product.originalPrice > product.price;
+    product.originalPrice &&
+    product.originalPrice > product.price;
 
   const discountPercent =
     hasDiscount && product.originalPrice
@@ -20,34 +21,49 @@ export default function ProductCard({ product }: Props) {
         )
       : null;
 
+  const imageUrl =
+    product.thumbnail ||
+    (product.images && product.images.length > 0
+      ? product.images[0]
+      : "/placeholder.png");
+
   return (
     <Link
       href={`/product/${product.slug}`}
       className="
         group block
-        rounded-xl border
+        rounded-2xl border
         bg-white
-        hover:shadow-lg
-        transition
         overflow-hidden
+        transition
+        hover:shadow-xl
       "
     >
       {/* IMAGE */}
-      <div className="relative w-full h-56 bg-gray-100 overflow-hidden">
+      <div className="relative h-64 bg-gray-100 overflow-hidden">
         <img
-          src={product.image}
+          src={imageUrl}
           alt={product.title}
-          className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
+          className="
+            w-full h-full object-cover
+            transition-transform duration-300
+            group-hover:scale-110
+          "
         />
 
-        {/* OUT OF STOCK */}
-        {!product.inStock && (
+        {/* BADGES */}
+        {product.isNewArrival && (
           <span className="absolute top-3 left-3 bg-black text-white text-xs px-3 py-1 rounded-full">
+            New
+          </span>
+        )}
+
+        {!product.inStock && (
+          <span className="absolute bottom-3 left-3 bg-red-600 text-white text-xs px-3 py-1 rounded-full">
             Out of Stock
           </span>
         )}
 
-        {/* DISCOUNT */}
         {discountPercent && (
           <span className="absolute top-3 right-3 bg-[#D32F2F] text-white text-xs px-3 py-1 rounded-full">
             {discountPercent}% OFF
@@ -56,11 +72,28 @@ export default function ProductCard({ product }: Props) {
       </div>
 
       {/* DETAILS */}
-      <div className="p-4">
+      <div className="p-4 space-y-2">
+        {/* BRAND */}
+        {product.brand && (
+          <p className="text-xs uppercase text-gray-500 tracking-wide">
+            {product.brand}
+          </p>
+        )}
+
         {/* TITLE */}
-        <h3 className="text-sm font-medium text-gray-800 line-clamp-2 mb-2">
+        <h3 className="text-sm font-medium text-gray-800 line-clamp-2">
           {product.title}
         </h3>
+
+        {/* RATING */}
+        {product.rating && (
+          <div className="flex items-center gap-1 text-xs text-gray-600">
+            <span className="font-semibold">
+              ⭐ {product.rating.average}
+            </span>
+            <span>({product.rating.count})</span>
+          </div>
+        )}
 
         {/* PRICE */}
         <div className="flex items-center gap-2">
