@@ -23,86 +23,60 @@ export default function ProductCard({ product }: Props) {
 
   const imageUrl =
     product.thumbnail ||
-    (product.images && product.images.length > 0
-      ? product.images[0]
-      : "/placeholder.png");
+    product.images?.[0] ||
+    "/placeholder.png";
 
   return (
     <Link
       href={`/product/${product.slug}`}
       className="
-        group block
-        rounded-2xl border
-        bg-white
+        block bg-white rounded-lg
         overflow-hidden
+        shadow-sm hover:shadow-md
         transition
-        hover:shadow-xl
       "
     >
       {/* IMAGE */}
-      <div className="relative h-64 bg-gray-100 overflow-hidden">
+      <div className="relative aspect-4/4 bg-gray-100">
         <img
           src={imageUrl}
           alt={product.title}
-          className="
-            w-full h-full object-cover
-            transition-transform duration-300
-            group-hover:scale-110
-          "
+          className="w-full h-full object-cover"
         />
 
-        {/* BADGES */}
-        {product.isNewArrival && (
-          <span className="absolute top-3 left-3 bg-black text-white text-xs px-3 py-1 rounded-full">
-            New
-          </span>
-        )}
-
-        {!product.inStock && (
-          <span className="absolute bottom-3 left-3 bg-red-600 text-white text-xs px-3 py-1 rounded-full">
-            Out of Stock
-          </span>
-        )}
-
         {discountPercent && (
-          <span className="absolute top-3 right-3 bg-[#D32F2F] text-white text-xs px-3 py-1 rounded-full">
+          <span className="absolute top-2 left-2 bg-red-600 text-white text-[11px] px-2 py-1 rounded">
             {discountPercent}% OFF
+          </span>
+        )}
+
+        {product.isNewArrival && (
+          <span className="absolute top-2 right-2 bg-black text-white text-[11px] px-2 py-1 rounded">
+            NEW
           </span>
         )}
       </div>
 
-      {/* DETAILS */}
-      <div className="p-4 space-y-2">
-        {/* BRAND */}
+      {/* INFO */}
+      <div className="p-3">
         {product.brand && (
-          <p className="text-xs uppercase text-gray-500 tracking-wide">
+          <p className="text-[11px] text-gray-500 uppercase mb-1">
             {product.brand}
           </p>
         )}
 
-        {/* TITLE */}
-        <h3 className="text-sm font-medium text-gray-800 line-clamp-2">
+        <h3 className="text-sm font-medium text-gray-800 line-clamp-2 leading-snug">
           {product.title}
         </h3>
 
-        {/* RATING */}
-        {product.rating && (
-          <div className="flex items-center gap-1 text-xs text-gray-600">
-            <span className="font-semibold">
-              ⭐ {product.rating.average}
-            </span>
-            <span>({product.rating.count})</span>
-          </div>
-        )}
-
         {/* PRICE */}
-        <div className="flex items-center gap-2">
-          <span className="text-base font-bold text-[#111111]">
+        <div className="flex items-center gap-2 mt-2">
+          <span className="text-base font-bold text-black">
             ₹{product.price}
           </span>
 
           {hasDiscount && (
-            <span className="text-sm text-gray-500 line-through">
+            <span className="text-xs text-gray-500 line-through">
               ₹{product.originalPrice}
             </span>
           )}

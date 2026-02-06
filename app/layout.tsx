@@ -4,6 +4,8 @@ import "./globals.css";
 
 import { CartProvider } from "@/app/context/cart/CartContext";
 import Header from "@/components/header/Header";
+import Footer from "@/components/footer/Footer";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,39 +19,14 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
-/* ================= METADATA ================= */
-
 export const metadata: Metadata = {
   title: {
     default: "RK Fashion House | Everyday Fashion for Every Family",
     template: "%s | RK Fashion House",
   },
   description:
-    "RK Fashion House offers premium quality clothing for men, women and kids. Honest pricing, fast delivery and cash on delivery available across India.",
-  keywords: [
-    "RK Fashion House",
-    "online clothing store",
-    "men fashion",
-    "women fashion",
-    "kids clothing",
-    "buy clothes online India",
-  ],
-  authors: [{ name: "RK Fashion House" }],
-  creator: "RK Fashion House",
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
-  ),
-  openGraph: {
-    title: "RK Fashion House",
-    description:
-      "Premium quality fashion for men, women and kids. Shop online with cash on delivery.",
-    type: "website",
-    locale: "en_IN",
-    siteName: "RK Fashion House",
-  },
+    "RK Fashion House offers premium quality clothing for men, women and kids.",
 };
-
-/* ================= ROOT LAYOUT ================= */
 
 export default function RootLayout({
   children,
@@ -61,13 +38,18 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-[#111111]`}
       >
-        {/* GLOBAL PROVIDERS */}
+        {/* 🔥 Razorpay SCRIPT — YAHI PE HONA CHAHIYE */}
+        <Script
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="afterInteractive"
+        />
+
         <CartProvider>
-          {/* HEADER */}
           <Header />
 
-          {/* MAIN CONTENT */}
           <main>{children}</main>
+
+          <Footer />
         </CartProvider>
       </body>
     </html>

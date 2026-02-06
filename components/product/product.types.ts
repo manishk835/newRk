@@ -64,4 +64,6 @@ export type Product = {
   /* ================= TIMESTAMPS ================= */
   createdAt?: string;
   updatedAt?: string;
+
+  
 };
