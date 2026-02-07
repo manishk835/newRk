@@ -60,6 +60,7 @@ export type Product = {
   isFeatured?: boolean;
   isNewArrival?: boolean;
   isbestSellers?:boolean;
+  isActive?: boolean;
 
   /* ================= TIMESTAMPS ================= */
   createdAt?: string;
