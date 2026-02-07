@@ -54,17 +54,53 @@ export async function searchProducts(
   return handleResponse<Product[]>(res);
 }
 
+/* ======================================================
+   PRODUCTS BY CATEGORY (WITH FILTERS)
+   ====================================================== */
+
+export type FilterCountItem = {
+  _id: string;
+  count: number;
+};
+
 export async function fetchProductsByCategory(
   category: string,
   params?: {
     type?: string;
     sort?: string;
+    brand?: string;
+    size?: string;
+    color?: string;
+    rating?: string;
+    minPrice?: string;
+    maxPrice?: string;
   }
-): Promise<Product[]> {
+): Promise<{
+  products: Product[];
+  filters: {
+    brands: FilterCountItem[];
+    subCategories: FilterCountItem[];
+    sizes: FilterCountItem[];
+    colors: FilterCountItem[];
+    ratings: number[];
+    priceRange: {
+      minPrice: number;
+      maxPrice: number;
+    };
+  };
+}> {
   const query = new URLSearchParams();
 
   if (params?.type) query.set("type", params.type);
   if (params?.sort) query.set("sort", params.sort);
+  if (params?.brand) query.set("brand", params.brand);
+  if (params?.size) query.set("size", params.size);
+  if (params?.color) query.set("color", params.color);
+  if (params?.rating) query.set("rating", params.rating);
+  if (params?.minPrice)
+    query.set("minPrice", params.minPrice);
+  if (params?.maxPrice)
+    query.set("maxPrice", params.maxPrice);
 
   const qs = query.toString() ? `?${query}` : "";
 
@@ -73,7 +109,7 @@ export async function fetchProductsByCategory(
     { cache: "no-store" }
   );
 
-  return handleResponse<Product[]>(res);
+  return handleResponse(res);
 }
 
 /* ======================================================
@@ -112,9 +148,28 @@ export async function createOrder(
 
 export async function fetchUserOrders(phone: string) {
   const res = await fetch(
-    `${BASE_URL}/api/orders/my?phone=${encodeURIComponent(phone)}`,
+    `${BASE_URL}/api/orders/my?phone=${encodeURIComponent(
+      phone
+    )}`,
     { cache: "no-store" }
   );
 
   return handleResponse(res);
+}
+
+/* ======================================================
+   CATEGORIES
+   ====================================================== */
+
+export async function fetchCategories() {
+  const res = await fetch(
+    `${BASE_URL}/api/categories`,
+    { cache: "no-store" }
+  );
+
+  if (!res.ok) {
+    throw new Error("Failed to load categories");
+  }
+
+  return res.json();
 }

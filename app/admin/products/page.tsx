@@ -1,3 +1,4 @@
+// app/admin/products/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -5,19 +6,6 @@ import { useRouter } from "next/navigation";
 import { fetchProducts } from "@/lib/api";
 import { AdminProduct } from "@/lib/types/adminProduct";
 
-/* ================= TYPES ================= */
-
-// type Product = {
-//   _id: string;
-//   title: string;
-//   price: number;
-//   category: string;
-//   subCategory?: string;
-//   isActive: boolean;
-//   isFeatured: boolean;
-//   isNewArrival: boolean;
-//   createdAt: string;
-// };
 
 /* ================= PAGE ================= */
 

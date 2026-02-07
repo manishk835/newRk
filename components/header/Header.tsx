@@ -1,11 +1,12 @@
+// components/header/Header.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import NavItem from "./NavItem";
-import { NAV_ITEMS } from "./navData";
 import { useCart } from "@/app/context/cart/CartContext";
+import CategoryMenu from "./CategoryMenu";
+
 
 type User = {
   name: string;
@@ -70,9 +71,9 @@ export default function Header() {
 
         {/* NAV */}
         <nav className="hidden lg:flex items-center gap-10 text-sm font-medium">
-          {NAV_ITEMS.map((item) => (
-            <NavItem key={item.slug} item={item} />
-          ))}
+          <div className="flex gap-6">
+            <CategoryMenu />
+          </div>
 
           <Link
             href="/sale"
@@ -81,6 +82,7 @@ export default function Header() {
             SALE
           </Link>
         </nav>
+
 
         {/* ACTIONS */}
         <div className="flex items-center gap-5">
