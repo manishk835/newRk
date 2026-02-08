@@ -6,6 +6,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/app/context/cart/CartContext";
 import CategoryMenu from "./CategoryMenu";
+import SearchBox from "../search/SearchBox";
+// import SearchBox from "@/components/search/SearchBox";
+
 
 
 type User = {
@@ -15,7 +18,6 @@ type User = {
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
-  const [query, setQuery] = useState("");
   const [user, setUser] = useState<User | null>(null);
 
   const router = useRouter();
@@ -41,13 +43,7 @@ export default function Header() {
     }
   }, []);
 
-  /* ================= SEARCH ================= */
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
-    router.push(`/search?q=${encodeURIComponent(query)}`);
-    setQuery("");
-  };
+
 
   /* ================= LOGOUT ================= */
   const handleLogout = () => {
@@ -86,19 +82,12 @@ export default function Header() {
 
         {/* ACTIONS */}
         <div className="flex items-center gap-5">
-          {/* SEARCH */}
-          <form
-            onSubmit={handleSearch}
-            className="hidden md:flex items-center gap-2 bg-white rounded-full px-4 py-2"
-          >
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search kurta, shoes..."
-              className="outline-none text-sm w-52"
-            />
-            🔍
-          </form>
+{/* SEARCH */}
+<div className="hidden md:block w-105">
+  <SearchBox />
+</div>
+
+
 
           {/* USER */}
           {user ? (

@@ -44,7 +44,7 @@ export default function CategorySort() {
           min-w-47.5
           rounded border border-gray-300
           bg-white px-5 py-2.5 text-sm
-          hover:border-amber-600 transition
+          hover:border-[#F5A623] transition
         "
       >
         <span className="text-gray-800 font-medium">
@@ -71,7 +71,7 @@ export default function CategorySort() {
           <div
             className="
               absolute right-0 mt-3 z-50 w-60
-              rounded-2xl border border-gray-300 hover:border-amber-600 bg-white
+              rounded-2xl border border-gray-300 hover:border-gray-300 bg-white
               shadow-[0_10px_30px_rgba(0,0,0,0.08)]
               overflow-hidden
               animate-dropdown

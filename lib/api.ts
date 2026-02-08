@@ -173,3 +173,54 @@ export async function fetchCategories() {
 
   return res.json();
 }
+
+/* ======================================================
+   ALL PRODUCTS (WITH FILTERS)
+   ====================================================== */
+
+   export async function fetchAllProducts(
+    params?: {
+      sort?: string;
+      brand?: string;
+      size?: string;
+      color?: string;
+      rating?: string;
+      minPrice?: string;
+      maxPrice?: string;
+    }
+  ): Promise<{
+    products: Product[];
+    filters: {
+      brands: FilterCountItem[];
+      subCategories: FilterCountItem[];
+      sizes: FilterCountItem[];
+      colors: FilterCountItem[];
+      ratings: number[];
+      priceRange: {
+        minPrice: number;
+        maxPrice: number;
+      };
+    };
+  }> {
+    const query = new URLSearchParams();
+  
+    if (params?.sort) query.set("sort", params.sort);
+    if (params?.brand) query.set("brand", params.brand);
+    if (params?.size) query.set("size", params.size);
+    if (params?.color) query.set("color", params.color);
+    if (params?.rating) query.set("rating", params.rating);
+    if (params?.minPrice)
+      query.set("minPrice", params.minPrice);
+    if (params?.maxPrice)
+      query.set("maxPrice", params.maxPrice);
+  
+    const qs = query.toString() ? `?${query}` : "";
+  
+    const res = await fetch(
+      `${BASE_URL}/api/products/all${qs}`,
+      { cache: "no-store" }
+    );
+  
+    return handleResponse(res);
+  }
+  
