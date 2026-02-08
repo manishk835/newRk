@@ -1,11 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
-  fetchAllOrders,
-  updateOrderStatus,
-} from "@/lib/adminApi";
+  useSearchParams,
+  useRouter,
+} from "next/navigation";
+
+/* ================= TYPES ================= */
+
+type OrderStatus =
+  | "Pending"
+  | "Processing"
+  | "Shipped"
+  | "Delivered"
+  | "Cancelled";
 
 type OrderItem = {
   productId: string;
@@ -16,154 +25,233 @@ type OrderItem = {
 
 type Order = {
   _id: string;
-  customer?: {
-    name?: string;
-    phone?: string;
-  };
-  items?: OrderItem[];
+  items: OrderItem[];
   totalAmount: number;
-  status: string;
+  status: OrderStatus;
   createdAt: string;
 };
 
+/* ================= CONSTANTS ================= */
+
+const STATUS_OPTIONS: (OrderStatus | "All")[] = [
+  "All",
+  "Pending",
+  "Processing",
+  "Shipped",
+  "Delivered",
+  "Cancelled",
+];
+
+const statusStyles: Record<OrderStatus, string> = {
+  Pending: "bg-yellow-100 text-yellow-700",
+  Processing: "bg-blue-100 text-blue-700",
+  Shipped: "bg-purple-100 text-purple-700",
+  Delivered: "bg-green-100 text-green-700",
+  Cancelled: "bg-red-100 text-red-700",
+};
+
+/* ================= PAGE ================= */
+
 export default function AdminOrdersPage() {
+  const searchParams = useSearchParams();
   const router = useRouter();
+
+  const status = searchParams.get("status") || "All";
+  const page = Number(searchParams.get("page") || 1);
+  const search = searchParams.get("search") || "";
+
   const [orders, setOrders] = useState<Order[]>([]);
+  const [pagination, setPagination] = useState({
+    totalPages: 1,
+  });
   const [loading, setLoading] = useState(true);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  /* ================= PARAM HELPER ================= */
+
+  const updateParams = (
+    params: Record<string, string>
+  ) => {
+    const q = new URLSearchParams(
+      searchParams.toString()
+    );
+
+    Object.entries(params).forEach(([k, v]) => {
+      if (v) q.set(k, v);
+      else q.delete(k);
+    });
+
+    router.push(`?${q.toString()}`);
+  };
+
+  /* ================= FETCH ================= */
 
   useEffect(() => {
-    const loadOrders = async () => {
+    const token = localStorage.getItem("admin_token");
+
+    if (!token) {
+      router.push("/admin/login");
+      return;
+    }
+
+    const fetchOrders = async () => {
       try {
-        const data = await fetchAllOrders();
-        setOrders(data);
+        setLoading(true);
+
+        const query = new URLSearchParams();
+        if (status !== "All")
+          query.set("status", status);
+        if (search) query.set("search", search);
+        query.set("page", String(page));
+        query.set("limit", "8");
+
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/orders?${query.toString()}`,
+          {
+            cache: "no-store",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!res.ok) throw new Error();
+
+        const data = await res.json();
+        setOrders(data.orders || []);
+        setPagination(data.pagination);
       } catch (err) {
-        console.error(err);
-        router.push("/admin/login");
+        console.error("Orders fetch error:", err);
+        setOrders([]);
       } finally {
         setLoading(false);
       }
     };
 
-    loadOrders();
-  }, [router]);
+    fetchOrders();
+  }, [status, page, search, router]);
 
-  const handleStatusUpdate = async (
-    orderId: string,
-    status: string
-  ) => {
-    try {
-      setUpdatingId(orderId);
-      await updateOrderStatus(orderId, status);
-
-      setOrders((prev) =>
-        prev.map((o) =>
-          o._id === orderId ? { ...o, status } : o
-        )
-      );
-    } catch (err) {
-      alert("Failed to update status");
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("admin_token");
-    router.push("/admin/login");
-  };
-
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 pt-28">
-        Loading orders...
-      </div>
-    );
-  }
+  /* ================= UI ================= */
 
   return (
-    <div className="container mx-auto px-4 pt-28 pb-12">
+    <div className="container mx-auto px-6 pt-10 pb-16 max-w-5xl">
       {/* HEADER */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Admin Orders</h1>
-        <button
-          onClick={handleLogout}
-          className="text-sm text-red-600"
+      <div className="flex flex-col lg:flex-row justify-between gap-4 mb-8">
+        <h1 className="text-3xl font-bold">
+          Orders
+        </h1>
+
+        <input
+          defaultValue={search}
+          placeholder="Search Order ID / Phone"
+          onChange={(e) =>
+            updateParams({
+              search: e.target.value,
+              page: "1",
+            })
+          }
+          className="border px-3 py-2 rounded-md text-sm w-full lg:w-64"
+        />
+
+        <select
+          value={status}
+          onChange={(e) =>
+            updateParams({
+              status:
+                e.target.value === "All"
+                  ? ""
+                  : e.target.value,
+              page: "1",
+            })
+          }
+          className="border rounded-md px-3 py-2 text-sm"
         >
-          Logout
+          {STATUS_OPTIONS.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+
+        <button
+          onClick={() =>
+            window.open(
+              `${process.env.NEXT_PUBLIC_API_URL}/api/orders/export/csv`,
+              "_blank"
+            )
+          }
+          className="px-4 py-2 bg-black text-white rounded-md text-sm"
+        >
+          Export CSV
         </button>
       </div>
 
-      {/* EMPTY STATE */}
-      {orders.length === 0 ? (
-        <p>No orders found</p>
+      {/* CONTENT */}
+      {loading ? (
+        <p className="text-gray-600">
+          Loading orders...
+        </p>
+      ) : orders.length === 0 ? (
+        <p className="text-gray-600">
+          No orders found
+        </p>
       ) : (
         <div className="space-y-6">
           {orders.map((order) => (
-            <div
+            <Link
               key={order._id}
-              className="border rounded-lg p-4"
+              href={`/admin/orders/${order._id}`}
+              className="block border rounded-2xl p-6 bg-white hover:shadow-md transition"
             >
-              {/* TOP ROW */}
-              <div className="flex justify-between mb-2">
-                <span className="font-medium">
-                  Order #{order._id}
-                </span>
-                <span className="text-sm text-gray-600">
-                  {new Date(order.createdAt).toLocaleString()}
-                </span>
-              </div>
+              <div className="flex justify-between mb-3">
+                <div>
+                  <p className="text-xs text-gray-500">
+                    Order ID
+                  </p>
+                  <p className="font-semibold">
+                    #{order._id.slice(-6)}
+                  </p>
+                </div>
 
-              {/* CUSTOMER */}
-              <p className="text-sm mb-2">
-                Customer:{" "}
-                <b>{order.customer?.name || "N/A"}</b>{" "}
-                — {order.customer?.phone || "N/A"}
-              </p>
-
-              {/* ITEMS */}
-              <div className="text-sm mb-3 space-y-1">
-                {order.items?.map((item) => (
-                  <div
-                    key={item.productId}
-                    className="flex justify-between"
-                  >
-                    <span>
-                      {item.title} × {item.quantity}
-                    </span>
-                    <span>
-                      ₹{item.price * item.quantity}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* FOOTER */}
-              <div className="flex justify-between items-center">
-                <span className="font-semibold">
-                  Total: ₹{order.totalAmount}
-                </span>
-
-                <select
-                  value={order.status}
-                  disabled={updatingId === order._id}
-                  onChange={(e) =>
-                    handleStatusUpdate(
-                      order._id,
-                      e.target.value
-                    )
-                  }
-                  className="border px-3 py-1 rounded"
+                <span
+                  className={`text-xs px-3 py-1 rounded-full ${statusStyles[order.status]}`}
                 >
-                  <option value="Pending">Pending</option>
-                  <option value="Confirmed">Confirmed</option>
-                  <option value="Packed">Packed</option>
-                  <option value="Shipped">Shipped</option>
-                  <option value="Delivered">Delivered</option>
-                  <option value="Cancelled">Cancelled</option>
-                </select>
+                  {order.status}
+                </span>
               </div>
-            </div>
+
+              <div className="flex justify-between text-sm text-gray-700">
+                <span>
+                  {order.items.length} items
+                </span>
+                <span className="font-semibold">
+                  ₹{order.totalAmount}
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* PAGINATION */}
+      {pagination.totalPages > 1 && (
+        <div className="flex justify-center gap-2 mt-10">
+          {Array.from(
+            { length: pagination.totalPages },
+            (_, i) => i + 1
+          ).map((p) => (
+            <button
+              key={p}
+              onClick={() =>
+                updateParams({ page: String(p) })
+              }
+              className={`px-3 py-1 rounded-md text-sm border ${
+                p === page
+                  ? "bg-black text-white"
+                  : "bg-white"
+              }`}
+            >
+              {p}
+            </button>
           ))}
         </div>
       )}
@@ -171,156 +259,3 @@ export default function AdminOrdersPage() {
   );
 }
 
-
-// // app/admin/orders/page.tsx
-// "use client";
-
-// import { useEffect, useState } from "react";
-// import { useRouter } from "next/navigation";
-
-// export default function AdminOrdersPage() {
-//   const router = useRouter();
-//   const [orders, setOrders] = useState<any[]>([]);
-//   const [loading, setLoading] = useState(true);
-
-//   const token =
-//     typeof window !== "undefined"
-//       ? localStorage.getItem("adminToken")
-//       : null;
-
-//   useEffect(() => {
-//     if (!token) {
-//       router.push("/admin/login");
-//       return;
-//     }
-
-//     const fetchOrders = async () => {
-//       try {
-//         const res = await fetch("http://localhost:5000/api/orders", {
-//           headers: {
-//             Authorization: `Bearer ${token}`,
-//           },
-//         });
-
-//         if (res.status === 401) {
-//           localStorage.removeItem("adminToken");
-//           router.push("/admin/login");
-//           return;
-//         }
-
-//         const data = await res.json();
-//         setOrders(data);
-//       } catch (err) {
-//         alert("Failed to load orders");
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchOrders();
-//   }, [router, token]);
-
-//   const updateStatus = async (id: string, status: string) => {
-//     await fetch(`http://localhost:5000/api/orders/${id}`, {
-//       method: "PUT",
-//       headers: {
-//         "Content-Type": "application/json",
-//         Authorization: `Bearer ${token}`,
-//       },
-//       body: JSON.stringify({ status }),
-//     });
-
-//     setOrders((prev) =>
-//       prev.map((o) =>
-//         o._id === id ? { ...o, status } : o
-//       )
-//     );
-//   };
-
-//   const handleLogout = () => {
-//     localStorage.removeItem("adminToken");
-//     router.push("/admin/login");
-//   };
-
-//   if (loading) {
-//     return (
-//       <div className="container mx-auto px-4 pt-28">
-//         Loading orders...
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="container mx-auto px-4 pt-28 pb-12">
-//       <div className="flex justify-between items-center mb-6">
-//         <h1 className="text-2xl font-bold">Admin Orders</h1>
-//         <button
-//           onClick={handleLogout}
-//           className="text-sm text-red-600"
-//         >
-//           Logout
-//         </button>
-//       </div>
-
-//       {orders.length === 0 ? (
-//         <p>No orders found</p>
-//       ) : (
-//         <div className="space-y-6">
-//           {orders.map((order) => (
-//             <div
-//               key={order._id}
-//               className="border rounded-lg p-4"
-//             >
-//               <div className="flex justify-between mb-2">
-//                 <span className="font-medium">
-//                   Order #{order._id}
-//                 </span>
-//                 <span className="text-sm text-gray-600">
-//                   {new Date(order.createdAt).toLocaleString()}
-//                 </span>
-//               </div>
-
-//               <p className="text-sm mb-2">
-//                 Customer: <b>{order.customer.name}</b> —{" "}
-//                 {order.customer.phone}
-//               </p>
-
-//               <div className="text-sm mb-3">
-//                 {order.items.map((item: any) => (
-//                   <div
-//                     key={item.productId}
-//                     className="flex justify-between"
-//                   >
-//                     <span>
-//                       {item.title} × {item.quantity}
-//                     </span>
-//                     <span>
-//                       ₹{item.price * item.quantity}
-//                     </span>
-//                   </div>
-//                 ))}
-//               </div>
-
-//               <div className="flex justify-between items-center">
-//                 <span className="font-semibold">
-//                   Total: ₹{order.totalAmount}
-//                 </span>
-
-//                 <select
-//                   value={order.status}
-//                   onChange={(e) =>
-//                     updateStatus(order._id, e.target.value)
-//                   }
-//                   className="border px-3 py-1 rounded"
-//                 >
-//                   <option value="Pending">Pending</option>
-//                   <option value="Delivered">Delivered</option>
-//                 </select>
-//               </div>
-//             </div>
-//           ))}
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
