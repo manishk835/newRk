@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+import { AuthProvider } from "@/app/providers/AuthProvider";
 import { CartProvider } from "@/app/context/cart/CartContext";
 import Header from "@/components/header/Header";
 import Footer from "@/components/footer/Footer";
@@ -38,19 +39,21 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-[#111111]`}
       >
-        {/* 🔥 Razorpay SCRIPT — YAHI PE HONA CHAHIYE */}
+        {/* Razorpay Script */}
         <Script
           src="https://checkout.razorpay.com/v1/checkout.js"
           strategy="afterInteractive"
         />
 
-        <CartProvider>
-          <Header />
+        {/* 🔐 Auth must wrap everything */}
+        <AuthProvider>
+          <CartProvider>
+            <Header />
+            <main>{children}</main>
+            <Footer />
+          </CartProvider>
+        </AuthProvider>
 
-          <main>{children}</main>
-
-          <Footer />
-        </CartProvider>
       </body>
     </html>
   );

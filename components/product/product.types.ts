@@ -1,70 +1,84 @@
-// components/product/product.types.ts
-
-/**
- * Product Variant (size + stock)
- * Example: S, M, L, XL
- */
+/* ======================================================
+   PRODUCT VARIANT
+====================================================== */
 export type ProductVariant = {
   size: string;
+  color: string;
   stock: number;
+  sku: string;
+  priceOverride?: number;
+  isActive?: boolean;
 };
 
-/**
- * Product Rating & Reviews summary
- */
-export type ProductRating = {
-  average: number; // 4.2
-  count: number;   // total reviews
+/* ======================================================
+   PRODUCT IMAGE
+====================================================== */
+export type ProductImage = {
+  url: string;
+  alt?: string;
+  order?: number;
 };
 
-/**
- * Main Product type (REAL ECOMMERCE LEVEL)
- */
+/* ======================================================
+   MAIN PRODUCT TYPE (BACKEND ALIGNED)
+====================================================== */
 export type Product = {
   /* ================= CORE ================= */
-  _id: string;              // MongoDB id
+  _id: string;
   title: string;
   slug: string;
+
+  /* ================= BRAND & CATEGORY ================= */
+  category: string;
+  subCategory?: string;
+  brand?: string;
+  tags?: string[];
 
   /* ================= PRICING ================= */
   price: number;
   originalPrice?: number;
-  currency?: "INR";
+  discountPercent?: number;
+  currency?: string;
+  taxInclusive?: boolean;
 
   /* ================= MEDIA ================= */
-  images: string[];         // Cloudinary URLs
-  thumbnail?: string;       // optional hero image
-
-  /* ================= CATEGORY ================= */
-  category: string;         // men / women / kids
-  subCategory?: string;     // tshirts / jeans / shoes
-  brand?: string;
+  thumbnail: string;
+  images?: ProductImage[];
 
   /* ================= INVENTORY ================= */
-  inStock: boolean;
-  stock?: number;           // total stock
   variants?: ProductVariant[];
+  totalStock?: number;
+  inStock: boolean;
+  maxOrderQty?: number;
 
   /* ================= PRODUCT DETAILS ================= */
-  description?: string;     // long description
-  highlights?: string[];    // bullet points
+  description?: string;
+  shortDescription?: string;
   material?: string;
-  fit?: string;             // Regular / Slim
-  care?: string;            // Wash care
+  fit?: string;
+  pattern?: string;
+  sleeve?: string;
+  occasion?: string;
+  careInstructions?: string;
+  countryOfOrigin?: string;
+
+  /* ================= DELIVERY ================= */
+  codAvailable?: boolean;
+  returnDays?: number;
+  replacementDays?: number;
+  deliveryEstimate?: string;
 
   /* ================= RATINGS ================= */
-  rating?: ProductRating;
+  rating?: number;          // backend uses number
+  reviewsCount?: number;    // backend uses number
 
-  /* ================= META ================= */
-  tags?: string[];
+  /* ================= FLAGS ================= */
   isFeatured?: boolean;
   isNewArrival?: boolean;
-  isbestSellers?:boolean;
+  isBestSeller?: boolean;
   isActive?: boolean;
 
-  /* ================= TIMESTAMPS ================= */
+  /* ================= META ================= */
   createdAt?: string;
   updatedAt?: string;
-
-  
 };

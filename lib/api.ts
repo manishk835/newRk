@@ -1,9 +1,8 @@
-// lib/api.ts
 import { Product } from "@/components/product/product.types";
 
 /* ======================================================
    BASE CONFIG
-   ====================================================== */
+====================================================== */
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -14,24 +13,46 @@ if (!BASE_URL) {
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     let message = "API request failed";
+
     try {
       const data = await res.json();
       message = data?.message || message;
     } catch {}
+
     throw new Error(message);
   }
+
   return res.json();
 }
 
 /* ======================================================
    PRODUCTS (PUBLIC)
-   ====================================================== */
+====================================================== */
 
+/**
+ * SAFE PRODUCT FETCH
+ * Handles both:
+ * 1) Array response
+ * 2) { products: [] } response
+ */
 export async function fetchProducts(): Promise<Product[]> {
   const res = await fetch(`${BASE_URL}/api/products`, {
     cache: "no-store",
   });
-  return handleResponse<Product[]>(res);
+
+  const data = await handleResponse<any>(res);
+
+  // If backend returns array
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  // If backend returns { products: [...] }
+  if (data?.products && Array.isArray(data.products)) {
+    return data.products;
+  }
+
+  return [];
 }
 
 export async function fetchProductBySlug(
@@ -41,6 +62,7 @@ export async function fetchProductBySlug(
     `${BASE_URL}/api/products/slug/${slug}`,
     { cache: "no-store" }
   );
+
   return handleResponse<Product>(res);
 }
 
@@ -51,12 +73,18 @@ export async function searchProducts(
     `${BASE_URL}/api/products/search?q=${encodeURIComponent(query)}`,
     { cache: "no-store" }
   );
-  return handleResponse<Product[]>(res);
+
+  const data = await handleResponse<any>(res);
+
+  if (Array.isArray(data)) return data;
+  if (data?.products) return data.products;
+
+  return [];
 }
 
 /* ======================================================
    PRODUCTS BY CATEGORY (WITH FILTERS)
-   ====================================================== */
+====================================================== */
 
 export type FilterCountItem = {
   _id: string;
@@ -97,10 +125,8 @@ export async function fetchProductsByCategory(
   if (params?.size) query.set("size", params.size);
   if (params?.color) query.set("color", params.color);
   if (params?.rating) query.set("rating", params.rating);
-  if (params?.minPrice)
-    query.set("minPrice", params.minPrice);
-  if (params?.maxPrice)
-    query.set("maxPrice", params.maxPrice);
+  if (params?.minPrice) query.set("minPrice", params.minPrice);
+  if (params?.maxPrice) query.set("maxPrice", params.maxPrice);
 
   const qs = query.toString() ? `?${query}` : "";
 
@@ -113,30 +139,13 @@ export async function fetchProductsByCategory(
 }
 
 /* ======================================================
-   ORDERS (USER)
-   ====================================================== */
+   ORDERS (COOKIE BASED)
+====================================================== */
 
-export type CreateOrderPayload = {
-  name: string;
-  phone: string;
-  address: string;
-  city: string;
-  pincode: string;
-  paymentMethod: "COD";
-  totalAmount: number;
-  items: {
-    productId: string;
-    title: string;
-    quantity: number;
-    price: number;
-  }[];
-};
-
-export async function createOrder(
-  payload: CreateOrderPayload
-) {
+export async function createOrder(payload: any) {
   const res = await fetch(`${BASE_URL}/api/orders`, {
     method: "POST",
+    credentials: "include", // 🔥 important for auth
     headers: {
       "Content-Type": "application/json",
     },
@@ -146,81 +155,71 @@ export async function createOrder(
   return handleResponse(res);
 }
 
-export async function fetchUserOrders(phone: string) {
-  const res = await fetch(
-    `${BASE_URL}/api/orders/my?phone=${encodeURIComponent(
-      phone
-    )}`,
-    { cache: "no-store" }
-  );
+export async function fetchUserOrders() {
+  const res = await fetch(`${BASE_URL}/api/orders/my`, {
+    credentials: "include",
+    cache: "no-store",
+  });
 
   return handleResponse(res);
 }
 
 /* ======================================================
    CATEGORIES
-   ====================================================== */
+====================================================== */
 
 export async function fetchCategories() {
-  const res = await fetch(
-    `${BASE_URL}/api/categories`,
-    { cache: "no-store" }
-  );
+  const res = await fetch(`${BASE_URL}/api/categories`, {
+    cache: "no-store",
+  });
 
-  if (!res.ok) {
-    throw new Error("Failed to load categories");
-  }
-
-  return res.json();
+  return handleResponse(res);
 }
 
 /* ======================================================
    ALL PRODUCTS (WITH FILTERS)
-   ====================================================== */
+====================================================== */
 
-   export async function fetchAllProducts(
-    params?: {
-      sort?: string;
-      brand?: string;
-      size?: string;
-      color?: string;
-      rating?: string;
-      minPrice?: string;
-      maxPrice?: string;
-    }
-  ): Promise<{
-    products: Product[];
-    filters: {
-      brands: FilterCountItem[];
-      subCategories: FilterCountItem[];
-      sizes: FilterCountItem[];
-      colors: FilterCountItem[];
-      ratings: number[];
-      priceRange: {
-        minPrice: number;
-        maxPrice: number;
-      };
-    };
-  }> {
-    const query = new URLSearchParams();
-  
-    if (params?.sort) query.set("sort", params.sort);
-    if (params?.brand) query.set("brand", params.brand);
-    if (params?.size) query.set("size", params.size);
-    if (params?.color) query.set("color", params.color);
-    if (params?.rating) query.set("rating", params.rating);
-    if (params?.minPrice)
-      query.set("minPrice", params.minPrice);
-    if (params?.maxPrice)
-      query.set("maxPrice", params.maxPrice);
-  
-    const qs = query.toString() ? `?${query}` : "";
-  
-    const res = await fetch(
-      `${BASE_URL}/api/products/all${qs}`,
-      { cache: "no-store" }
-    );
-  
-    return handleResponse(res);
+export async function fetchAllProducts(
+  params?: {
+    sort?: string;
+    brand?: string;
+    size?: string;
+    color?: string;
+    rating?: string;
+    minPrice?: string;
+    maxPrice?: string;
   }
-  
+): Promise<{
+  products: Product[];
+  filters: {
+    brands: FilterCountItem[];
+    subCategories: FilterCountItem[];
+    sizes: FilterCountItem[];
+    colors: FilterCountItem[];
+    ratings: number[];
+    priceRange: {
+      minPrice: number;
+      maxPrice: number;
+    };
+  };
+}> {
+  const query = new URLSearchParams();
+
+  if (params?.sort) query.set("sort", params.sort);
+  if (params?.brand) query.set("brand", params.brand);
+  if (params?.size) query.set("size", params.size);
+  if (params?.color) query.set("color", params.color);
+  if (params?.rating) query.set("rating", params.rating);
+  if (params?.minPrice) query.set("minPrice", params.minPrice);
+  if (params?.maxPrice) query.set("maxPrice", params.maxPrice);
+
+  const qs = query.toString() ? `?${query}` : "";
+
+  const res = await fetch(
+    `${BASE_URL}/api/products/all${qs}`,
+    { cache: "no-store" }
+  );
+
+  return handleResponse(res);
+}

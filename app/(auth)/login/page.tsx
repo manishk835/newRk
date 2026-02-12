@@ -1,0 +1,144 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/app/providers/AuthProvider";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { user, loading } = useAuth();
+
+  const redirectParam = searchParams.get("redirect") || "/";
+  
+  // 🔐 Prevent open redirect attack
+  const redirect =
+    redirectParam.startsWith("/") ? redirectParam : "/";
+
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  // 🔁 If already logged in → redirect
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace(redirect);
+    }
+  }, [user, loading, router, redirect]);
+
+  const validate = () => {
+    if (!name.trim()) {
+      setError("Please enter your full name");
+      return false;
+    }
+
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      setError("Enter valid 10 digit mobile number");
+      return false;
+    }
+
+    return true;
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (!validate()) return;
+
+    try {
+      setSubmitting(true);
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            name: name.trim(),
+            phone,
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+
+      // 👉 OTP page
+      router.push(
+        `/verify?phone=${phone}&redirect=${encodeURIComponent(
+          redirect
+        )}`
+      );
+    } catch (err: any) {
+      setError(err.message || "Something went wrong");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Avoid flicker while checking auth
+  if (loading) return null;
+
+  return (
+    <main className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+      <div className="bg-white border rounded-2xl p-8 shadow-sm w-full max-w-md">
+
+        <h1 className="text-3xl font-bold text-center mb-2">
+          RK<span className="text-[#F5A623]">Fashion</span>
+        </h1>
+
+        <p className="text-center text-gray-500 mb-6">
+          Login to continue
+        </p>
+
+        <form onSubmit={submit} className="space-y-4">
+
+          <input
+            type="text"
+            placeholder="Full name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full border px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+          />
+
+          <input
+            type="tel"
+            placeholder="Mobile number"
+            value={phone}
+            maxLength={10}
+            onChange={(e) =>
+              setPhone(e.target.value.replace(/\D/g, ""))
+            }
+            className="w-full border px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+          />
+
+          {error && (
+            <p className="text-sm text-red-600">
+              {error}
+            </p>
+          )}
+
+          <button
+            disabled={submitting}
+            className="w-full bg-black text-white py-3 rounded-lg font-semibold disabled:opacity-60"
+          >
+            {submitting ? "Sending OTP..." : "Continue"}
+          </button>
+
+        </form>
+
+        <p className="text-xs text-gray-500 mt-6 text-center">
+          By continuing, you agree to our Terms & Privacy Policy.
+        </p>
+      </div>
+    </main>
+  );
+}

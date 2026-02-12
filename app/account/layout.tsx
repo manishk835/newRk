@@ -18,28 +18,51 @@ export default function AccountLayout({
   const pathname = usePathname();
 
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const isActive = (path: string) =>
     pathname === path || pathname.startsWith(path + "/");
 
   useEffect(() => {
-    const stored = localStorage.getItem("rk_user");
-    const phone = localStorage.getItem("userPhone");
+    const loadUser = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`,
+          {
+            credentials: "include",
+          }
+        );
 
-    if (!stored || !phone) {
-      router.push("/login");
-      return;
-    }
+        if (!res.ok) {
+          router.replace("/login");
+          return;
+        }
 
-    const parsed = JSON.parse(stored);
-    setUser({ name: parsed.name, phone });
+        const data = await res.json();
+        setUser(data);
+      } catch {
+        router.replace("/login");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUser();
   }, [router]);
 
-  const logout = () => {
-    localStorage.removeItem("rk_user");
-    localStorage.removeItem("userPhone");
-    router.push("/login");
+  const logout = async () => {
+    await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`,
+      {
+        method: "POST",
+        credentials: "include",
+      }
+    );
+
+    router.push("/");
   };
+
+  if (loading) return <div className="pt-24">Loading...</div>;
 
   if (!user) return null;
 

@@ -1,7 +1,9 @@
+// app/admin/categories/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import {  fetchCategories,  createCategory,} from "@/lib/adminCategories";
+import Link from "next/link";
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -39,13 +41,12 @@ export default function AdminCategoriesPage() {
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-        <button
-          onClick={handleAdd}
-          className="bg-black text-white px-4 rounded"
-          disabled={loading}
+        <Link
+          href="/admin/categories/add"
+          className="bg-black text-white px-4 py-2 rounded text-sm"
         >
-          Add
-        </button>
+          + Add Category
+        </Link>
       </div>
 
       <div className="space-y-2">

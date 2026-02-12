@@ -1,31 +1,29 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PROTECTED_ROUTES = ["/checkout", "/orders"];
+export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const token = req.cookies.get("token")?.value;
 
-  const isProtected = PROTECTED_ROUTES.some((route) =>
-    pathname.startsWith(route)
-  );
+  // ================= PROTECT ADMIN ROUTES =================
+  if (pathname.startsWith("/admin")) {
+    // Allow login page without token
+    if (pathname === "/admin/login") {
+      return NextResponse.next();
+    }
 
-  if (!isProtected) {
-    return NextResponse.next();
-  }
-
-  // ✅ cookie read (ONLY thing middleware can read)
-  const userCookie = request.cookies.get("rk_user");
-
-  if (!userCookie) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
+    if (!token) {
+      return NextResponse.redirect(
+        new URL("/admin/login", req.url)
+      );
+    }
   }
 
   return NextResponse.next();
 }
 
+/* ================= MATCHER ================= */
 export const config = {
-  matcher: ["/checkout/:path*", "/orders/:path*"],
+  matcher: ["/admin/:path*"],
 };
