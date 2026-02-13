@@ -21,16 +21,24 @@ export default function AuthLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-sm text-gray-500">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-sm text-gray-500 animate-pulse">
+          Checking session...
+        </div>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white border rounded-2xl shadow-sm p-8">
-        {children}
+    <main className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white border rounded-2xl shadow-sm p-8">
+          {children}
+        </div>
+
+        <p className="text-xs text-center text-gray-400 mt-6">
+          © {new Date().getFullYear()} RK Fashion. All rights reserved.
+        </p>
       </div>
     </main>
   );

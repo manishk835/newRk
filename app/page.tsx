@@ -5,6 +5,7 @@ import { Metadata } from "next";
 import ProductCard from "@/components/product/ProductCard";
 import { fetchProducts } from "@/lib/api";
 import type { Product } from "@/components/product/product.types";
+import WishlistButton from "@/components/WishlistButton";
 
 export const metadata: Metadata = {
   title: "RK Fashion House | Everyday Fashion for Every Family",
@@ -182,11 +183,32 @@ function ProductSection({
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {products.map((product) => (
-            <ProductCard
+            <div
               key={product._id}
-              product={product}
-            />
+              className="relative bg-white rounded-xl border p-4"
+            >
+              {/* HEART */}
+              <div className="absolute top-3 right-3">
+                <WishlistButton productId={product._id} />
+              </div>
+
+              {/* IMAGE */}
+              <img
+                src={product.image}
+                alt={product.title}
+                className="w-full h-48 object-cover rounded-lg"
+              />
+
+              {/* INFO */}
+              <h2 className="mt-3 font-medium">
+                {product.title}
+              </h2>
+              <p className="font-semibold">
+                ₹{product.price}
+              </p>
+            </div>
           ))}
+
         </div>
       </div>
     </section>

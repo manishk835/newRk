@@ -5,6 +5,7 @@ import { Product } from "@/components/product/product.types";
 ====================================================== */
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+console.log("BASE_URL:", BASE_URL);
 
 if (!BASE_URL) {
   throw new Error("NEXT_PUBLIC_API_URL is not defined");
@@ -23,6 +24,41 @@ async function handleResponse<T>(res: Response): Promise<T> {
   }
 
   return res.json();
+}
+
+
+
+
+export async function loginUser(data: {
+  phone: string;
+  password: string;
+}) {
+  const res = await fetch(`${BASE_URL}/api/auth/login`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  return handleResponse(res);
+}
+
+export async function registerUser(data: {
+  name: string;
+  phone: string;
+  password: string;
+}) {
+  const res = await fetch(`${BASE_URL}/api/auth/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  return handleResponse(res);
 }
 
 /* ======================================================

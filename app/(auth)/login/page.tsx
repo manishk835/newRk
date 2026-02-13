@@ -10,13 +10,11 @@ export default function LoginPage() {
   const { user, loading } = useAuth();
 
   const redirectParam = searchParams.get("redirect") || "/";
-  
-  // 🔐 Prevent open redirect attack
   const redirect =
     redirectParam.startsWith("/") ? redirectParam : "/";
 
-  const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -28,13 +26,13 @@ export default function LoginPage() {
   }, [user, loading, router, redirect]);
 
   const validate = () => {
-    if (!name.trim()) {
-      setError("Please enter your full name");
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      setError("Enter valid 10 digit mobile number");
       return false;
     }
 
-    if (!/^[6-9]\d{9}$/.test(phone)) {
-      setError("Enter valid 10 digit mobile number");
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
       return false;
     }
 
@@ -59,8 +57,8 @@ export default function LoginPage() {
           },
           credentials: "include",
           body: JSON.stringify({
-            name: name.trim(),
             phone,
+            password,
           }),
         }
       );
@@ -71,12 +69,7 @@ export default function LoginPage() {
         throw new Error(data.message || "Login failed");
       }
 
-      // 👉 OTP page
-      router.push(
-        `/verify?phone=${phone}&redirect=${encodeURIComponent(
-          redirect
-        )}`
-      );
+      router.replace(redirect);
     } catch (err: any) {
       setError(err.message || "Something went wrong");
     } finally {
@@ -84,7 +77,6 @@ export default function LoginPage() {
     }
   };
 
-  // Avoid flicker while checking auth
   if (loading) return null;
 
   return (
@@ -96,18 +88,10 @@ export default function LoginPage() {
         </h1>
 
         <p className="text-center text-gray-500 mb-6">
-          Login to continue
+          Sign in to your account
         </p>
 
         <form onSubmit={submit} className="space-y-4">
-
-          <input
-            type="text"
-            placeholder="Full name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full border px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-          />
 
           <input
             type="tel"
@@ -116,6 +100,16 @@ export default function LoginPage() {
             maxLength={10}
             onChange={(e) =>
               setPhone(e.target.value.replace(/\D/g, ""))
+            }
+            className="w-full border px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+          />
+
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) =>
+              setPassword(e.target.value)
             }
             className="w-full border px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
           />
@@ -130,13 +124,29 @@ export default function LoginPage() {
             disabled={submitting}
             className="w-full bg-black text-white py-3 rounded-lg font-semibold disabled:opacity-60"
           >
-            {submitting ? "Sending OTP..." : "Continue"}
+            {submitting ? "Signing in..." : "Sign In"}
           </button>
 
         </form>
 
+        <div className="flex justify-between text-sm mt-4">
+          <button
+            onClick={() => router.push("/forgot-password")}
+            className="text-black hover:underline"
+          >
+            Forgot password?
+          </button>
+
+          <button
+            onClick={() => router.push("/register")}
+            className="text-black hover:underline"
+          >
+            Create account
+          </button>
+        </div>
+
         <p className="text-xs text-gray-500 mt-6 text-center">
-          By continuing, you agree to our Terms & Privacy Policy.
+          By signing in, you agree to our Terms & Privacy Policy.
         </p>
       </div>
     </main>
