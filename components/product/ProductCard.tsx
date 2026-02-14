@@ -21,10 +21,11 @@ export default function ProductCard({ product }: Props) {
         )
       : null;
 
-  const imageUrl =
-    product.thumbnail ||
-    product.images?.[0] ||
-    "/placeholder.png";
+      const imageUrl =
+      product.thumbnail ||
+      product.images?.[0]?.url ||
+      "/placeholder.png";
+    
 
   return (
     <Link
