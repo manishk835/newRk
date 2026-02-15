@@ -10,21 +10,21 @@ export default function ResetPasswordPage() {
   const { user, loading: authLoading } = useAuth();
 
   const phone = searchParams.get("phone") || "";
-  const otp = searchParams.get("otp") || "";
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🔐 Prevent access without required params
+  /* 🔐 Prevent access without phone */
   useEffect(() => {
-    if (!phone || !otp) {
+    if (!phone) {
       router.replace("/login");
     }
-  }, [phone, otp, router]);
+  }, [phone, router]);
 
-  // 🔁 If already logged in → redirect
+  /* 🔁 If already logged in → redirect home */
   useEffect(() => {
     if (!authLoading && user) {
       router.replace("/");
@@ -34,9 +34,10 @@ export default function ResetPasswordPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
       return;
     }
 
@@ -52,12 +53,9 @@ export default function ResetPasswordPage() {
         `${process.env.NEXT_PUBLIC_API_URL}/api/auth/reset-password`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             phone,
-            otp,
             password,
           }),
         }
@@ -69,8 +67,11 @@ export default function ResetPasswordPage() {
         throw new Error(data.message || "Reset failed");
       }
 
-      // ✅ Success → redirect to login
-      router.replace("/login?reset=success");
+      setSuccess("Password updated successfully 🎉");
+
+      setTimeout(() => {
+        router.replace("/login?reset=success");
+      }, 1500);
 
     } catch (err: any) {
       setError(err.message || "Something went wrong");
@@ -90,7 +91,7 @@ export default function ResetPasswordPage() {
         </h2>
 
         <p className="text-sm text-gray-500 text-center mb-6">
-          Create a new secure password for your account
+          Create a new secure password
         </p>
 
         <form onSubmit={submit} className="space-y-4">
@@ -100,7 +101,7 @@ export default function ResetPasswordPage() {
             placeholder="New password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full border px-4 py-3 rounded-lg"
+            className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-black"
           />
 
           <input
@@ -108,7 +109,7 @@ export default function ResetPasswordPage() {
             placeholder="Confirm password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
-            className="w-full border px-4 py-3 rounded-lg"
+            className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-black"
           />
 
           {error && (
@@ -117,9 +118,15 @@ export default function ResetPasswordPage() {
             </p>
           )}
 
+          {success && (
+            <p className="text-sm text-green-600 text-center">
+              {success}
+            </p>
+          )}
+
           <button
             disabled={loading}
-            className="w-full bg-black text-white py-3 rounded-lg font-semibold"
+            className="w-full bg-black text-white py-3 rounded-lg font-semibold disabled:opacity-60"
           >
             {loading ? "Updating..." : "Update Password"}
           </button>

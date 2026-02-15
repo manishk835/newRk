@@ -10,13 +10,13 @@ type Address = {
   address: string;
   city: string;
   pincode: string;
-  isDefault?: boolean;
 };
 
 export default function AddressesPage() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [error, setError] = useState("");
 
   const [form, setForm] = useState<Omit<Address, "id">>({
     name: "",
@@ -24,7 +24,6 @@ export default function AddressesPage() {
     address: "",
     city: "",
     pincode: "",
-    isDefault: false,
   });
 
   /* ================= LOAD ================= */
@@ -40,30 +39,33 @@ export default function AddressesPage() {
     localStorage.setItem("rk_addresses", JSON.stringify(data));
   };
 
+  /* ================= VALIDATION ================= */
+  const validate = () => {
+    if (!form.name.trim()) return "Name required";
+    if (!/^[6-9]\d{9}$/.test(form.phone))
+      return "Enter valid 10 digit mobile number";
+    if (!form.address.trim()) return "Address required";
+    if (!form.city.trim()) return "City required";
+    if (!/^\d{6}$/.test(form.pincode))
+      return "Enter valid 6 digit pincode";
+    return "";
+  };
+
   /* ================= ADD ================= */
   const addAddress = () => {
-    if (
-      !form.name ||
-      !form.phone ||
-      !form.address ||
-      !form.city ||
-      !form.pincode
-    )
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
       return;
-
-    let updated = [...addresses];
-
-    if (form.isDefault) {
-      updated = updated.map((a) => ({
-        ...a,
-        isDefault: false,
-      }));
     }
 
-    updated.unshift({
-      id: uuid(),
-      ...form,
-    });
+    const updated = [
+      {
+        id: uuid(),
+        ...form,
+      },
+      ...addresses,
+    ];
 
     saveAddresses(updated);
 
@@ -73,9 +75,9 @@ export default function AddressesPage() {
       address: "",
       city: "",
       pincode: "",
-      isDefault: false,
     });
 
+    setError("");
     setShowForm(false);
   };
 
@@ -85,69 +87,57 @@ export default function AddressesPage() {
     saveAddresses(updated);
   };
 
-  if (loading) return <p>Loading addresses...</p>;
+  if (loading)
+    return <p className="text-center py-10">Loading addresses...</p>;
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-3xl mx-auto space-y-8">
 
       {/* HEADER */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">
-          Saved Addresses
-        </h1>
+        <h1 className="text-2xl font-bold">Saved Addresses</h1>
 
         <button
           onClick={() => setShowForm(true)}
           className="bg-black text-white px-5 py-2 rounded-lg text-sm hover:opacity-90"
         >
-          + Add New
+          + Add Address
         </button>
       </div>
 
-      {/* EMPTY */}
+      {/* EMPTY STATE */}
       {addresses.length === 0 && (
-        <div className="bg-white rounded-2xl border p-12 text-center">
+        <div className="bg-white border rounded-2xl p-12 text-center shadow-sm">
           <div className="text-4xl mb-4">📍</div>
           <p className="text-gray-600 mb-4">
-            You haven’t added any address yet.
+            No saved addresses yet.
           </p>
           <button
             onClick={() => setShowForm(true)}
             className="bg-black text-white px-6 py-3 rounded-xl"
           >
-            Add Address
+            Add Your First Address
           </button>
         </div>
       )}
 
-      {/* LIST */}
+      {/* ADDRESS LIST */}
       <div className="grid gap-6">
         {addresses.map((addr) => (
           <div
             key={addr.id}
             className="bg-white border rounded-2xl p-6 shadow-sm hover:shadow-md transition"
           >
-            <div className="flex justify-between">
-
-              <div>
-                <p className="font-semibold">
-                  {addr.name}
-                  {addr.isDefault && (
-                    <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                      Default
-                    </span>
-                  )}
-                </p>
-
-                <p className="text-sm text-gray-600 mt-2">
+            <div className="flex justify-between items-start">
+              <div className="space-y-1">
+                <p className="font-semibold text-lg">{addr.name}</p>
+                <p className="text-gray-600 text-sm">
                   {addr.address}
                 </p>
-
-                <p className="text-sm text-gray-600">
-                  {addr.city} – {addr.pincode}
+                <p className="text-gray-600 text-sm">
+                  {addr.city} - {addr.pincode}
                 </p>
-
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-gray-600 text-sm">
                   📞 {addr.phone}
                 </p>
               </div>
@@ -158,7 +148,6 @@ export default function AddressesPage() {
               >
                 Remove
               </button>
-
             </div>
           </div>
         ))}
@@ -166,57 +155,80 @@ export default function AddressesPage() {
 
       {/* MODAL */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 space-y-4">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl">
 
             <h2 className="text-lg font-semibold">
               Add New Address
             </h2>
 
-            {["name", "phone", "city", "pincode"].map((f) => (
+            <div className="space-y-3">
+
               <input
-                key={f}
-                placeholder={f}
-                value={(form as any)[f]}
+                placeholder="Full Name"
+                value={form.name}
+                onChange={(e) =>
+                  setForm({ ...form, name: e.target.value })
+                }
+                className="w-full border px-4 py-2 rounded-lg"
+              />
+
+              <input
+                placeholder="Mobile Number"
+                maxLength={10}
+                value={form.phone}
                 onChange={(e) =>
                   setForm({
                     ...form,
-                    [f]: e.target.value,
+                    phone: e.target.value.replace(/\D/g, ""),
                   })
                 }
                 className="w-full border px-4 py-2 rounded-lg"
               />
-            ))}
 
-            <textarea
-              placeholder="Full Address"
-              value={form.address}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  address: e.target.value,
-                })
-              }
-              className="w-full border px-4 py-2 rounded-lg"
-            />
+              <textarea
+                placeholder="Full Address"
+                value={form.address}
+                onChange={(e) =>
+                  setForm({ ...form, address: e.target.value })
+                }
+                className="w-full border px-4 py-2 rounded-lg"
+              />
 
-            <label className="flex items-center gap-2 text-sm">
               <input
-                type="checkbox"
-                checked={form.isDefault}
+                placeholder="City"
+                value={form.city}
+                onChange={(e) =>
+                  setForm({ ...form, city: e.target.value })
+                }
+                className="w-full border px-4 py-2 rounded-lg"
+              />
+
+              <input
+                placeholder="Pincode"
+                maxLength={6}
+                value={form.pincode}
                 onChange={(e) =>
                   setForm({
                     ...form,
-                    isDefault: e.target.checked,
+                    pincode: e.target.value.replace(/\D/g, ""),
                   })
                 }
+                className="w-full border px-4 py-2 rounded-lg"
               />
-              Set as default address
-            </label>
+
+              {error && (
+                <p className="text-sm text-red-600">{error}</p>
+              )}
+
+            </div>
 
             <div className="flex justify-end gap-3 pt-2">
               <button
-                onClick={() => setShowForm(false)}
+                onClick={() => {
+                  setShowForm(false);
+                  setError("");
+                }}
                 className="px-4 py-2 text-sm border rounded-lg"
               >
                 Cancel
@@ -226,7 +238,7 @@ export default function AddressesPage() {
                 onClick={addAddress}
                 className="px-4 py-2 text-sm bg-black text-white rounded-lg"
               >
-                Save
+                Save Address
               </button>
             </div>
 
