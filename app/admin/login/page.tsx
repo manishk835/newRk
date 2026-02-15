@@ -10,43 +10,37 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  /* ================= AUTO REDIRECT IF LOGGED IN ================= */
-  useEffect(() => {
-    const token = localStorage.getItem("admin_token");
-    if (token) {
-      router.replace("/admin");
-    }
-  }, [router]);
+  // /* ================= AUTO REDIRECT IF LOGGED IN ================= */
+  // useEffect(() => {
+  //   const token = localStorage.getItem("admin_token");
+  //   if (token) {
+  //     router.replace("/admin");
+  //   }
+  // }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
-
+  
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include", // IMPORTANT
           body: JSON.stringify({ email, password }),
         }
       );
-
+  
       const data = await res.json();
-
+  
       if (!res.ok) {
         setError(data.message || "Login failed");
         return;
       }
-
-      // OPTIONAL (recommended)
-      // if (data.user?.role !== "admin") {
-      //   setError("Access denied");
-      //   return;
-      // }
-
-      localStorage.setItem("admin_token", data.token);
+  
       router.replace("/admin");
     } catch (err) {
       setError("Server error. Try again.");
@@ -54,6 +48,7 @@ export default function AdminLoginPage() {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">

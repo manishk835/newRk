@@ -41,14 +41,18 @@ export default function AdminDashboardPage() {
           }
         );
 
-        if (ordersRes.status === 401) {
+        if (ordersRes.status === 401 || ordersRes.status === 403) {
           router.replace("/admin/login");
           return;
         }
+        
 
         if (!ordersRes.ok) {
-          throw new Error("Failed to fetch orders");
+          const errData = await ordersRes.json();
+          console.log("Orders API Error:", ordersRes.status, errData);
+          throw new Error(errData.message || "Failed to fetch orders");
         }
+        
 
         const ordersData = await ordersRes.json();
 

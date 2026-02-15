@@ -9,12 +9,14 @@ type Address = {
   address: string;
   city: string;
   pincode: string;
+  isDefault?: boolean;
 };
 
 export default function AddressesPage() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState("");
 
@@ -26,31 +28,26 @@ export default function AddressesPage() {
     pincode: "",
   });
 
-  /* ================= LOAD FROM BACKEND ================= */
+  /* ================= LOAD ================= */
+  const fetchAddresses = async () => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/address`,
+        { credentials: "include" }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+
+      setAddresses(data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchAddresses = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/addresses`,
-          {
-            credentials: "include",
-          }
-        );
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.message || "Failed to load addresses");
-        }
-
-        setAddresses(data);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchAddresses();
   }, []);
 
@@ -66,8 +63,8 @@ export default function AddressesPage() {
     return "";
   };
 
-  /* ================= ADD ADDRESS ================= */
-  const addAddress = async () => {
+  /* ================= SAVE (ADD / EDIT) ================= */
+  const handleSave = async () => {
     const validationError = validate();
     if (validationError) {
       setError(validationError);
@@ -78,23 +75,23 @@ export default function AddressesPage() {
       setSubmitting(true);
       setError("");
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/addresses`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(form),
-        }
-      );
+      const url = editingId
+        ? `${process.env.NEXT_PUBLIC_API_URL}/api/address/${editingId}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/api/address`;
+
+      const method = editingId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(form),
+      });
 
       const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
 
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to add address");
-      }
-
-      setAddresses([data, ...addresses]);
+      await fetchAddresses();
 
       setForm({
         name: "",
@@ -104,6 +101,7 @@ export default function AddressesPage() {
         pincode: "",
       });
 
+      setEditingId(null);
       setShowForm(false);
     } catch (err: any) {
       setError(err.message);
@@ -112,27 +110,39 @@ export default function AddressesPage() {
     }
   };
 
-  /* ================= DELETE ADDRESS ================= */
+  /* ================= DELETE ================= */
   const deleteAddress = async (id: string) => {
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/addresses/${id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      );
+    if (!confirm("Delete this address?")) return;
 
-      const data = await res.json();
+    await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/address/${id}`,
+      { method: "DELETE", credentials: "include" }
+    );
 
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to delete");
-      }
+    fetchAddresses();
+  };
 
-      setAddresses(addresses.filter((a) => a._id !== id));
-    } catch (err: any) {
-      alert(err.message);
-    }
+  /* ================= SET DEFAULT ================= */
+  const setDefault = async (id: string) => {
+    await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/address/${id}/default`,
+      { method: "PATCH", credentials: "include" }
+    );
+
+    fetchAddresses();
+  };
+
+  /* ================= EDIT ================= */
+  const startEdit = (addr: Address) => {
+    setForm({
+      name: addr.name,
+      phone: addr.phone,
+      address: addr.address,
+      city: addr.city,
+      pincode: addr.pincode,
+    });
+    setEditingId(addr._id);
+    setShowForm(true);
   };
 
   if (loading)
@@ -146,7 +156,10 @@ export default function AddressesPage() {
         <h1 className="text-2xl font-bold">Saved Addresses</h1>
 
         <button
-          onClick={() => setShowForm(true)}
+          onClick={() => {
+            setEditingId(null);
+            setShowForm(true);
+          }}
           className="bg-black text-white px-5 py-2 rounded-lg text-sm hover:opacity-90"
         >
           + Add Address
@@ -157,9 +170,7 @@ export default function AddressesPage() {
       {addresses.length === 0 && (
         <div className="bg-white border rounded-2xl p-12 text-center shadow-sm">
           <div className="text-4xl mb-4">📍</div>
-          <p className="text-gray-600">
-            No saved addresses yet.
-          </p>
+          <p className="text-gray-600">No saved addresses yet.</p>
         </div>
       )}
 
@@ -168,14 +179,20 @@ export default function AddressesPage() {
         {addresses.map((addr) => (
           <div
             key={addr._id}
-            className="bg-white border rounded-2xl p-6 shadow-sm hover:shadow-md transition"
+            className="bg-white border rounded-2xl p-6 shadow-sm"
           >
             <div className="flex justify-between items-start">
               <div className="space-y-1">
-                <p className="font-semibold text-lg">{addr.name}</p>
-                <p className="text-gray-600 text-sm">
-                  {addr.address}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-lg">{addr.name}</p>
+                  {addr.isDefault && (
+                    <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                      Default
+                    </span>
+                  )}
+                </div>
+
+                <p className="text-gray-600 text-sm">{addr.address}</p>
                 <p className="text-gray-600 text-sm">
                   {addr.city} - {addr.pincode}
                 </p>
@@ -184,12 +201,30 @@ export default function AddressesPage() {
                 </p>
               </div>
 
-              <button
-                onClick={() => deleteAddress(addr._id)}
-                className="text-sm text-red-600 hover:underline"
-              >
-                Remove
-              </button>
+              <div className="flex gap-3 text-sm">
+                {!addr.isDefault && (
+                  <button
+                    onClick={() => setDefault(addr._id)}
+                    className="text-blue-600 hover:underline"
+                  >
+                    Make Default
+                  </button>
+                )}
+
+                <button
+                  onClick={() => startEdit(addr)}
+                  className="text-black hover:underline"
+                >
+                  Edit
+                </button>
+
+                <button
+                  onClick={() => deleteAddress(addr._id)}
+                  className="text-red-600 hover:underline"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -201,7 +236,7 @@ export default function AddressesPage() {
           <div className="bg-white rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl">
 
             <h2 className="text-lg font-semibold">
-              Add New Address
+              {editingId ? "Edit Address" : "Add New Address"}
             </h2>
 
             <div className="space-y-3">
@@ -268,6 +303,7 @@ export default function AddressesPage() {
               <button
                 onClick={() => {
                   setShowForm(false);
+                  setEditingId(null);
                   setError("");
                 }}
                 className="px-4 py-2 text-sm border rounded-lg"
@@ -277,10 +313,10 @@ export default function AddressesPage() {
 
               <button
                 disabled={submitting}
-                onClick={addAddress}
+                onClick={handleSave}
                 className="px-4 py-2 text-sm bg-black text-white rounded-lg disabled:opacity-60"
               >
-                {submitting ? "Saving..." : "Save Address"}
+                {submitting ? "Saving..." : "Save"}
               </button>
             </div>
 
@@ -295,10 +331,9 @@ export default function AddressesPage() {
 // "use client";
 
 // import { useEffect, useState } from "react";
-// import { v4 as uuid } from "uuid";
 
 // type Address = {
-//   id: string;
+//   _id: string;
 //   name: string;
 //   phone: string;
 //   address: string;
@@ -309,10 +344,11 @@ export default function AddressesPage() {
 // export default function AddressesPage() {
 //   const [addresses, setAddresses] = useState<Address[]>([]);
 //   const [loading, setLoading] = useState(true);
+//   const [submitting, setSubmitting] = useState(false);
 //   const [showForm, setShowForm] = useState(false);
 //   const [error, setError] = useState("");
 
-//   const [form, setForm] = useState<Omit<Address, "id">>({
+//   const [form, setForm] = useState({
 //     name: "",
 //     phone: "",
 //     address: "",
@@ -320,18 +356,33 @@ export default function AddressesPage() {
 //     pincode: "",
 //   });
 
-//   /* ================= LOAD ================= */
+//   /* ================= LOAD FROM BACKEND ================= */
 //   useEffect(() => {
-//     const stored = localStorage.getItem("rk_addresses");
-//     if (stored) setAddresses(JSON.parse(stored));
-//     setLoading(false);
-//   }, []);
+//     const fetchAddresses = async () => {
+//       try {
+//         const res = await fetch(
+//           `${process.env.NEXT_PUBLIC_API_URL}/api/addresses`,
+//           {
+//             credentials: "include",
+//           }
+//         );
 
-//   /* ================= SAVE ================= */
-//   const saveAddresses = (data: Address[]) => {
-//     setAddresses(data);
-//     localStorage.setItem("rk_addresses", JSON.stringify(data));
-//   };
+//         const data = await res.json();
+
+//         if (!res.ok) {
+//           throw new Error(data.message || "Failed to load addresses");
+//         }
+
+//         setAddresses(data);
+//       } catch (err: any) {
+//         setError(err.message);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchAddresses();
+//   }, []);
 
 //   /* ================= VALIDATION ================= */
 //   const validate = () => {
@@ -345,40 +396,73 @@ export default function AddressesPage() {
 //     return "";
 //   };
 
-//   /* ================= ADD ================= */
-//   const addAddress = () => {
+//   /* ================= ADD ADDRESS ================= */
+//   const addAddress = async () => {
 //     const validationError = validate();
 //     if (validationError) {
 //       setError(validationError);
 //       return;
 //     }
 
-//     const updated = [
-//       {
-//         id: uuid(),
-//         ...form,
-//       },
-//       ...addresses,
-//     ];
+//     try {
+//       setSubmitting(true);
+//       setError("");
 
-//     saveAddresses(updated);
+//       const res = await fetch(
+//         `${process.env.NEXT_PUBLIC_API_URL}/api/addresses`,
+//         {
+//           method: "POST",
+//           headers: { "Content-Type": "application/json" },
+//           credentials: "include",
+//           body: JSON.stringify(form),
+//         }
+//       );
 
-//     setForm({
-//       name: "",
-//       phone: "",
-//       address: "",
-//       city: "",
-//       pincode: "",
-//     });
+//       const data = await res.json();
 
-//     setError("");
-//     setShowForm(false);
+//       if (!res.ok) {
+//         throw new Error(data.message || "Failed to add address");
+//       }
+
+//       setAddresses([data, ...addresses]);
+
+//       setForm({
+//         name: "",
+//         phone: "",
+//         address: "",
+//         city: "",
+//         pincode: "",
+//       });
+
+//       setShowForm(false);
+//     } catch (err: any) {
+//       setError(err.message);
+//     } finally {
+//       setSubmitting(false);
+//     }
 //   };
 
-//   /* ================= DELETE ================= */
-//   const deleteAddress = (id: string) => {
-//     const updated = addresses.filter((a) => a.id !== id);
-//     saveAddresses(updated);
+//   /* ================= DELETE ADDRESS ================= */
+//   const deleteAddress = async (id: string) => {
+//     try {
+//       const res = await fetch(
+//         `${process.env.NEXT_PUBLIC_API_URL}/api/addresses/${id}`,
+//         {
+//           method: "DELETE",
+//           credentials: "include",
+//         }
+//       );
+
+//       const data = await res.json();
+
+//       if (!res.ok) {
+//         throw new Error(data.message || "Failed to delete");
+//       }
+
+//       setAddresses(addresses.filter((a) => a._id !== id));
+//     } catch (err: any) {
+//       alert(err.message);
+//     }
 //   };
 
 //   if (loading)
@@ -399,27 +483,21 @@ export default function AddressesPage() {
 //         </button>
 //       </div>
 
-//       {/* EMPTY STATE */}
+//       {/* EMPTY */}
 //       {addresses.length === 0 && (
 //         <div className="bg-white border rounded-2xl p-12 text-center shadow-sm">
 //           <div className="text-4xl mb-4">📍</div>
-//           <p className="text-gray-600 mb-4">
+//           <p className="text-gray-600">
 //             No saved addresses yet.
 //           </p>
-//           <button
-//             onClick={() => setShowForm(true)}
-//             className="bg-black text-white px-6 py-3 rounded-xl"
-//           >
-//             Add Your First Address
-//           </button>
 //         </div>
 //       )}
 
-//       {/* ADDRESS LIST */}
+//       {/* LIST */}
 //       <div className="grid gap-6">
 //         {addresses.map((addr) => (
 //           <div
-//             key={addr.id}
+//             key={addr._id}
 //             className="bg-white border rounded-2xl p-6 shadow-sm hover:shadow-md transition"
 //           >
 //             <div className="flex justify-between items-start">
@@ -437,7 +515,7 @@ export default function AddressesPage() {
 //               </div>
 
 //               <button
-//                 onClick={() => deleteAddress(addr.id)}
+//                 onClick={() => deleteAddress(addr._id)}
 //                 className="text-sm text-red-600 hover:underline"
 //               >
 //                 Remove
@@ -514,7 +592,6 @@ export default function AddressesPage() {
 //               {error && (
 //                 <p className="text-sm text-red-600">{error}</p>
 //               )}
-
 //             </div>
 
 //             <div className="flex justify-end gap-3 pt-2">
@@ -529,10 +606,11 @@ export default function AddressesPage() {
 //               </button>
 
 //               <button
+//                 disabled={submitting}
 //                 onClick={addAddress}
-//                 className="px-4 py-2 text-sm bg-black text-white rounded-lg"
+//                 className="px-4 py-2 text-sm bg-black text-white rounded-lg disabled:opacity-60"
 //               >
-//                 Save Address
+//                 {submitting ? "Saving..." : "Save Address"}
 //               </button>
 //             </div>
 

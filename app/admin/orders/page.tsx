@@ -89,12 +89,12 @@ export default function AdminOrdersPage() {
   /* ================= FETCH ================= */
 
   useEffect(() => {
-    const token = localStorage.getItem("admin_token");
+    // const token = localStorage.getItem("admin_token");
 
-    if (!token) {
-      router.push("/admin/login");
-      return;
-    }
+    // if (!token) {
+    //   router.push("/admin/login");
+    //   return;
+    // }
 
     const fetchOrders = async () => {
       try {
@@ -110,14 +110,25 @@ export default function AdminOrdersPage() {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/orders?${query.toString()}`,
           {
+            credentials: "include",
             cache: "no-store",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
           }
         );
+        
+        if (res.status === 401 || res.status === 403) {
+          router.push("/admin/login");
+          return;
+        }
+        
+        
+        
 
-        if (!res.ok) throw new Error();
+        if (!res.ok) {
+          const errData = await res.json();
+          console.log("Orders Fetch Error:", res.status, errData);
+          throw new Error(errData.message || "Failed to fetch orders");
+        }
+        
 
         const data = await res.json();
         setOrders(data.orders || []);
