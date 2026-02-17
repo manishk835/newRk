@@ -71,7 +71,7 @@ export default async function SearchPage({
 
 // async function searchProducts(query: string): Promise<Product[]> {
 //   const res = await fetch(
-//     `${process.env.NEXT_PUBLIC_API_URL}/api/products/search?q=${encodeURIComponent(query)}`,
+//     `${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/search?q=${encodeURIComponent(query)}`,
 //     { cache: "no-store" }
 //   );
 //   if (!res.ok) return [];

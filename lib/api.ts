@@ -1,3 +1,4 @@
+// lib/types/api.ts
 import { Product } from "@/components/product/product.types";
 
 /* ======================================================
@@ -95,7 +96,7 @@ export async function fetchProductBySlug(
   slug: string
 ): Promise<Product> {
   const res = await fetch(
-    `${BASE_URL}/api/products/slug/${slug}`,
+`${BASE_URL}/api/products/slug/${slug}`,
     { cache: "no-store" }
   );
 
@@ -106,7 +107,7 @@ export async function searchProducts(
   query: string
 ): Promise<Product[]> {
   const res = await fetch(
-    `${BASE_URL}/api/products/search?q=${encodeURIComponent(query)}`,
+   `${BASE_URL}/api/products/search?q=${encodeURIComponent(query)}`,
     { cache: "no-store" }
   );
 
@@ -167,7 +168,7 @@ export async function fetchProductsByCategory(
   const qs = query.toString() ? `?${query}` : "";
 
   const res = await fetch(
-    `${BASE_URL}/api/products/category/${category}${qs}`,
+`${BASE_URL}/api/products/category/${category}${qs}`,
     { cache: "no-store" }
   );
 
@@ -253,7 +254,7 @@ export async function fetchAllProducts(
   const qs = query.toString() ? `?${query}` : "";
 
   const res = await fetch(
-    `${BASE_URL}/api/products/all${qs}`,
+`${BASE_URL}/api/products/all${qs}`,
     { cache: "no-store" }
   );
 

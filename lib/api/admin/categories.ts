@@ -1,4 +1,4 @@
-import { adminFetch } from "./adminApi";
+import { adminFetch } from "./core";
 
 export function fetchCategories() {
   return adminFetch("/api/categories");

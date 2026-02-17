@@ -4,8 +4,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createProduct } from "@/lib/adminProducts";
-import { uploadImage } from "@/lib/adminUpload";
+import { createProduct } from "@/lib/api/admin/products";
+import { uploadImage } from "@/lib/api/admin/upload";
 
 /* ================= TYPES ================= */
 

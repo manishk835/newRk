@@ -24,17 +24,18 @@ export default function AdminSettingsPage() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const token = localStorage.getItem("admin_token");
-
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/admin/settings`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            credentials: "include", // 🔥 cookie based
             cache: "no-store",
           }
         );
+
+        if (res.status === 401 || res.status === 403) {
+          window.location.href = "/admin/login";
+          return;
+        }
 
         if (!res.ok) throw new Error();
 
@@ -50,26 +51,29 @@ export default function AdminSettingsPage() {
     fetchSettings();
   }, []);
 
-  const handleSave = async (
-    e: React.FormEvent
-  ) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
     try {
-      const token = localStorage.getItem("admin_token");
-
-      await fetch(
+      const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/admin/settings`,
         {
           method: "PUT",
+          credentials: "include", // 🔥 cookie based
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(settings),
         }
       );
+
+      if (res.status === 401 || res.status === 403) {
+        window.location.href = "/admin/login";
+        return;
+      }
+
+      if (!res.ok) throw new Error();
 
       alert("Settings saved");
     } catch {
@@ -99,7 +103,7 @@ export default function AdminSettingsPage() {
       >
         <input
           placeholder="Store Name"
-          className="border px-4 py-2 rounded"
+          className="border px-4 py-2 rounded w-full"
           value={settings.storeName}
           onChange={(e) =>
             setSettings({
@@ -111,7 +115,7 @@ export default function AdminSettingsPage() {
 
         <input
           placeholder="Support Email"
-          className="border px-4 py-2 rounded"
+          className="border px-4 py-2 rounded w-full"
           value={settings.supportEmail}
           onChange={(e) =>
             setSettings({
@@ -123,7 +127,7 @@ export default function AdminSettingsPage() {
 
         <input
           placeholder="Support Phone"
-          className="border px-4 py-2 rounded"
+          className="border px-4 py-2 rounded w-full"
           value={settings.supportPhone}
           onChange={(e) =>
             setSettings({

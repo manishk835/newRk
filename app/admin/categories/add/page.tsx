@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createCategory } from "@/lib/adminCategories";
+import { createCategory } from "@/lib/api/admin/categories";
 
 export default function AddCategoryPage() {
   const router = useRouter();

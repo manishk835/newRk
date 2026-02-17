@@ -2,7 +2,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {  fetchCategories,  createCategory,} from "@/lib/adminCategories";
+import {  createCategory } from "@/lib/api/admin/categories";
+import {  fetchCategories } from "@/lib/api/admin/categories";
 import Link from "next/link";
 
 export default function AdminCategoriesPage() {

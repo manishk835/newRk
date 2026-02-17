@@ -1,4 +1,3 @@
-// app/admin/orders/[id]/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -60,9 +59,7 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
 
 export default function AdminOrderDetailPage() {
   const params = useParams();
-  const id = Array.isArray(params.id)
-    ? params.id[0]
-    : params.id;
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,18 +69,20 @@ export default function AdminOrderDetailPage() {
 
   const fetchOrder = async () => {
     try {
-      const token = localStorage.getItem("admin_token");
-      if (!token || !id) throw new Error("Missing token or id");
+      if (!id) return;
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/orders/admin/${id}`,
         {
           cache: "no-store",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include", // 🔥 cookie based
         }
       );
+
+      if (res.status === 401 || res.status === 403) {
+        window.location.href = "/admin/login";
+        return;
+      }
 
       if (!res.ok) throw new Error("Order not found");
 
@@ -109,23 +108,27 @@ export default function AdminOrderDetailPage() {
 
     try {
       setUpdating(true);
-      const token = localStorage.getItem("admin_token");
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/orders/${order._id}/status`,
         {
           method: "PUT",
+          credentials: "include", // 🔥 cookie based
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ status: newStatus }),
         }
       );
 
+      if (res.status === 401 || res.status === 403) {
+        window.location.href = "/admin/login";
+        return;
+      }
+
       if (!res.ok) throw new Error("Status update failed");
 
-      await fetchOrder(); // refresh data
+      await fetchOrder();
     } catch (err) {
       console.error("Status update error:", err);
       alert("Failed to update status");
@@ -165,14 +168,10 @@ export default function AdminOrderDetailPage() {
         {new Date(order.createdAt).toLocaleDateString("en-IN")}
       </p>
 
-      {/* ================= STATUS ================= */}
       <div className="mb-6 flex items-center gap-4">
         <span className="text-sm">Status:</span>
 
-        <span
-          className={`font-semibold ${STATUS_COLORS[order.status]
-            }`}
-        >
+        <span className={`font-semibold ${STATUS_COLORS[order.status]}`}>
           {order.status}
         </span>
 
@@ -198,13 +197,9 @@ export default function AdminOrderDetailPage() {
         )}
       </div>
 
-      {/* ================= ITEMS ================= */}
       <div className="border rounded-xl p-5 mb-6">
         {order.items.map((item, i) => (
-          <div
-            key={i}
-            className="flex justify-between text-sm mb-2"
-          >
+          <div key={i} className="flex justify-between text-sm mb-2">
             <span>
               {item.title} × {item.quantity}
             </span>
@@ -222,7 +217,6 @@ export default function AdminOrderDetailPage() {
         </div>
       </div>
 
-      {/* ================= DELIVERY ================= */}
       <div className="border rounded-xl p-5 mb-6">
         <h2 className="font-semibold mb-2">
           Delivery Address
@@ -238,7 +232,6 @@ export default function AdminOrderDetailPage() {
         </p>
       </div>
 
-      {/* ================= STATUS HISTORY ================= */}
       <div className="border rounded-xl p-5">
         <h2 className="font-semibold mb-4">
           Status History
@@ -275,7 +268,6 @@ export default function AdminOrderDetailPage() {
           )}
         </div>
       </div>
-
     </div>
   );
 }

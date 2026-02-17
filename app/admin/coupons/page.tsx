@@ -21,17 +21,18 @@ export default function AdminCouponsPage() {
   useEffect(() => {
     const fetchCoupons = async () => {
       try {
-        const token = localStorage.getItem("admin_token");
-
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/admin/coupons`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            credentials: "include", // 🔥 cookie send karega
             cache: "no-store",
           }
         );
+
+        if (res.status === 401 || res.status === 403) {
+          window.location.href = "/admin/login";
+          return;
+        }
 
         if (!res.ok) throw new Error();
 
@@ -83,9 +84,7 @@ export default function AdminCouponsPage() {
                 {c.expiryDate && (
                   <p className="text-xs text-gray-500">
                     Expires:{" "}
-                    {new Date(
-                      c.expiryDate
-                    ).toLocaleDateString("en-IN")}
+                    {new Date(c.expiryDate).toLocaleDateString("en-IN")}
                   </p>
                 )}
               </div>

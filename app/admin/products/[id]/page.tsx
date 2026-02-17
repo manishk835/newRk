@@ -4,11 +4,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import {
-  fetchProductById,
-  updateProduct,
-} from "@/lib/adminProducts";
-import { uploadImage } from "@/lib/adminUpload";
+import { fetchProductById } from "@/lib/api/admin/products";
+import { updateProduct } from "@/lib/api/admin/products";
+import { uploadImage } from "@/lib/api/admin/upload";
 
 /* ================= TYPES ================= */
 

@@ -20,17 +20,18 @@ export default function AdminBannersPage() {
   useEffect(() => {
     const fetchBanners = async () => {
       try {
-        const token = localStorage.getItem("admin_token");
-
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/admin/banners`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            credentials: "include", // 🔥 cookie send karega
             cache: "no-store",
           }
         );
+
+        if (res.status === 401 || res.status === 403) {
+          window.location.href = "/admin/login";
+          return;
+        }
 
         if (!res.ok) throw new Error();
 

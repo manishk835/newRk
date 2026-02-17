@@ -25,6 +25,22 @@ export default function Sidebar() {
     );
   };
 
+  const handleLogout = async () => {
+    try {
+      await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/logout`,
+        {
+          method: "POST",
+          credentials: "include", // 🔥 cookie clear hoga
+        }
+      );
+    } catch (err) {
+      console.error("Logout failed:", err);
+    } finally {
+      router.replace("/admin/login");
+    }
+  };
+
   return (
     <aside className="w-64 bg-white border-r hidden lg:flex flex-col">
       <div className="px-6 py-5 border-b">
@@ -48,10 +64,7 @@ export default function Sidebar() {
 
       <div className="px-4 py-4 border-t">
         <button
-          onClick={() => {
-            localStorage.removeItem("admin_token");
-            router.replace("/admin/login");
-          }}
+          onClick={handleLogout}
           className="w-full text-sm text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg"
         >
           Logout

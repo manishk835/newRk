@@ -66,7 +66,7 @@ export default function AdminDashboardPage() {
 
         /* ================= LOW STOCK ================= */
         const stockRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/products/admin/low-stock`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/admin/low-stock`,
           {
             credentials: "include",
             cache: "no-store",

@@ -89,12 +89,7 @@ export default function AdminOrdersPage() {
   /* ================= FETCH ================= */
 
   useEffect(() => {
-    // const token = localStorage.getItem("admin_token");
 
-    // if (!token) {
-    //   router.push("/admin/login");
-    //   return;
-    // }
 
     const fetchOrders = async () => {
       try {
