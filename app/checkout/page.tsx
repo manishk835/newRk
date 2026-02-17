@@ -105,7 +105,9 @@ export default function CheckoutPage() {
           paymentMethod,
         }),
       }
+      
     );
+    
 
     if (!res.ok) throw new Error("Order creation failed");
     return res.json();
@@ -199,7 +201,7 @@ export default function CheckoutPage() {
 
       if (paymentMethod === "COD") {
         dispatch({ type: "SET_CART", payload: { items: [] } });
-        router.push("/order-success");
+        router.push("/order-success/${data.order._id}");
       } else {
         await handleRazorpayPayment(order._id);
       }

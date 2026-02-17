@@ -81,4 +81,6 @@ export type Product = {
   /* ================= META ================= */
   createdAt?: string;
   updatedAt?: string;
+
+
 };
