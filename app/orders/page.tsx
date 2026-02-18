@@ -20,7 +20,7 @@ export default function OrdersPage() {
     const fetchOrders = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/orders/my`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/orders/my`,
           {
             credentials: "include",
             cache: "no-store",
@@ -148,7 +148,7 @@ export default function OrdersPage() {
 //     const fetchOrders = async () => {
 //       try {
 //         const res = await fetch(
-//           `${process.env.NEXT_PUBLIC_API_URL}/api/orders/my`,
+//           `${process.env.NEXT_PUBLIC_API_URL}/api/admin/orders/my`,
 //           {
 //             credentials: "include",
 //             cache: "no-store",

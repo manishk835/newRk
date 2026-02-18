@@ -103,7 +103,7 @@ export default function AdminOrdersPage() {
         query.set("limit", "8");
 
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/orders?${query.toString()}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/orders?${query.toString()}`,
           {
             credentials: "include",
             cache: "no-store",
@@ -184,7 +184,7 @@ export default function AdminOrdersPage() {
         <button
           onClick={() =>
             window.open(
-              `${process.env.NEXT_PUBLIC_API_URL}/api/orders/export/csv`,
+              `${process.env.NEXT_PUBLIC_API_URL}/api/admin/orders/export/csv`,
               "_blank"
             )
           }

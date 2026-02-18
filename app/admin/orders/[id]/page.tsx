@@ -72,7 +72,7 @@ export default function AdminOrderDetailPage() {
       if (!id) return;
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/orders/admin/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/orders/admin/${id}`,
         {
           cache: "no-store",
           credentials: "include", // 🔥 cookie based
@@ -110,7 +110,7 @@ export default function AdminOrderDetailPage() {
       setUpdating(true);
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/orders/${order._id}/status`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/orders/${order._id}/status`,
         {
           method: "PUT",
           credentials: "include", // 🔥 cookie based

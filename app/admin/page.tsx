@@ -34,7 +34,7 @@ export default function AdminDashboardPage() {
       try {
         /* ================= ORDERS ================= */
         const ordersRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/orders`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/orders`,
           {
             credentials: "include",
             cache: "no-store",

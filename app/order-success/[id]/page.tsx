@@ -23,7 +23,7 @@ export default function OrderSuccessPage() {
     const fetchOrder = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/orders/${id}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/orders/${id}`,
           {
             credentials: "include",
           }

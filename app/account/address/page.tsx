@@ -1,3 +1,4 @@
+// app/account/addressess/psge.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -35,9 +36,18 @@ export default function AddressesPage() {
         `${process.env.NEXT_PUBLIC_API_URL}/api/address`,
         { credentials: "include" }
       );
-
+      
+      if (res.status === 401) {
+        window.location.href = "/login";
+        return;
+      }
+      
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      
+      if (!res.ok) {
+        throw new Error(data?.message || "Failed to load addresses");
+      }
+      
 
       setAddresses(data);
     } catch (err: any) {
@@ -110,28 +120,48 @@ export default function AddressesPage() {
     }
   };
 
-  /* ================= DELETE ================= */
-  const deleteAddress = async (id: string) => {
-    if (!confirm("Delete this address?")) return;
+/* ================= DELETE ================= */
+const deleteAddress = async (id: string) => {
+  if (!confirm("Delete this address?")) return;
 
-    await fetch(
+  try {
+    const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/api/address/${id}`,
       { method: "DELETE", credentials: "include" }
     );
 
-    fetchAddresses();
-  };
+    if (res.ok) {
+      fetchAddresses();
+    } else {
+      const data = await res.json();
+      alert(data?.message || "Delete failed");
+    }
+  } catch (err) {
+    alert("Something went wrong");
+  }
+};
 
-  /* ================= SET DEFAULT ================= */
-  const setDefault = async (id: string) => {
-    await fetch(
+
+/* ================= SET DEFAULT ================= */
+const setDefault = async (id: string) => {
+  try {
+    const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/api/address/${id}/default`,
       { method: "PATCH", credentials: "include" }
     );
 
-    fetchAddresses();
-  };
+    if (res.ok) {
+      fetchAddresses();
+    } else {
+      const data = await res.json();
+      alert(data?.message || "Failed to set default");
+    }
+  } catch (err) {
+    alert("Something went wrong");
+  }
+};
 
+  
   /* ================= EDIT ================= */
   const startEdit = (addr: Address) => {
     setForm({

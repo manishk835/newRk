@@ -180,7 +180,7 @@ export async function fetchProductsByCategory(
 ====================================================== */
 
 export async function createOrder(payload: any) {
-  const res = await fetch(`${BASE_URL}/api/orders`, {
+  const res = await fetch(`${BASE_URL}/api/admin/orders`, {
     method: "POST",
     credentials: "include", // 🔥 important for auth
     headers: {
@@ -193,7 +193,7 @@ export async function createOrder(payload: any) {
 }
 
 export async function fetchUserOrders() {
-  const res = await fetch(`${BASE_URL}/api/orders/my`, {
+  const res = await fetch(`${BASE_URL}/api/admin/orders/my`, {
     credentials: "include",
     cache: "no-store",
   });
