@@ -37,7 +37,7 @@ export default function OrderDetailPage() {
     const fetchOrder = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/orders/my`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/orders/my`,
           {
             credentials: "include",
             cache: "no-store",

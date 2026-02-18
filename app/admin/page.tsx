@@ -1,3 +1,4 @@
+// app/admin/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -34,7 +35,7 @@ export default function AdminDashboardPage() {
       try {
         /* ================= ORDERS ================= */
         const ordersRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/orders`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/orders`,
           {
             credentials: "include",
             cache: "no-store",
@@ -66,7 +67,7 @@ export default function AdminDashboardPage() {
 
         /* ================= LOW STOCK ================= */
         const stockRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/admin/low-stock`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/products/admin/low-stock`,
           {
             credentials: "include",
             cache: "no-store",

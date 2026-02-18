@@ -23,17 +23,20 @@ export default async function HomePage() {
     console.error("Homepage product fetch failed:", err);
   }
 
-  const featured = products
-    .filter((p) => p?.isFeatured === true)
-    .slice(0, 8);
 
-  const newArrivals = products
-    .filter((p) => p?.isNewArrival === true)
-    .slice(0, 8);
+    const featured =
+  products.filter((p) => p.isFeatured).length > 0
+    ? products.filter((p) => p.isFeatured).slice(0, 8)
+    : products.slice(0, 8);
+    const newArrivals =
+    products.filter((p) => p.isNewArrival).length > 0
+      ? products.filter((p) => p.isNewArrival).slice(0, 8)
+      : products.slice(0, 8);
+      const bestSellers =
+      products.filter((p) => p.isBestSeller).length > 0
+        ? products.filter((p) => p.isBestSeller).slice(0, 8)
+        : products.slice(0, 8);
 
-  const bestSellers = products
-    .filter((p) => p?.isBestSeller === true)
-    .slice(0, 8);
 
   return (
     <main className="bg-white">
