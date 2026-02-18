@@ -217,7 +217,7 @@ export default function AdminOrdersPage() {
                     Order ID
                   </p>
                   <p className="font-semibold">
-                    #{order._id.slice(-6)}
+                    #{order?._id?.slice(-6)}
                   </p>
                 </div>
 

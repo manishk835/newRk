@@ -1,5 +1,3 @@
-// app/account/orders/page.tsx
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -37,42 +35,59 @@ export default function OrdersPage() {
             cache: "no-store",
           }
         );
-  
+
         if (res.status === 401) {
           router.replace("/login?redirect=/account/orders");
           return;
         }
-  
+
         if (!res.ok) {
           setOrders([]);
           return;
         }
-  
+
         const data = await res.json();
-        setOrders(Array.isArray(data) ? data : []);
+
+        // sort latest first
+        const sorted = Array.isArray(data)
+          ? data.sort(
+              (a: Order, b: Order) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime()
+            )
+          : [];
+
+        setOrders(sorted);
       } catch {
         setOrders([]);
       } finally {
         setLoading(false);
       }
     };
-  
+
     fetchOrders();
   }, [router]);
-  
+
   /* ================= LOADING ================= */
+
   if (loading) {
     return (
-      <div className="text-center text-gray-500 py-20">
-        Loading your orders...
+      <div className="space-y-6">
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="h-24 bg-gray-100 rounded-2xl animate-pulse"
+          />
+        ))}
       </div>
     );
   }
 
   /* ================= EMPTY ================= */
+
   if (orders.length === 0) {
     return (
-      <div className="text-center py-20">
+      <div className="text-center py-24">
         <div className="text-5xl mb-4">📦</div>
         <h2 className="text-xl font-semibold mb-2">
           No orders yet
@@ -91,54 +106,69 @@ export default function OrdersPage() {
   }
 
   /* ================= LIST ================= */
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
 
-      {orders.map((order) => (
-        <Link
-          key={order._id}
-          href={`/account/orders/${order._id}`}
-          className="block bg-white border rounded-2xl p-6 hover:shadow-lg transition"
-        >
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+      {/* HEADER */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-semibold">
+          My Orders
+        </h1>
+        <span className="text-sm text-gray-500">
+          {orders.length} Orders
+        </span>
+      </div>
 
-            {/* LEFT */}
-            <div>
-              <p className="text-xs text-gray-500">
-                Order ID
-              </p>
-              <p className="font-semibold text-lg">
-                #{order._id.slice(-6)}
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                {new Date(order.createdAt).toLocaleDateString("en-IN", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
-              </p>
+      <div className="space-y-5">
+        {orders.map((order) => (
+          <Link
+            key={order._id}
+            href={`/account/orders/${order._id}`}
+            className="block bg-white border rounded-3xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+          >
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
+
+              {/* LEFT SECTION */}
+              <div className="space-y-1">
+                <p className="text-xs text-gray-500">
+                  Order ID
+                </p>
+
+                <p className="font-semibold text-lg tracking-wide">
+                  #{order._id.slice(-6)}
+                </p>
+
+                <p className="text-sm text-gray-500">
+                  {new Date(order.createdAt).toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </p>
+              </div>
+
+              {/* RIGHT SECTION */}
+              <div className="text-left sm:text-right space-y-2">
+                <p className="font-semibold text-lg">
+                  ₹{order.totalAmount}
+                </p>
+
+                <span
+                  className={`inline-flex items-center gap-2 px-3 py-1 text-xs font-medium rounded-full ${
+                    statusStyles[order.status] ||
+                    "bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-current" />
+                  {order.status}
+                </span>
+              </div>
+
             </div>
-
-            {/* RIGHT */}
-            <div className="text-right">
-              <p className="font-semibold text-lg">
-                ₹{order.totalAmount}
-              </p>
-
-              <span
-                className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-full ${
-                  statusStyles[order.status] ||
-                  "bg-gray-100 text-gray-700"
-                }`}
-              >
-                {order.status}
-              </span>
-            </div>
-
-          </div>
-        </Link>
-      ))}
-
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

@@ -160,7 +160,7 @@ export default function AdminOrderDetailPage() {
   return (
     <div className="container mx-auto px-6 pt-28 pb-16 max-w-3xl">
       <h1 className="text-2xl font-bold mb-1">
-        Order #{order._id.slice(-6)}
+        Order #{order?._id?.slice(-6)}
       </h1>
 
       <p className="text-sm text-gray-600 mb-6">

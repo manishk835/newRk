@@ -1,7 +1,6 @@
-// app/checkout/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/app/context/cart/CartContext";
 import { useAuth } from "@/app/providers/AuthProvider";
@@ -31,29 +30,33 @@ export default function CheckoutPage() {
 
   const [error, setError] = useState("");
 
+  /* ================= SELECTED CART ================= */
+
+  const selectedCart = useMemo(() => {
+    if (typeof window === "undefined") return [];
+    return JSON.parse(
+      sessionStorage.getItem("selectedCart") || "[]"
+    );
+  }, []);
+
   /* ================= AUTH GUARD ================= */
+
   useEffect(() => {
     if (!authLoading && !user) {
       router.replace("/login?redirect=/checkout");
     }
   }, [user, authLoading, router]);
 
-  /* ================= LOAD RAZORPAY SCRIPT ================= */
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
-
   /* ================= CART EMPTY GUARD ================= */
+
   useEffect(() => {
-    if (!authLoading && state.items.length === 0) {
+    if (!authLoading && selectedCart.length === 0) {
       router.replace("/cart");
     }
-  }, [state.items.length, authLoading, router]);
+  }, [selectedCart.length, authLoading, router]);
 
   /* ================= LOAD ADDRESSES ================= */
+
   useEffect(() => {
     const fetchAddresses = async () => {
       try {
@@ -78,16 +81,21 @@ export default function CheckoutPage() {
     if (user) fetchAddresses();
   }, [user]);
 
-  if (authLoading || !user) return null;
+  /* ================= TOTAL CALCULATION ================= */
 
-  const totalAmount = state.items.reduce(
-    (sum, i) => sum + i.product.price * i.quantity,
+  const subtotal = selectedCart.reduce(
+    (sum: number, i: any) =>
+      sum + i.product.price * i.quantity,
     0
   );
 
+  const deliveryFee = subtotal >= 999 ? 0 : 49;
+  const totalAmount = subtotal + deliveryFee;
+
   /* ======================================================
-     STEP 1 → CREATE ORDER IN DB (ALWAYS FIRST)
+     STEP 1 → CREATE ORDER
   ====================================================== */
+
   const createOrderInDB = async () => {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/api/orders`,
@@ -97,7 +105,7 @@ export default function CheckoutPage() {
         credentials: "include",
         body: JSON.stringify({
           customer: selectedAddress,
-          items: state.items.map((i) => ({
+          items: selectedCart.map((i: any) => ({
             productId: i.product._id,
             title: i.product.title,
             price: i.product.price,
@@ -107,19 +115,18 @@ export default function CheckoutPage() {
         }),
       }
     );
-  
+
     if (!res.ok) throw new Error("Order creation failed");
-  
+
     return res.json();
   };
-  
 
   /* ======================================================
-     STEP 2 → RAZORPAY PAYMENT FLOW
+     RAZORPAY FLOW
   ====================================================== */
+
   const handleRazorpayPayment = async (orderId: string) => {
     try {
-      // 🔐 Get Razorpay order from backend
       const rpRes = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/orders/razorpay/create`,
         {
@@ -137,36 +144,26 @@ export default function CheckoutPage() {
         key: rpData.key,
         amount: rpData.amount,
         currency: rpData.currency,
-        name: "RK Fashion",
+        name: "RK Fashion House",
         description: "Order Payment",
         order_id: rpData.id,
 
         handler: async function (response: any) {
-          // 🔐 Verify Payment
-          const verifyRes = await fetch(
+          await fetch(
             `${process.env.NEXT_PUBLIC_API_URL}/api/orders/razorpay/verify`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               credentials: "include",
               body: JSON.stringify({
-                razorpay_order_id:
-                  response.razorpay_order_id,
-                razorpay_payment_id:
-                  response.razorpay_payment_id,
-                razorpay_signature:
-                  response.razorpay_signature,
+                ...response,
                 orderId,
               }),
             }
           );
 
-          const verifyData = await verifyRes.json();
-          if (!verifyRes.ok)
-            throw new Error(verifyData.message);
-
-          dispatch({ type: "SET_CART", payload: { items: [] } });
-          router.push("/order-success");
+          clearOrderedItems();
+          router.push(`/order-success/${orderId}`);
         },
 
         prefill: {
@@ -179,58 +176,75 @@ export default function CheckoutPage() {
 
       const razor = new (window as any).Razorpay(options);
       razor.open();
-    } catch (err) {
-      console.error(err);
-      setError("Payment failed. Please try again.");
+    } catch {
+      setError("Payment failed. Try again.");
     }
   };
 
+  /* ================= CLEAR ONLY ORDERED ITEMS ================= */
+
+  const clearOrderedItems = () => {
+    const remaining = state.items.filter(
+      (item) =>
+        !selectedCart.find(
+          (sc: any) => sc.product._id === item.product._id
+        )
+    );
+
+    dispatch({ type: "SET_CART", payload: { items: remaining } });
+    sessionStorage.removeItem("selectedCart");
+  };
+
   /* ======================================================
-     FINAL PLACE ORDER HANDLER
+     PLACE ORDER
   ====================================================== */
+
   const handleOrder = async () => {
     if (!selectedAddress) {
-      setError("Please select a delivery address");
+      setError("Please select delivery address");
       return;
     }
-  
-    setLoading(true);
-    setError("");
-  
+
     try {
+      setLoading(true);
+      setError("");
+
       const order = await createOrderInDB();
-  
+
       if (paymentMethod === "COD") {
-        dispatch({ type: "SET_CART", payload: { items: [] } });
+        clearOrderedItems();
         router.push(`/order-success/${order._id}`);
       } else {
         await handleRazorpayPayment(order._id);
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("Order failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
-  
+
+  if (authLoading || !user) return null;
+
   return (
-    <main className="pt-24 min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 py-10 grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
+    <main className="pt-28 min-h-screen bg-gray-100">
+      <div className="max-w-6xl mx-auto px-4 grid lg:grid-cols-3 gap-10">
+
+        {/* LEFT SECTION */}
+        <div className="lg:col-span-2 space-y-8">
 
           {/* ADDRESS */}
-          <div className="bg-white rounded-2xl shadow-sm border p-6">
-            <h2 className="text-lg font-semibold mb-4">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border">
+            <h2 className="text-xl font-semibold mb-6">
               Delivery Address
             </h2>
 
             {addresses.map((addr) => (
               <label
                 key={addr._id}
-                className={`border rounded-xl p-4 flex gap-3 cursor-pointer ${
+                className={`border rounded-xl p-4 flex gap-4 cursor-pointer transition ${
                   selectedAddress?._id === addr._id
-                    ? "border-black"
+                    ? "border-black bg-gray-50"
                     : "border-gray-200"
                 }`}
               >
@@ -239,61 +253,62 @@ export default function CheckoutPage() {
                   checked={selectedAddress?._id === addr._id}
                   onChange={() => setSelectedAddress(addr)}
                 />
-                <div className="text-sm">
+
+                <div>
                   <p className="font-semibold">
                     {addr.name}
                   </p>
-                  <p>{addr.address}</p>
-                  <p>
+                  <p className="text-sm text-gray-600">
+                    {addr.address}
+                  </p>
+                  <p className="text-sm text-gray-600">
                     {addr.city} - {addr.pincode}
                   </p>
-                  <p>📞 {addr.phone}</p>
+                  <p className="text-sm">
+                    📞 {addr.phone}
+                  </p>
                 </div>
               </label>
             ))}
-
-            {error && (
-              <p className="text-red-600 mt-4 text-sm">
-                {error}
-              </p>
-            )}
           </div>
 
           {/* PAYMENT */}
-          <div className="bg-white rounded-2xl shadow-sm border p-6">
-            <h2 className="text-lg font-semibold mb-4">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border">
+            <h2 className="text-xl font-semibold mb-6">
               Payment Method
             </h2>
 
-            <label className="flex items-center gap-2 cursor-pointer mb-2">
-              <input
-                type="radio"
-                checked={paymentMethod === "COD"}
-                onChange={() => setPaymentMethod("COD")}
-              />
-              Cash on Delivery
-            </label>
+            <div className="space-y-3">
+              <label className="flex items-center gap-3">
+                <input
+                  type="radio"
+                  checked={paymentMethod === "COD"}
+                  onChange={() => setPaymentMethod("COD")}
+                />
+                Cash on Delivery
+              </label>
 
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                checked={paymentMethod === "RAZORPAY"}
-                onChange={() =>
-                  setPaymentMethod("RAZORPAY")
-                }
-              />
-              UPI / Card (Razorpay)
-            </label>
+              <label className="flex items-center gap-3">
+                <input
+                  type="radio"
+                  checked={paymentMethod === "RAZORPAY"}
+                  onChange={() =>
+                    setPaymentMethod("RAZORPAY")
+                  }
+                />
+                UPI / Card (Razorpay)
+              </label>
+            </div>
           </div>
         </div>
 
-        {/* SUMMARY */}
-        <div className="bg-white rounded-2xl shadow-sm border p-6 h-fit sticky top-28">
-          <h2 className="text-lg font-semibold mb-4">
+        {/* RIGHT SUMMARY */}
+        <aside className="bg-white rounded-2xl p-6 shadow-sm border h-fit sticky top-28">
+          <h2 className="text-xl font-semibold mb-6">
             Order Summary
           </h2>
 
-          {state.items.map((item) => (
+          {selectedCart.map((item: any) => (
             <div
               key={item.product._id}
               className="flex justify-between text-sm mb-2"
@@ -309,19 +324,37 @@ export default function CheckoutPage() {
 
           <hr className="my-4" />
 
-          <div className="flex justify-between font-semibold text-lg">
+          <div className="flex justify-between mb-2">
+            <span>Subtotal</span>
+            <span>₹{subtotal}</span>
+          </div>
+
+          <div className="flex justify-between mb-4">
+            <span>Delivery</span>
+            <span>
+              {deliveryFee === 0 ? "FREE" : `₹${deliveryFee}`}
+            </span>
+          </div>
+
+          <div className="flex justify-between text-lg font-semibold mb-6">
             <span>Total</span>
             <span>₹{totalAmount}</span>
           </div>
 
+          {error && (
+            <p className="text-red-600 text-sm mb-4">
+              {error}
+            </p>
+          )}
+
           <button
             disabled={loading}
             onClick={handleOrder}
-            className="w-full mt-6 bg-black text-white py-3 rounded-lg font-semibold hover:opacity-90 disabled:opacity-60"
+            className="w-full bg-black text-white py-3 rounded-xl font-semibold hover:opacity-90 disabled:opacity-50"
           >
             {loading ? "Processing..." : "Place Order"}
           </button>
-        </div>
+        </aside>
       </div>
     </main>
   );

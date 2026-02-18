@@ -1,5 +1,3 @@
-// app/account/orders/[id]/page.tsx
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -46,15 +44,19 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function OrderDetailPage() {
-  const { id } = useParams();
+  const params = useParams();
   const router = useRouter();
+  const id = params?.id as string;
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
   /* ================= FETCH ORDER ================= */
+
   useEffect(() => {
+    if (!id) return;
+
     const fetchOrder = async () => {
       try {
         const res = await fetch(
@@ -64,32 +66,40 @@ export default function OrderDetailPage() {
             cache: "no-store",
           }
         );
-  
+
         if (res.status === 401) {
           router.replace("/login?redirect=/account/orders");
           return;
         }
-  
+
         if (!res.ok) {
           setOrder(null);
           return;
         }
-  
+
         const data = await res.json();
-        setOrder(data); // ✅ direct single order
+        setOrder(data.order);
       } catch {
         setOrder(null);
       } finally {
         setLoading(false);
       }
     };
-  
-    if (id) {
-      fetchOrder();
-    }
+
+    fetchOrder();
   }, [id, router]);
-  
+
   /* ================= ACTIONS ================= */
+
+  const refreshOrder = async () => {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/orders/${id}`,
+      { credentials: "include", cache: "no-store" }
+    );
+    const data = await res.json();
+    setOrder(data.order);
+  };
+
   const handleCancel = async () => {
     if (!order) return;
 
@@ -101,7 +111,7 @@ export default function OrderDetailPage() {
         { method: "PUT", credentials: "include" }
       );
 
-      router.refresh();
+      await refreshOrder();
     } finally {
       setActionLoading(false);
     }
@@ -118,16 +128,17 @@ export default function OrderDetailPage() {
         { method: "PUT", credentials: "include" }
       );
 
-      router.refresh();
+      await refreshOrder();
     } finally {
       setActionLoading(false);
     }
   };
 
   /* ================= STATES ================= */
+
   if (loading) {
     return (
-      <div className="text-center text-gray-500 py-20 animate-pulse">
+      <div className="py-20 text-center animate-pulse text-gray-500">
         Loading order details...
       </div>
     );
@@ -135,13 +146,13 @@ export default function OrderDetailPage() {
 
   if (!order) {
     return (
-      <div className="text-center py-20">
+      <div className="py-20 text-center">
         <h2 className="text-lg font-semibold mb-3">
           Order not found
         </h2>
         <Link
           href="/account/orders"
-          className="underline text-black"
+          className="text-black underline"
         >
           Back to Orders
         </Link>
@@ -155,24 +166,26 @@ export default function OrderDetailPage() {
       : orderSteps.indexOf(order.status);
 
   /* ================= UI ================= */
+
   return (
     <div className="space-y-8">
 
-      {/* Back */}
       <Link
         href="/account/orders"
-        className="text-sm text-gray-600 hover:underline"
+        className="text-sm text-gray-500 hover:underline"
       >
         ← Back to Orders
       </Link>
 
-      <div className="bg-white border rounded-2xl shadow-sm p-8">
+      <div className="bg-white border rounded-3xl shadow-md p-8">
 
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row justify-between gap-6 mb-10">
           <div>
-            <p className="text-xs text-gray-500">Order ID</p>
-            <p className="font-semibold text-lg">
+            <p className="text-xs text-gray-500">
+              Order ID
+            </p>
+            <p className="text-lg font-semibold">
               #{order._id.slice(-6)}
             </p>
             <p className="text-sm text-gray-500 mt-1">
@@ -181,7 +194,7 @@ export default function OrderDetailPage() {
           </div>
 
           <span
-            className={`px-4 py-2 text-sm font-medium rounded-full h-fit ${
+            className={`px-4 py-2 rounded-full text-sm font-medium ${
               statusStyles[order.status] ||
               "bg-gray-100 text-gray-700"
             }`}
@@ -190,19 +203,18 @@ export default function OrderDetailPage() {
           </span>
         </div>
 
-        {/* ================= TRACKING TIMELINE ================= */}
+        {/* TRACKING */}
         {order.status !== "Cancelled" && (
           <div className="mb-14">
-            <h3 className="font-semibold mb-10 text-lg">
+            <h3 className="font-semibold mb-8 text-lg">
               Order Progress
             </h3>
 
             <div className="relative">
-
               <div className="absolute top-5 left-0 right-0 h-1 bg-gray-200 rounded-full" />
 
               <div
-                className="absolute top-5 left-0 h-1 bg-green-500 rounded-full transition-all duration-700"
+                className="absolute top-5 left-0 h-1 bg-green-500 rounded-full transition-all duration-500"
                 style={{
                   width:
                     currentStepIndex >= 0
@@ -217,7 +229,8 @@ export default function OrderDetailPage() {
 
               <div className="flex justify-between">
                 {orderSteps.map((step, index) => {
-                  const isCompleted = index < currentStepIndex;
+                  const isCompleted =
+                    index < currentStepIndex;
                   const isCurrent =
                     index === currentStepIndex;
 
@@ -232,15 +245,15 @@ export default function OrderDetailPage() {
                       className="flex flex-col items-center relative z-10"
                     >
                       <div
-                        className={`w-10 h-10 flex items-center justify-center rounded-full text-sm font-semibold transition-all ${
+                        className={`w-10 h-10 flex items-center justify-center rounded-full text-sm font-semibold ${
                           isCompleted
                             ? "bg-green-500 text-white"
                             : isCurrent
-                            ? "bg-black text-white animate-pulse"
+                            ? "bg-black text-white"
                             : "bg-gray-300 text-gray-600"
                         }`}
                       >
-                        {isCompleted ? "✔" : index + 1}
+                        {isCompleted ? "✓" : index + 1}
                       </div>
 
                       <p className="text-xs mt-3 font-medium">
@@ -262,28 +275,8 @@ export default function OrderDetailPage() {
           </div>
         )}
 
-        {/* Cancelled State */}
-        {order.status === "Cancelled" && (
-          <div className="mb-8 text-red-600 font-medium">
-            This order has been cancelled.
-          </div>
-        )}
-
-        {/* Estimated Delivery */}
-        {order.estimatedDelivery &&
-          order.status !== "Cancelled" && (
-            <div className="mb-8 text-sm text-gray-600">
-              Estimated Delivery:{" "}
-              <span className="font-medium">
-                {new Date(
-                  order.estimatedDelivery
-                ).toLocaleDateString("en-IN")}
-              </span>
-            </div>
-          )}
-
         {/* ITEMS */}
-        <div className="space-y-4 mb-8">
+        <div className="space-y-5 mb-10">
           {order.items.map((item, i) => (
             <div
               key={i}
@@ -311,25 +304,26 @@ export default function OrderDetailPage() {
           <span>₹{order.totalAmount}</span>
         </div>
 
-        {/* Invoice */}
+        {/* INVOICE */}
         <div className="mb-8">
           <a
             href={`${process.env.NEXT_PUBLIC_API_URL}/api/orders/${order._id}/invoice`}
             target="_blank"
-            className="inline-block px-6 py-2 border rounded-lg text-sm font-medium hover:bg-gray-100 transition"
+            className="inline-block px-6 py-2 border rounded-xl text-sm hover:bg-gray-100 transition"
           >
             Download Invoice
           </a>
         </div>
 
-        {/* ACTION BUTTONS */}
+        {/* ACTIONS */}
         <div className="flex gap-4 flex-wrap">
-
-          {["Pending", "Confirmed", "Packed"].includes(order.status) && (
+          {["Pending", "Confirmed", "Packed"].includes(
+            order.status
+          ) && (
             <button
               onClick={handleCancel}
               disabled={actionLoading}
-              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:opacity-90 transition disabled:opacity-50"
+              className="px-6 py-2 bg-red-600 text-white rounded-xl hover:opacity-90 disabled:opacity-50"
             >
               {actionLoading
                 ? "Cancelling..."
@@ -342,7 +336,7 @@ export default function OrderDetailPage() {
               <button
                 onClick={handleReturn}
                 disabled={actionLoading}
-                className="px-6 py-2 bg-black text-white rounded-lg hover:opacity-90 transition disabled:opacity-50"
+                className="px-6 py-2 bg-black text-white rounded-xl hover:opacity-90 disabled:opacity-50"
               >
                 {actionLoading
                   ? "Requesting..."
