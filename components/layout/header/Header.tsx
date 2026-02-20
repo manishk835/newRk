@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useCart } from "@/app/context/cart/CartContext";
+import { useCart } from "@/features/cart/CartContext";
 import { useAuth } from "@/app/providers/AuthProvider";
 import CategoryMenu from "./CategoryMenu";
-import SearchBox from "../search/SearchBox";
+import SearchBox from "@/components/ui/SearchBox";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCart } from "@/app/context/cart/CartContext";
+import { useCart } from "@/features/cart/CartContext";
 import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
 

@@ -1,18 +1,18 @@
 // app/products/page.tsx
 
-import ProductCard from "@/components/product/ProductCard";
-import BrandFilter from "@/components/category/BrandFilter";
-import ColorFilter from "@/components/category/ColorFilter";
-import PriceFilter from "@/components/category/PriceFilter";
-import RatingFilter from "@/components/category/RatingFilter";
-import SizeFilter from "@/components/category/SizeFilter";
-import SubCategoryFilter from "@/components/category/SubCategoryFilter";
-import StickyActiveFilters from "@/components/category/StickyActiveFilters";
-import ClearFilters from "@/components/category/ClearFilters";
-import CategorySort from "@/components/category/CategorySort";
+import ProductCard from "@/components/ui/product/ProductCard";
+import BrandFilter from "@/components/ui/category/BrandFilter";
+import ColorFilter from "@/components/ui/category/ColorFilter";
+import PriceFilter from "@/components/ui/category/PriceFilter";
+import RatingFilter from "@/components/ui/category/RatingFilter";
+import SizeFilter from "@/components/ui/category/SizeFilter";
+import SubCategoryFilter from "@/components/ui/category/SubCategoryFilter";
+import StickyActiveFilters from "@/components/ui/category/StickyActiveFilters";
+import ClearFilters from "@/components/ui/category/ClearFilters";
+import CategorySort from "@/components/ui/category/CategorySort";
 
 import { fetchAllProducts } from "@/lib/api";
-import { Product } from "@/components/product/product.types";
+import { Product } from "@/components/ui/product/product.types";
 
 export const metadata = {
   title: "All Products | RK Fashion",

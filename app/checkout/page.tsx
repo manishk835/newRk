@@ -1,8 +1,9 @@
+// app/checkout/page.tsx
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useCart } from "@/app/context/cart/CartContext";
+import { useCart } from "@/features/cart/CartContext";
 import { useAuth } from "@/app/providers/AuthProvider";
 
 type Address = {

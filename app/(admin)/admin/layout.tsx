@@ -1,8 +1,10 @@
+// app/(admin)/admin/layout.tsx
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { apiFetch } from "@/lib/api/client";
 
 export default function AdminLayout({
   children,
@@ -19,40 +21,31 @@ export default function AdminLayout({
 
   /* ================= AUTH CHECK ================= */
 
+  const checkAdminAuth = useCallback(async () => {
+    if (isLoginPage) {
+      setCheckingAuth(false);
+      return;
+    }
+
+    try {
+      await apiFetch("/admin/me");
+    } catch {
+      router.replace("/admin/login");
+      return;
+    } finally {
+      setCheckingAuth(false);
+    }
+  }, [isLoginPage, router]);
+
   useEffect(() => {
-    const checkAdmin = async () => {
-      if (isLoginPage) {
-        setCheckingAuth(false);
-        return;
-      }
-
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/me`,
-          {
-            credentials: "include",
-          }
-        );
-
-        if (!res.ok) {
-          router.replace("/admin/login");
-          return;
-        }
-      } catch (err) {
-        router.replace("/admin/login");
-        return;
-      } finally {
-        setCheckingAuth(false);
-      }
-    };
-
-    checkAdmin();
-  }, [pathname, isLoginPage, router]);
+    checkAdminAuth();
+  }, [checkAdminAuth]);
 
   /* ================= NAV ITEM ================= */
 
   const navItem = (href: string, label: string) => {
-    const active = pathname === href;
+    const active =
+      pathname === href || pathname.startsWith(`${href}/`);
 
     return (
       <Link
@@ -73,15 +66,7 @@ export default function AdminLayout({
   const handleLogout = async () => {
     try {
       setLoggingOut(true);
-
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/logout`,
-        {
-          method: "POST",
-          credentials: "include",
-        }
-      );
-
+      await apiFetch("/admin/logout", { method: "POST" });
       router.replace("/admin/login");
     } catch (err) {
       console.error("Logout failed:", err);
@@ -90,7 +75,7 @@ export default function AdminLayout({
     }
   };
 
-  /* ================= LOADING STATE ================= */
+  /* ================= LOADING ================= */
 
   if (checkingAuth && !isLoginPage) {
     return (
@@ -144,12 +129,12 @@ export default function AdminLayout({
   );
 }
 
-
+// // app/(admin)/admin/layout.tsx
 // "use client";
 
 // import { useRouter, usePathname } from "next/navigation";
 // import Link from "next/link";
-// import { useState } from "react";
+// import { useState, useEffect } from "react";
 
 // export default function AdminLayout({
 //   children,
@@ -158,9 +143,45 @@ export default function AdminLayout({
 // }) {
 //   const router = useRouter();
 //   const pathname = usePathname();
+
+//   const [checkingAuth, setCheckingAuth] = useState(true);
 //   const [loggingOut, setLoggingOut] = useState(false);
 
 //   const isLoginPage = pathname === "/admin/login";
+
+//   /* ================= AUTH CHECK ================= */
+
+//   useEffect(() => {
+//     const checkAdmin = async () => {
+//       if (isLoginPage) {
+//         setCheckingAuth(false);
+//         return;
+//       }
+
+//       try {
+//         const res = await fetch(
+//           `${process.env.NEXT_PUBLIC_API_URL}/api/admin/me`,
+//           {
+//             credentials: "include",
+//           }
+//         );
+
+//         if (!res.ok) {
+//           router.replace("/admin/login");
+//           return;
+//         }
+//       } catch (err) {
+//         router.replace("/admin/login");
+//         return;
+//       } finally {
+//         setCheckingAuth(false);
+//       }
+//     };
+
+//     checkAdmin();
+//   }, [pathname, isLoginPage, router]);
+
+//   /* ================= NAV ITEM ================= */
 
 //   const navItem = (href: string, label: string) => {
 //     const active = pathname === href;
@@ -179,6 +200,8 @@ export default function AdminLayout({
 //     );
 //   };
 
+//   /* ================= LOGOUT ================= */
+
 //   const handleLogout = async () => {
 //     try {
 //       setLoggingOut(true);
@@ -187,7 +210,7 @@ export default function AdminLayout({
 //         `${process.env.NEXT_PUBLIC_API_URL}/api/admin/logout`,
 //         {
 //           method: "POST",
-//           credentials: "include", // 🔥 important for cookies
+//           credentials: "include",
 //         }
 //       );
 
@@ -198,6 +221,16 @@ export default function AdminLayout({
 //       setLoggingOut(false);
 //     }
 //   };
+
+//   /* ================= LOADING STATE ================= */
+
+//   if (checkingAuth && !isLoginPage) {
+//     return (
+//       <div className="min-h-screen flex items-center justify-center">
+//         Checking admin access...
+//       </div>
+//     );
+//   }
 
 //   return (
 //     <div className="min-h-screen flex bg-gray-50">

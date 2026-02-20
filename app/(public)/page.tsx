@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { Metadata } from "next";
-import ProductCard from "@/components/product/ProductCard";
+import ProductCard from "@/components/ui/product/ProductCard";
 import { fetchProducts } from "@/lib/api";
-import type { Product } from "@/components/product/product.types";
-import WishlistButton from "@/components/WishlistButton";
+import type { Product } from "@/components/ui/product/product.types";
+import WishlistButton from "@/components/ui/WishlistButton";
 
 export const metadata: Metadata = {
   title: "RK Fashion House | Everyday Fashion for Every Family",

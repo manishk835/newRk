@@ -1,4 +1,4 @@
-import { Product } from "@/components/product/product.types";
+import { Product } from "@/components/ui/product/product.types";
 
 /* ================= CART ITEM ================= */
 

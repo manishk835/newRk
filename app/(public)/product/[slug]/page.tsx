@@ -4,9 +4,9 @@
 import { useEffect, useState } from "react";
 import { notFound } from "next/navigation";
 import { fetchProductBySlug, fetchProducts } from "@/lib/api";
-import { Product } from "@/components/product/product.types";
+import { Product } from "@/components/ui/product/product.types";
 import { useCart } from "@/app/context/cart/CartContext";
-import ProductCard from "@/components/product/ProductCard";
+import ProductCard from "@/components/ui/product/ProductCard";
 
 type Params = {
   slug: string;

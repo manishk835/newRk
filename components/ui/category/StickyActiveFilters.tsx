@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ActiveFilterChips from "@/components/category/ActiveFilterChips";
+import ActiveFilterChips from "@/components/ui/category/ActiveFilterChips";
 
 export default function StickyActiveFilters() {
   const [isSticky, setIsSticky] = useState(false);

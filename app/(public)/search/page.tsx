@@ -1,7 +1,7 @@
 // app/search/page.tsx
 
-import ProductCard from "@/components/product/ProductCard";
-import { Product } from "@/components/product/product.types";
+import ProductCard from "@/components/ui/product/ProductCard";
+import { Product } from "@/components/ui/product/product.types";
 import { searchProducts } from "@/lib/api";
 
 type SearchPageProps = {

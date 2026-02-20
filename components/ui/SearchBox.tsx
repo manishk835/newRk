@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { searchProducts } from "@/lib/api";
-import { Product } from "@/components/product/product.types";
-import { useDebounce } from "@/hooks/useDebounce";
+import { Product } from "@/components/ui/product/product.types";
+import { useDebounce } from "@/lib/hooks/useDebounce";
 
 export default function SearchBox() {
   const [query, setQuery] = useState("");

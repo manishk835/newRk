@@ -1,18 +1,18 @@
-import ProductCard from "@/components/product/ProductCard";
+import ProductCard from "@/components/ui/product/ProductCard";
 import { fetchProductsByCategory } from "@/lib/api";
-import { Product } from "@/components/product/product.types";
+import { Product } from "@/components/ui/product/product.types";
 
-import CategorySort from "@/components/category/CategorySort";
-import BrandFilter from "@/components/category/BrandFilter";
-import PriceFilter from "@/components/category/PriceFilter";
-import ClearFilters from "@/components/category/ClearFilters";
-import StickyActiveFilters from "@/components/category/StickyActiveFilters";
+import CategorySort from "@/components/ui/category/CategorySort";
+import BrandFilter from "@/components/ui/category/BrandFilter";
+import PriceFilter from "@/components/ui/category/PriceFilter";
+import ClearFilters from "@/components/ui/category/ClearFilters";
+import StickyActiveFilters from "@/components/ui/category/StickyActiveFilters";
 
-import SubCategoryFilter from "@/components/category/SubCategoryFilter";
-import SizeFilter from "@/components/category/SizeFilter";
-import ColorFilter from "@/components/category/ColorFilter";
-import RatingFilter from "@/components/category/RatingFilter";
-import MobileFilterDrawer from "@/components/category/MobileFilterDrawer";
+import SubCategoryFilter from "@/components/ui/category/SubCategoryFilter";
+import SizeFilter from "@/components/ui/category/SizeFilter";
+import ColorFilter from "@/components/ui/category/ColorFilter";
+import RatingFilter from "@/components/ui/category/RatingFilter";
+import MobileFilterDrawer from "@/components/ui/category/MobileFilterDrawer";
 
 /* ================= TYPES ================= */
 
