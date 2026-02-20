@@ -18,21 +18,68 @@ export type CartState = {
 export type CartAction =
   | {
       type: "ADD_TO_CART";
-      payload: Product;
+      payload: {
+        product: Product;
+        quantity: number;
+      };
     }
   | {
       type: "REMOVE_FROM_CART";
-      payload: string; // product._id
+      payload: string;
     }
   | {
       type: "INCREASE_QTY";
-      payload: string; // product._id
+      payload: string;
     }
   | {
       type: "DECREASE_QTY";
-      payload: string; // product._id
+      payload: string;
     }
   | {
       type: "SET_CART";
       payload: CartState;
+    }
+  | {
+      type: "CLEAR_CART";
     };
+
+// // // components/features/cart/cart.types.ts
+
+// import { Product } from "@/components/ui/product/product.types";
+
+// /* ================= CART ITEM ================= */
+
+// export type CartItem = {
+//   product: Product;
+//   quantity: number;
+// };
+
+// /* ================= CART STATE ================= */
+
+// export type CartState = {
+//   items: CartItem[];
+// };
+
+// /* ================= CART ACTIONS ================= */
+
+// export type CartAction =
+//   | {
+//       type: "ADD_TO_CART";
+//       payload: Product;
+//     }
+//   | {
+//       type: "REMOVE_FROM_CART";
+//       payload: string; // product._id
+//     }
+//   | {
+//       type: "INCREASE_QTY";
+//       payload: string; // product._id
+//     }
+//   | {
+//       type: "DECREASE_QTY";
+//       payload: string; // product._id
+//     }
+//   | {
+//       type: "SET_CART";
+//       payload: CartState;
+//     };

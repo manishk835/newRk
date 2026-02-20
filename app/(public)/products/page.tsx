@@ -1,4 +1,5 @@
-// app/products/page.tsx
+
+// app/(public)/products/page.tsx
 
 import ProductCard from "@/components/ui/product/ProductCard";
 import BrandFilter from "@/components/ui/category/BrandFilter";
