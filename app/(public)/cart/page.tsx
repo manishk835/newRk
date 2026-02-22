@@ -5,6 +5,7 @@ import { useCart } from "@/features/cart/CartContext";
 import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
 
+
 export default function CartPage() {
   const { state, dispatch } = useCart();
   const router = useRouter();
@@ -64,7 +65,7 @@ export default function CartPage() {
       JSON.stringify(selectedCartItems)
     );
 
-    router.push("/checkout");
+    router.push("account/checkout");
   };
 
   /* ================= EMPTY CART ================= */
