@@ -1,4 +1,4 @@
-// lib/types/api.ts
+// lib/api.ts
 import { Product } from "@/components/ui/product/product.types";
 
 /* ======================================================
@@ -94,13 +94,34 @@ export async function fetchProducts(): Promise<Product[]> {
 
 export async function fetchProductBySlug(
   slug: string
-): Promise<Product> {
-  const res = await fetch(
-`${BASE_URL}/api/products/slug/${slug}`,
-    { cache: "no-store" }
-  );
+): Promise<Product | null> {
 
-  return handleResponse<Product>(res);
+  try {
+    const res = await fetch(
+      `${BASE_URL}/api/products/slug/${slug}`,
+      { cache: "no-store" }
+    );
+
+    if (res.status === 404) {
+      return null;
+    }
+
+    if (!res.ok) {
+      return null; // ❗ do not crash server component
+    }
+
+    const data = await res.json();
+
+    // 🔥 Normalize id → _id
+    return {
+      ...data,
+      _id: data._id || data.id,
+    };
+
+  } catch (error) {
+    console.error("fetchProductBySlug error:", error);
+    return null; // ❗ prevent server crash
+  }
 }
 
 export async function searchProducts(
@@ -229,18 +250,9 @@ export async function fetchAllProducts(
   }
 ): Promise<{
   products: Product[];
-  filters: {
-    brands: FilterCountItem[];
-    subCategories: FilterCountItem[];
-    sizes: FilterCountItem[];
-    colors: FilterCountItem[];
-    ratings: number[];
-    priceRange: {
-      minPrice: number;
-      maxPrice: number;
-    };
-  };
+  filters: any;
 }> {
+
   const query = new URLSearchParams();
 
   if (params?.sort) query.set("sort", params.sort);
@@ -253,10 +265,28 @@ export async function fetchAllProducts(
 
   const qs = query.toString() ? `?${query}` : "";
 
-  const res = await fetch(
-`${BASE_URL}/api/products/all${qs}`,
-    { cache: "no-store" }
-  );
+  try {
+    const res = await fetch(
+      `${BASE_URL}/api/products/all${qs}`,
+      { cache: "no-store" }
+    );
 
-  return handleResponse(res);
+    if (!res.ok) {
+      return { products: [], filters: {} };
+    }
+
+    const data = await res.json();
+
+    return {
+      ...data,
+      products: (data.products || []).map((p: any) => ({
+        ...p,
+        _id: p._id || p.id, // 🔥 normalize
+      })),
+    };
+
+  } catch (error) {
+    console.error("fetchAllProducts error:", error);
+    return { products: [], filters: {} };
+  }
 }

@@ -103,6 +103,7 @@ export default function AdminLayout({
             {navItem("/admin", "Dashboard")}
             {navItem("/admin/orders", "Orders")}
             {navItem("/admin/products", "Products")}
+            {navItem("/admin/products/pending", "Pending Products")}
             {navItem("/admin/categories", "Categories")}
             {navItem("/admin/users", "Users")}
             {navItem("/admin/coupons", "Coupons")}
