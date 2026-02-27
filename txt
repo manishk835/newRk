@@ -1,0 +1,92 @@
+app/(public)/
+
+├─ page.tsx                        // Home / Landing
+
+# -------------------------------
+# PRODUCT DISCOVERY (CORE SEO)
+# -------------------------------
+├─ products/page.tsx
+├─ product/[slug]/page.tsx
+├─ category/[slug]/page.tsx
+├─ search/page.tsx
+
+# -------------------------------
+# MARKETPLACE SELLER DISCOVERY
+# -------------------------------
+├─ vendors/page.tsx
+├─ vendor/[slug]/page.tsx
+
+# ⭐ VERY IMPORTANT (You missed this)
+├─ vendor/[slug]/products/page.tsx
+├─ vendor/[slug]/reviews/page.tsx
+
+# -------------------------------
+# STORE-BASED MARKETPLACE
+# -------------------------------
+├─ stores/page.tsx
+├─ store/[storeSlug]/page.tsx
+├─ store/[storeSlug]/products/page.tsx
+├─ store/[storeSlug]/about/page.tsx
+├─ store/[storeSlug]/policies/page.tsx
+
+# -------------------------------
+# MERCHANDISING PAGES
+# -------------------------------
+├─ deals/page.tsx
+├─ trending/page.tsx
+├─ new-arrivals/page.tsx
+├─ top-rated/page.tsx
+├─ best-sellers/page.tsx        ← add this
+├─ featured/page.tsx            ← add this
+
+# -------------------------------
+# SAAS MARKETING (B2B ACQUISITION)
+# -------------------------------
+├─ pricing/page.tsx
+├─ features/page.tsx
+├─ integrations/page.tsx
+├─ how-it-works/page.tsx        ← add this
+├─ use-cases/page.tsx           ← add this
+├─ for-vendors/page.tsx         ← seller onboarding page
+
+# -------------------------------
+# CONTENT / SEO ENGINE
+# -------------------------------
+├─ blog/page.tsx
+├─ blog/[slug]/page.tsx
+
+# ⭐ ADD THIS FOR SEO SILOING
+├─ guides/page.tsx
+├─ guides/[slug]/page.tsx
+
+# -------------------------------
+# TRUST & LEGAL
+# -------------------------------
+├─ about/page.tsx
+├─ contact/page.tsx
+├─ privacy-policy/page.tsx
+├─ terms/page.tsx
+├─ refund-policy/page.tsx
+├─ shipping-policy/page.tsx     ← add this
+├─ cancellation-policy/page.tsx ← add this
+├─ faq/page.tsx
+
+# -------------------------------
+# SUPPORT (VERY IMPORTANT)
+# -------------------------------
+├─ support/page.tsx             ← add this
+├─ report-issue/page.tsx        ← add this
+
+# -------------------------------
+# PRE-AUTH FUNNEL
+# -------------------------------
+├─ cart/page.tsx
+
+# -------------------------------
+# GLOBAL
+# -------------------------------
+├─ layout.tsx
+├─ loading.tsx                  ← add this
+├─ not-found.tsx                ← add this
+tumhe to pta hi hai frontend latest next.js or backend node.js me bna rhe hai 
+ab start kro

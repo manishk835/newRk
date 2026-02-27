@@ -21,7 +21,10 @@ async function handleResponse<T>(res: Response): Promise<T> {
       message = data?.message || message;
     } catch {}
 
-    throw new Error(message);
+    // throw new Error(message);
+    console.error("API STATUS:", res.status);
+console.error("API MESSAGE:", message);
+throw new Error(message);
   }
 
   return res.json();
