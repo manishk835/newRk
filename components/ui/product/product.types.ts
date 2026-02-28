@@ -96,6 +96,7 @@ export type Product = {
   /* ================= META ================= */
   createdAt?: string;
   updatedAt?: string;
+  comparePrice?: number;
 };
 
 // // components/product/product.types.ts
