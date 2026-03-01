@@ -250,10 +250,15 @@ export async function fetchAllProducts(
     rating?: string;
     minPrice?: string;
     maxPrice?: string;
+    page?: string;
+    filter?: string;
   }
 ): Promise<{
   products: Product[];
   filters: any;
+  total: number;
+  page: number;
+  totalPages: number;
 }> {
 
   const query = new URLSearchParams();
@@ -265,6 +270,8 @@ export async function fetchAllProducts(
   if (params?.rating) query.set("rating", params.rating);
   if (params?.minPrice) query.set("minPrice", params.minPrice);
   if (params?.maxPrice) query.set("maxPrice", params.maxPrice);
+  if (params?.page) query.set("page", params.page);
+  if (params?.filter) query.set("filter", params.filter);
 
   const qs = query.toString() ? `?${query}` : "";
 
@@ -275,21 +282,36 @@ export async function fetchAllProducts(
     );
 
     if (!res.ok) {
-      return { products: [], filters: {} };
+      return {
+        products: [],
+        filters: {},
+        total: 0,
+        page: 1,
+        totalPages: 1,
+      };
     }
 
     const data = await res.json();
 
     return {
-      ...data,
       products: (data.products || []).map((p: any) => ({
         ...p,
-        _id: p._id || p.id, // 🔥 normalize
+        _id: p._id || p.id,
       })),
+      filters: data.filters || {},
+      total: data.total || 0,
+      page: data.page || 1,
+      totalPages: data.totalPages || 1,
     };
 
   } catch (error) {
     console.error("fetchAllProducts error:", error);
-    return { products: [], filters: {} };
+    return {
+      products: [],
+      filters: {},
+      total: 0,
+      page: 1,
+      totalPages: 1,
+    };
   }
 }

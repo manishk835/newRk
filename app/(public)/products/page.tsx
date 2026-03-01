@@ -1,5 +1,6 @@
 // ======================================================
 // 📄 app/(public)/products/page.tsx
+// Production SaaS Version
 // ======================================================
 
 import type { Metadata } from "next";
@@ -25,17 +26,20 @@ export const revalidate = 60;
    TYPES
 ====================================================== */
 
+type SearchParams = {
+  sort?: string;
+  brand?: string;
+  size?: string;
+  color?: string;
+  rating?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  page?: string;
+  filter?: string; // featured | new | best
+};
+
 type ProductsPageProps = {
-  searchParams?: Promise<{
-    sort?: string;
-    brand?: string;
-    size?: string;
-    color?: string;
-    rating?: string;
-    minPrice?: string;
-    maxPrice?: string;
-    page?: string;
-  }>;
+  searchParams?: Promise<SearchParams>;
 };
 
 /* ======================================================
@@ -50,11 +54,22 @@ export async function generateMetadata(
 
   let title = "All Products | RK Fashion House";
   let description =
-    "Browse all products at RK Fashion House. Discover premium clothing for men, women and kids.";
+    "Browse premium fashion for men, women and kids at RK Fashion House.";
+
+  if (sp.filter === "featured") {
+    title = "Featured Products | RK Fashion House";
+  }
+
+  if (sp.filter === "new") {
+    title = "New Arrivals | RK Fashion House";
+  }
+
+  if (sp.filter === "best") {
+    title = "Best Sellers | RK Fashion House";
+  }
 
   if (sp.brand) {
     title = `${sp.brand} Products | RK Fashion House`;
-    description = `Explore premium ${sp.brand} products at RK Fashion House.`;
   }
 
   return {
@@ -78,7 +93,11 @@ export default async function ProductsPage({
 
   const sp = (await searchParams) || {};
 
+  const currentPage = Number(sp.page) || 1;
+
   let products: Product[] = [];
+  let total = 0;
+
   let filters: any = {
     brands: [],
     subCategories: [],
@@ -89,12 +108,24 @@ export default async function ProductsPage({
   };
 
   try {
-    const data = await fetchAllProducts(sp);
-    products = data.products || [];
+    const data = await fetchAllProducts({
+      ...sp,
+      page: sp.page || "1",
+    });    products = data.products || [];
     filters = data.filters || filters;
+    total = data.total || products.length;
   } catch (error) {
     console.error("Products fetch failed:", error);
   }
+
+  /* ================= PAGE TITLE ================= */
+
+  let pageTitle = "All Products";
+
+  if (sp.filter === "featured") pageTitle = "Featured Products";
+  if (sp.filter === "new") pageTitle = "New Arrivals";
+  if (sp.filter === "best") pageTitle = "Best Sellers";
+  if (sp.brand) pageTitle = `${sp.brand} Products`;
 
   return (
     <div className="pt-24 bg-gray-50 min-h-screen">
@@ -103,10 +134,10 @@ export default async function ProductsPage({
       <section className="border-b border-gray-200 bg-white">
         <div className="container mx-auto px-6 py-10">
           <h1 className="text-3xl font-bold text-gray-900">
-            All Products
+            {pageTitle}
           </h1>
           <p className="text-gray-600 mt-2">
-            Discover premium fashion — honest pricing, quality you can trust.
+            Showing curated results tailored to your selection.
           </p>
         </div>
       </section>
@@ -135,7 +166,7 @@ export default async function ProductsPage({
             {/* TOP BAR */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
               <p className="text-sm text-gray-600">
-                Showing <b>{products.length}</b> products
+                Showing <b>{products.length}</b> of <b>{total}</b> products
               </p>
 
               <div className="flex items-center gap-4">
@@ -161,10 +192,14 @@ export default async function ProductsPage({
               </div>
             )}
 
-            {/* PAGINATION PLACEHOLDER */}
-            <div className="mt-16 flex justify-center">
-              {/* Future: Pagination component */}
-            </div>
+            {/* ================= PAGINATION ================= */}
+            {total > 12 && (
+              <Pagination
+                currentPage={currentPage}
+                totalItems={total}
+                perPage={12}
+              />
+            )}
 
           </div>
         </div>
@@ -174,7 +209,7 @@ export default async function ProductsPage({
       <section className="bg-white border-t">
         <div className="container mx-auto px-6 py-10 text-center">
           <p className="text-sm text-gray-600">
-            ✔ Cash on Delivery • ✔ 7 Days Return • ✔ Fast & Secure Delivery
+            ✔ Secure Checkout • ✔ 7 Days Return • ✔ Verified Sellers
           </p>
         </div>
       </section>
@@ -192,8 +227,49 @@ function EmptyState() {
         No products found
       </h3>
       <p className="text-gray-600 mb-6">
-        Try adjusting your filters or explore other categories.
+        Try adjusting filters or explore other collections.
       </p>
+    </div>
+  );
+}
+
+/* ====================================================== */
+/* PAGINATION COMPONENT */
+/* ====================================================== */
+
+function Pagination({
+  currentPage,
+  totalItems,
+  perPage,
+}: {
+  currentPage: number;
+  totalItems: number;
+  perPage: number;
+}) {
+
+  const totalPages = Math.ceil(totalItems / perPage);
+
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="mt-16 flex justify-center gap-3">
+      {Array.from({ length: totalPages }).map((_, i) => {
+        const page = i + 1;
+
+        return (
+          <a
+            key={page}
+            href={`?page=${page}`}
+            className={`px-4 py-2 rounded-lg border text-sm ${
+              currentPage === page
+                ? "bg-black text-white"
+                : "bg-white hover:bg-gray-100"
+            }`}
+          >
+            {page}
+          </a>
+        );
+      })}
     </div>
   );
 }

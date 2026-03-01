@@ -97,6 +97,8 @@ export type Product = {
   createdAt?: string;
   updatedAt?: string;
   comparePrice?: number;
+
+  
 };
 
 // // components/product/product.types.ts
