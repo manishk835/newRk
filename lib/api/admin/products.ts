@@ -22,6 +22,7 @@ export async function fetchProductById(id: string) {
     return adminFetch(`/api/admin/products/${id}`);
   }
   
+  
 
 export async function updateProduct(
   id: string,

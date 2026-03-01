@@ -32,10 +32,14 @@ export default function SubCategoryFilter({
     router.push(`?${params.toString()}`);
   };
 
-  const list = showAll
-    ? subCategories
-    : subCategories.slice(0, 5);
+  // const list = showAll
+  //   ? subCategories
+  //   : subCategories.slice(0, 5);
+  const safeSubCategories = subCategories ?? [];
 
+  const list = showAll
+    ? safeSubCategories
+    : safeSubCategories.slice(0, 5);
   return (
     <div className="mb-6">
       <p className="font-medium mb-3">Category</p>
@@ -61,7 +65,7 @@ export default function SubCategoryFilter({
         ))}
       </div>
 
-      {subCategories.length > 5 && (
+      {safeSubCategories.length > 5 && (
         <button
           onClick={() => setShowAll(!showAll)}
           className="text-xs mt-2 text-blue-600"

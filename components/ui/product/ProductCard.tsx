@@ -20,11 +20,15 @@ export default function ProductCard({ product }: Props) {
             100
         )
       : null;
-
-      const imageUrl =
+      
+      let imageUrl =
       product.thumbnail ||
       product.images?.[0]?.url ||
       "/placeholder.png";
+    
+    if (imageUrl.includes("images.unsplash.com") && !imageUrl.includes("?")) {
+      imageUrl += "?q=80&w=1200&auto=format&fit=crop";
+    }
     
 
   return (
