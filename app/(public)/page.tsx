@@ -148,7 +148,6 @@ function TrustSection() {
 }
 
 /* ========================================================= */
-
 function ProductSection({
   title,
   products,
@@ -163,20 +162,31 @@ function ProductSection({
   if (!products?.length) return null;
 
   return (
-    <section className={`py-24 ${bg || ""}`}>
+    <section className={`py-20 ${bg || "bg-gray-50"}`}>
       <div className="container mx-auto px-6">
 
-        <div className="flex justify-between items-center mb-14">
-          <h2 className="text-3xl font-bold">{title}</h2>
+        {/* Header */}
+        <div className="flex justify-between items-end mb-12">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+              {title}
+            </h2>
+            <div className="w-16 h-1 bg-black mt-3 rounded-full" />
+          </div>
+
           <Link
             href={viewAll}
-            className="text-sm font-semibold hover:underline"
+            className="text-sm font-semibold flex items-center gap-1 group"
           >
             View All
+            <span className="group-hover:translate-x-1 transition">
+              →
+            </span>
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        {/* Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
           {products.map((product) => {
             const imageUrl =
               product.thumbnail ||
@@ -187,46 +197,61 @@ function ProductSection({
               product.comparePrice &&
               product.comparePrice > product.price;
 
-            return (
-              <div key={product._id} className="relative group">
+              const comparePrice = product.comparePrice ?? 0;
 
+              const discountPercent =
+                comparePrice > product.price
+                  ? Math.round(
+                      ((comparePrice - product.price) / comparePrice) * 100
+                    )
+                  : 0;
+
+            return (
+              <div
+                key={product._id}
+                className="group relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition duration-300 overflow-hidden"
+              >
+                {/* Discount Badge */}
                 {hasDiscount && (
-                  <div className="absolute top-3 left-3 bg-black text-white text-xs px-3 py-1 rounded-full z-10">
-                    Sale
+                  <div className="absolute top-3 left-3 bg-black text-white text-xs font-medium px-3 py-1 rounded-full z-10">
+                    {discountPercent}% OFF
                   </div>
                 )}
 
+                {/* Wishlist */}
                 <div className="absolute top-3 right-3 z-10">
                   <WishlistButton productId={product._id} />
                 </div>
 
-                <Link
-                  href={`/product/${product.slug}`}
-                  className="block bg-white rounded-2xl border p-4 hover:shadow-lg transition overflow-hidden"
-                >
-                  <div className="relative h-52 bg-gray-100 rounded-lg overflow-hidden">
+                <Link href={`/product/${product.slug}`} className="block">
+                  
+                  {/* Image */}
+                  <div className="relative h-56 bg-gray-100 overflow-hidden">
                     <Image
                       src={imageUrl}
                       alt={product.title}
                       fill
-                      className="object-cover group-hover:scale-105 transition duration-300"
+                      className="object-cover group-hover:scale-110 transition duration-500"
                     />
                   </div>
 
-                  <h3 className="mt-4 font-medium line-clamp-2">
-                    {product.title}
-                  </h3>
+                  {/* Content */}
+                  <div className="p-4">
+                    <h3 className="font-medium text-sm md:text-base line-clamp-2 min-h-10">
+                      {product.title}
+                    </h3>
 
-                  <div className="mt-2 flex items-center gap-2">
-                    <p className="font-semibold text-lg">
-                      ₹{product.price}
-                    </p>
+                    <div className="mt-3 flex items-center gap-2">
+                      <p className="font-semibold text-lg">
+                        ₹{product.price}
+                      </p>
 
-                    {hasDiscount && (
-                      <span className="text-sm line-through text-gray-400">
-                        ₹{product.comparePrice}
-                      </span>
-                    )}
+                      {hasDiscount && (
+                        <span className="text-sm line-through text-gray-400">
+                          ₹{product.comparePrice}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </Link>
               </div>
@@ -238,6 +263,95 @@ function ProductSection({
     </section>
   );
 }
+// function ProductSection({
+//   title,
+//   products,
+//   viewAll,
+//   bg,
+// }: {
+//   title: string;
+//   products: Product[];
+//   viewAll: string;
+//   bg?: string;
+// }) {
+//   if (!products?.length) return null;
+
+//   return (
+//     <section className={`py-24 ${bg || ""}`}>
+//       <div className="container mx-auto px-6">
+
+//         <div className="flex justify-between items-center mb-14">
+//           <h2 className="text-3xl font-bold">{title}</h2>
+//           <Link
+//             href={viewAll}
+//             className="text-sm font-semibold hover:underline"
+//           >
+//             View All
+//           </Link>
+//         </div>
+
+//         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+//           {products.map((product) => {
+//             const imageUrl =
+//               product.thumbnail ||
+//               product.images?.[0]?.url ||
+//               "/placeholder.png";
+
+//             const hasDiscount =
+//               product.comparePrice &&
+//               product.comparePrice > product.price;
+
+//             return (
+//               <div key={product._id} className="relative group">
+
+//                 {hasDiscount && (
+//                   <div className="absolute top-3 left-3 bg-black text-white text-xs px-3 py-1 rounded-full z-10">
+//                     Sale
+//                   </div>
+//                 )}
+
+//                 <div className="absolute top-3 right-3 z-10">
+//                   <WishlistButton productId={product._id} />
+//                 </div>
+
+//                 <Link
+//                   href={`/product/${product.slug}`}
+//                   className="block bg-white rounded-2xl border p-4 hover:shadow-lg transition overflow-hidden"
+//                 >
+//                   <div className="relative h-52 bg-gray-100 rounded-lg overflow-hidden">
+//                     <Image
+//                       src={imageUrl}
+//                       alt={product.title}
+//                       fill
+//                       className="object-cover group-hover:scale-105 transition duration-300"
+//                     />
+//                   </div>
+
+//                   <h3 className="mt-4 font-medium line-clamp-2">
+//                     {product.title}
+//                   </h3>
+
+//                   <div className="mt-2 flex items-center gap-2">
+//                     <p className="font-semibold text-lg">
+//                       ₹{product.price}
+//                     </p>
+
+//                     {hasDiscount && (
+//                       <span className="text-sm line-through text-gray-400">
+//                         ₹{product.comparePrice}
+//                       </span>
+//                     )}
+//                   </div>
+//                 </Link>
+//               </div>
+//             );
+//           })}
+//         </div>
+
+//       </div>
+//     </section>
+//   );
+// }
 
 /* ========================================================= */
 
