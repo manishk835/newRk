@@ -1,3 +1,5 @@
+// 📄 app/(public)/for-vendors/vendorForm.tsx
+
 "use client";
 
 import { useState } from "react";

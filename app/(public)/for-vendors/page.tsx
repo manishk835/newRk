@@ -1,68 +1,124 @@
-import type { Metadata } from "next";
-import VendorForm from "./VendorForm";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Sell on RK Fashion House",
-  description:
-    "Join RK Fashion House as a seller. Grow your fashion brand with our trusted marketplace platform.",
-};
+import { useState } from "react";
+import { apiFetch } from "@/lib/api/client";
 
-export default function ForVendorsPage() {
+export default function VendorForm() {
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+
+    const payload = {
+      businessName: formData.get("businessName"),
+      email: formData.get("email"),
+      phone: formData.get("phone"),
+      category: formData.get("category"),
+      message: formData.get("message"),
+    };
+
+    try {
+      await apiFetch("/vendors/apply", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      setSuccess(true);
+      e.currentTarget.reset();
+    } catch (err) {
+      console.error("Vendor apply error", err);
+      alert("Application submission failed");
+    }
+
+    setLoading(false);
+  }
+
   return (
-    <div className="bg-white">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-6 bg-white p-8 rounded-2xl shadow-md"
+    >
+      <Input
+        name="businessName"
+        label="Business Name"
+        required
+      />
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-24 bg-linear-to-b from-gray-50 to-white">
-        <div className="container mx-auto px-6 text-center max-w-4xl">
-          <h1 className="text-5xl font-extrabold mb-6">
-            Sell Your Products Online
-          </h1>
+      <Input
+        name="email"
+        label="Business Email"
+        type="email"
+        required
+      />
 
-          <p className="text-gray-600 text-lg mb-10">
-            Reach thousands of customers. Manage products,
-            track orders and scale your fashion business with ease.
-          </p>
-        </div>
-      </section>
+      <Input
+        name="phone"
+        label="Phone Number"
+        required
+      />
 
-      {/* Benefits Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-6 grid md:grid-cols-3 gap-10 text-center">
-          <Benefit
-            title="Easy Product Management"
-            desc="Add, edit and manage your catalog with a powerful dashboard."
-          />
-          <Benefit
-            title="Real-Time Order Tracking"
-            desc="Stay updated with instant notifications and analytics."
-          />
-          <Benefit
-            title="Secure Payments"
-            desc="Receive payments directly and securely."
-          />
-        </div>
-      </section>
+      <Input
+        name="category"
+        label="Product Category"
+        required
+      />
 
-      {/* Application Form */}
-      <section className="py-24">
-        <div className="container mx-auto px-6 max-w-2xl">
-          <h2 className="text-3xl font-bold mb-8 text-center">
-            Apply to Become a Seller
-          </h2>
+      <div>
+        <label className="block text-sm font-medium mb-2">
+          Tell us about your brand
+        </label>
 
-          <VendorForm />
-        </div>
-      </section>
+        <textarea
+          name="message"
+          rows={4}
+          className="w-full border rounded-lg px-4 py-3"
+        />
+      </div>
 
-    </div>
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full py-4 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 transition"
+      >
+        {loading ? "Submitting..." : "Submit Application"}
+      </button>
+
+      {success && (
+        <p className="text-green-600 text-center mt-4">
+          Application submitted successfully!
+        </p>
+      )}
+    </form>
   );
 }
 
-function Benefit({ title, desc }: { title: string; desc: string }) {
+function Input({
+  label,
+  name,
+  type = "text",
+  required,
+}: {
+  label: string;
+  name: string;
+  type?: string;
+  required?: boolean;
+}) {
   return (
-    <div className="bg-white p-8 rounded-2xl shadow-sm">
-      <h3 className="font-semibold text-xl mb-3">{title}</h3>
-      <p className="text-gray-600">{desc}</p>
+    <div>
+      <label className="block text-sm font-medium mb-2">
+        {label}
+      </label>
+
+      <input
+        name={name}
+        type={type}
+        required={required}
+        className="w-full border rounded-lg px-4 py-3"
+      />
     </div>
   );
 }

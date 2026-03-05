@@ -1,9 +1,18 @@
-// app/(admin)/admin/page.tsx
+// // app/(admin)/admin/page.tsx
+
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api/client";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 /* ================= TYPES ================= */
 
@@ -13,15 +22,8 @@ type Order = {
   createdAt: string;
 };
 
-type LowStockProduct = {
-  _id: string;
-  title: string;
-  totalStock: number;
-};
-
 type DashboardState = {
   orders: Order[];
-  lowStock: LowStockProduct[];
 };
 
 /* ================= PAGE ================= */
@@ -31,64 +33,33 @@ export default function AdminDashboardPage() {
 
   const [data, setData] = useState<DashboardState>({
     orders: [],
-    lowStock: [],
   });
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  /* ================= LOAD DASHBOARD ================= */
 
   useEffect(() => {
-    let active = true;
-
     const loadDashboard = async () => {
       try {
-        setLoading(true);
-        setError("");
-
-        const [ordersRes, lowStockRes] = await Promise.all([
-          apiFetch("/admin/orders"),
-          apiFetch("/admin/products/admin/low-stock"),
-        ]);
-
-        if (!active) return;
+        const ordersRes = await apiFetch("/admin/orders");
 
         setData({
           orders: Array.isArray(ordersRes?.orders)
             ? ordersRes.orders
             : [],
-          lowStock: Array.isArray(lowStockRes)
-            ? lowStockRes
-            : [],
         });
       } catch (err: any) {
-        if (!active) return;
-
         if (err?.message?.includes("401")) {
           router.replace("/admin/login");
-          return;
         }
-
-        setError("Failed to load dashboard data");
       } finally {
-        if (active) setLoading(false);
+        setLoading(false);
       }
     };
 
     loadDashboard();
-
-    return () => {
-      active = false;
-    };
   }, [router]);
 
-  /* ================= DERIVED METRICS ================= */
-
-  const todayString = useMemo(
-    () => new Date().toDateString(),
-    []
-  );
+  /* ================= METRICS ================= */
 
   const totalOrders = data.orders.length;
 
@@ -101,29 +72,6 @@ export default function AdminDashboardPage() {
     [data.orders]
   );
 
-  const todayOrders = useMemo(
-    () =>
-      data.orders.filter(
-        (o) =>
-          new Date(o.createdAt).toDateString() ===
-          todayString
-      ),
-    [data.orders, todayString]
-  );
-
-  const todayRevenue = useMemo(
-    () =>
-      todayOrders.reduce(
-        (sum, o) => sum + (o.totalAmount || 0),
-        0
-      ),
-    [todayOrders]
-  );
-
-  const lowStockCount = data.lowStock.length;
-
-  /* ================= FORMATTERS ================= */
-
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("en-IN", {
       style: "currency",
@@ -131,89 +79,69 @@ export default function AdminDashboardPage() {
       maximumFractionDigits: 0,
     }).format(value);
 
-  /* ================= STATES ================= */
+  /* ================= ORDERS PER DAY ================= */
+
+  const ordersPerDay = useMemo(() => {
+    const map: Record<string, number> = {};
+
+    data.orders.forEach((order) => {
+      const date = new Date(order.createdAt)
+        .toISOString()
+        .split("T")[0];
+
+      map[date] = (map[date] || 0) + 1;
+    });
+
+    return Object.entries(map).map(([date, count]) => ({
+      date,
+      orders: count,
+    }));
+  }, [data.orders]);
 
   if (loading) {
-    return (
-      <div className="container mx-auto px-6 pt-28">
-        Loading dashboard...
-      </div>
-    );
+    return <div>Loading dashboard...</div>;
   }
-
-  if (error) {
-    return (
-      <div className="container mx-auto px-6 pt-28 text-red-600">
-        {error}
-      </div>
-    );
-  }
-
-  /* ================= UI ================= */
 
   return (
-    <div className="container mx-auto px-6 pt-10 pb-16 max-w-7xl">
-      <h1 className="text-3xl font-bold mb-10">
+    <div className="max-w-7xl mx-auto">
+      <h1 className="text-3xl font-bold mb-8">
         Admin Dashboard
       </h1>
 
-      {/* KPI CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      {/* KPI */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <StatCard title="Total Orders" value={totalOrders} />
-        <StatCard
-          title="Today Orders"
-          value={todayOrders.length}
-        />
         <StatCard
           title="Total Revenue"
           value={formatCurrency(totalRevenue)}
         />
         <StatCard
-          title="Today Revenue"
-          value={formatCurrency(todayRevenue)}
+          title="Total Stores"
+          value={"2"} 
         />
       </div>
 
-      {/* ALERTS SECTION */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Low Stock */}
-        <div className="bg-white border rounded-2xl p-6">
-          <h2 className="text-xl font-semibold mb-4">
-            Low Stock Alerts
-          </h2>
+      {/* CHART */}
+      <div className="bg-white border rounded-2xl p-6">
+        <h2 className="text-lg font-semibold mb-4">
+          Orders / Day
+        </h2>
 
-          {lowStockCount === 0 ? (
-            <p className="text-sm text-gray-600">
-              All products are sufficiently stocked
-            </p>
-          ) : (
-            <ul className="space-y-3 text-sm">
-              {data.lowStock.map((p) => (
-                <li
-                  key={p._id}
-                  className="flex justify-between"
-                >
-                  <span>{p.title}</span>
-                  <span className="text-red-600 font-semibold">
-                    {p.totalStock} left
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Future Expansion Placeholder */}
-        <div className="bg-white border rounded-2xl p-6">
-          <h2 className="text-xl font-semibold mb-4">
-            System Overview
-          </h2>
-
-          <div className="text-sm text-gray-600 space-y-2">
-            <p>Low Stock Products: {lowStockCount}</p>
-            <p>Total Revenue: {formatCurrency(totalRevenue)}</p>
-            <p>Total Orders: {totalOrders}</p>
-          </div>
+        <div className="h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={ordersPerDay}>
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Area
+                type="monotone"
+                dataKey="orders"
+                stroke="#6366f1"
+                fill="#6366f1"
+                fillOpacity={0.3}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>
@@ -230,7 +158,7 @@ function StatCard({
   value: string | number;
 }) {
   return (
-    <div className="bg-white border rounded-2xl p-6 hover:shadow-md transition">
+    <div className="bg-white border rounded-2xl p-6">
       <p className="text-sm text-gray-500 mb-2">
         {title}
       </p>
@@ -242,10 +170,9 @@ function StatCard({
 }
 
 // // app/(admin)/admin/page.tsx
-
 // "use client";
 
-// import { useEffect, useState } from "react";
+// import { useEffect, useState, useMemo } from "react";
 // import { useRouter } from "next/navigation";
 // import { apiFetch } from "@/lib/api/client";
 
@@ -263,83 +190,110 @@ function StatCard({
 //   totalStock: number;
 // };
 
+// type DashboardState = {
+//   orders: Order[];
+//   lowStock: LowStockProduct[];
+// };
+
 // /* ================= PAGE ================= */
 
 // export default function AdminDashboardPage() {
 //   const router = useRouter();
 
-//   const [orders, setOrders] = useState<Order[]>([]);
-//   const [lowStock, setLowStock] = useState<LowStockProduct[]>([]);
+//   const [data, setData] = useState<DashboardState>({
+//     orders: [],
+//     lowStock: [],
+//   });
+
 //   const [loading, setLoading] = useState(true);
 //   const [error, setError] = useState("");
 
+//   /* ================= LOAD DASHBOARD ================= */
+
 //   useEffect(() => {
-//     let mounted = true;
+//     let active = true;
 
 //     const loadDashboard = async () => {
 //       try {
 //         setLoading(true);
+//         setError("");
 
-//         /* ===== PARALLEL REQUESTS ===== */
-//         const [ordersData, stockData] = await Promise.all([
+//         const [ordersRes, lowStockRes] = await Promise.all([
 //           apiFetch("/admin/orders"),
 //           apiFetch("/admin/products/admin/low-stock"),
 //         ]);
 
-//         if (!mounted) return;
+//         if (!active) return;
 
-//         setOrders(
-//           Array.isArray(ordersData.orders)
-//             ? ordersData.orders
-//             : []
-//         );
-
-//         setLowStock(
-//           Array.isArray(stockData)
-//             ? stockData
-//             : []
-//         );
+//         setData({
+//           orders: Array.isArray(ordersRes?.orders)
+//             ? ordersRes.orders
+//             : [],
+//           lowStock: Array.isArray(lowStockRes)
+//             ? lowStockRes
+//             : [],
+//         });
 //       } catch (err: any) {
-//         if (!mounted) return;
+//         if (!active) return;
 
-//         if (err.message?.includes("401")) {
+//         if (err?.message?.includes("401")) {
 //           router.replace("/admin/login");
 //           return;
 //         }
 
-//         setError("Unable to load dashboard data");
+//         setError("Failed to load dashboard data");
 //       } finally {
-//         if (mounted) setLoading(false);
+//         if (active) setLoading(false);
 //       }
 //     };
 
 //     loadDashboard();
 
 //     return () => {
-//       mounted = false;
+//       active = false;
 //     };
 //   }, [router]);
 
-//   /* ================= CALCULATIONS ================= */
+//   /* ================= DERIVED METRICS ================= */
 
-//   const todayString = new Date().toDateString();
-
-//   const totalOrders = orders.length;
-
-//   const totalRevenue = orders.reduce(
-//     (sum, o) => sum + o.totalAmount,
-//     0
+//   const todayString = useMemo(
+//     () => new Date().toDateString(),
+//     []
 //   );
 
-//   const todayOrders = orders.filter(
-//     (o) =>
-//       new Date(o.createdAt).toDateString() === todayString
+//   const totalOrders = data.orders.length;
+
+//   const totalRevenue = useMemo(
+//     () =>
+//       data.orders.reduce(
+//         (sum, o) => sum + (o.totalAmount || 0),
+//         0
+//       ),
+//     [data.orders]
 //   );
 
-//   const todayRevenue = todayOrders.reduce(
-//     (sum, o) => sum + o.totalAmount,
-//     0
+//   const todayOrders = useMemo(
+//     () =>
+//       data.orders.filter(
+//         (o) =>
+//           new Date(o.createdAt).toDateString() ===
+//           todayString
+//       ),
+//     [data.orders, todayString]
 //   );
+
+//   const todayRevenue = useMemo(
+//     () =>
+//       todayOrders.reduce(
+//         (sum, o) => sum + (o.totalAmount || 0),
+//         0
+//       ),
+//     [todayOrders]
+//   );
+
+//   const lowStockCount = data.lowStock.length;
+
+//   /* ================= FORMATTERS ================= */
 
 //   const formatCurrency = (value: number) =>
 //     new Intl.NumberFormat("en-IN", {
@@ -369,12 +323,12 @@ function StatCard({
 //   /* ================= UI ================= */
 
 //   return (
-//     <div className="container mx-auto px-6 pt-10 pb-16">
+//     <div className="container mx-auto px-6 pt-10 pb-16 max-w-7xl">
 //       <h1 className="text-3xl font-bold mb-10">
 //         Admin Dashboard
 //       </h1>
 
-//       {/* ================= STATS ================= */}
+//       {/* KPI CARDS */}
 //       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
 //         <StatCard title="Total Orders" value={totalOrders} />
 //         <StatCard
@@ -391,247 +345,53 @@ function StatCard({
 //         />
 //       </div>
 
-//       {/* ================= LOW STOCK ================= */}
-//       <div className="bg-white border rounded-2xl p-6">
-//         <h2 className="text-xl font-semibold mb-4">
-//           Low Stock Alerts
-//         </h2>
+//       {/* ALERTS SECTION */}
+//       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+//         {/* Low Stock */}
+//         <div className="bg-white border rounded-2xl p-6">
+//           <h2 className="text-xl font-semibold mb-4">
+//             Low Stock Alerts
+//           </h2>
 
-//         {lowStock.length === 0 ? (
-//           <p className="text-sm text-gray-600">
-//             All products are sufficiently stocked
-//           </p>
-//         ) : (
-//           <ul className="space-y-3 text-sm">
-//             {lowStock.map((p) => (
-//               <li
-//                 key={p._id}
-//                 className="flex justify-between"
-//               >
-//                 <span>{p.title}</span>
-//                 <span className="text-red-600 font-semibold">
-//                   {p.totalStock} left
-//                 </span>
-//               </li>
-//             ))}
-//           </ul>
-//         )}
+//           {lowStockCount === 0 ? (
+//             <p className="text-sm text-gray-600">
+//               All products are sufficiently stocked
+//             </p>
+//           ) : (
+//             <ul className="space-y-3 text-sm">
+//               {data.lowStock.map((p) => (
+//                 <li
+//                   key={p._id}
+//                   className="flex justify-between"
+//                 >
+//                   <span>{p.title}</span>
+//                   <span className="text-red-600 font-semibold">
+//                     {p.totalStock} left
+//                   </span>
+//                 </li>
+//               ))}
+//             </ul>
+//           )}
+//         </div>
+
+//         {/* Future Expansion Placeholder */}
+//         <div className="bg-white border rounded-2xl p-6">
+//           <h2 className="text-xl font-semibold mb-4">
+//             System Overview
+//           </h2>
+
+//           <div className="text-sm text-gray-600 space-y-2">
+//             <p>Low Stock Products: {lowStockCount}</p>
+//             <p>Total Revenue: {formatCurrency(totalRevenue)}</p>
+//             <p>Total Orders: {totalOrders}</p>
+//           </div>
+//         </div>
 //       </div>
 //     </div>
 //   );
 // }
 
-// /* ================= CARD ================= */
-
-// function StatCard({
-//   title,
-//   value,
-// }: {
-//   title: string;
-//   value: string | number;
-// }) {
-//   return (
-//     <div className="bg-white border rounded-2xl p-6 hover:shadow-md transition">
-//       <p className="text-sm text-gray-500 mb-2">
-//         {title}
-//       </p>
-//       <p className="text-2xl font-bold">
-//         {value}
-//       </p>
-//     </div>
-//   );
-// }
-
-// // // app/(admin)/admin/page.tsx
-
-// "use client";
-
-// import { useEffect, useState } from "react";
-// import { useRouter } from "next/navigation";
-
-// /* ================= TYPES ================= */
-
-// type Order = {
-//   _id: string;
-//   totalAmount: number;
-//   createdAt: string;
-// };
-
-// type LowStockProduct = {
-//   _id: string;
-//   title: string;
-//   totalStock: number;
-// };
-
-// /* ================= PAGE ================= */
-
-// export default function AdminDashboardPage() {
-//   const router = useRouter();
-
-//   const [orders, setOrders] = useState<Order[]>([]);
-//   const [lowStock, setLowStock] = useState<LowStockProduct[]>([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState("");
-
-//   useEffect(() => {
-//     let isMounted = true;
-
-//     const fetchDashboardData = async () => {
-//       try {
-//         /* ================= ORDERS ================= */
-//         const ordersRes = await fetch(
-//           `${process.env.NEXT_PUBLIC_API_URL}/api/admin/orders`,
-//           {
-//             credentials: "include",
-//             cache: "no-store",
-//           }
-//         );
-
-//         if (ordersRes.status === 401 || ordersRes.status === 403) {
-//           router.replace("/admin/login");
-//           return;
-//         }
-        
-
-//         if (!ordersRes.ok) {
-//           const errData = await ordersRes.json();
-//           console.log("Orders API Error:", ordersRes.status, errData);
-//           throw new Error(errData.message || "Failed to fetch orders");
-//         }
-        
-
-//         const ordersData = await ordersRes.json();
-
-//         if (isMounted) {
-//           setOrders(
-//             Array.isArray(ordersData.orders)
-//               ? ordersData.orders
-//               : []
-//           );
-//         }
-
-//         /* ================= LOW STOCK ================= */
-//         const stockRes = await fetch(
-//           `${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/admin/low-stock`,
-//           {
-//             credentials: "include",
-//             cache: "no-store",
-//           }
-//         );
-
-//         if (stockRes.ok) {
-//           const stockData = await stockRes.json();
-//           if (isMounted) {
-//             setLowStock(
-//               Array.isArray(stockData) ? stockData : []
-//             );
-//           }
-//         }
-
-//       } catch (err) {
-//         console.error("Dashboard fetch error:", err);
-//         if (isMounted) {
-//           setError("Unable to load dashboard");
-//         }
-//       } finally {
-//         if (isMounted) {
-//           setLoading(false);
-//         }
-//       }
-//     };
-
-//     fetchDashboardData();
-
-//     return () => {
-//       isMounted = false;
-//     };
-//   }, [router]);
-
-//   /* ================= CALCULATIONS ================= */
-
-//   const today = new Date().toDateString();
-
-//   const totalOrders = orders.length;
-//   const totalRevenue = orders.reduce(
-//     (sum, o) => sum + o.totalAmount,
-//     0
-//   );
-
-//   const todayOrders = orders.filter(
-//     (o) =>
-//       new Date(o.createdAt).toDateString() === today
-//   );
-
-//   const todayRevenue = todayOrders.reduce(
-//     (sum, o) => sum + o.totalAmount,
-//     0
-//   );
-
-//   /* ================= STATES ================= */
-
-//   if (loading) {
-//     return (
-//       <div className="container mx-auto px-6 pt-28">
-//         Loading dashboard...
-//       </div>
-//     );
-//   }
-
-//   if (error) {
-//     return (
-//       <div className="container mx-auto px-6 pt-28 text-red-600">
-//         {error}
-//       </div>
-//     );
-//   }
-
-//   /* ================= UI ================= */
-
-//   return (
-//     <div className="container mx-auto px-6 pt-10 pb-16">
-//       <h1 className="text-3xl font-bold mb-10">
-//         Admin Dashboard
-//       </h1>
-
-//       {/* ================= STATS ================= */}
-//       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-//         <StatCard title="Total Orders" value={totalOrders} />
-//         <StatCard title="Today Orders" value={todayOrders.length} />
-//         <StatCard title="Total Revenue" value={`₹${totalRevenue}`} />
-//         <StatCard title="Today Revenue" value={`₹${todayRevenue}`} />
-//       </div>
-
-//       {/* ================= LOW STOCK ================= */}
-//       <div className="bg-white border rounded-2xl p-6">
-//         <h2 className="text-xl font-semibold mb-4">
-//           Low Stock Alerts
-//         </h2>
-
-//         {lowStock.length === 0 ? (
-//           <p className="text-sm text-gray-600">
-//             All products are sufficiently stocked
-//           </p>
-//         ) : (
-//           <ul className="space-y-3 text-sm">
-//             {lowStock.map((p) => (
-//               <li
-//                 key={p._id}
-//                 className="flex justify-between"
-//               >
-//                 <span>{p.title}</span>
-//                 <span className="text-red-600 font-semibold">
-//                   {p.totalStock} left
-//                 </span>
-//               </li>
-//             ))}
-//           </ul>
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
-
-// /* ================= CARD ================= */
+// /* ================= COMPONENT ================= */
 
 // function StatCard({
 //   title,

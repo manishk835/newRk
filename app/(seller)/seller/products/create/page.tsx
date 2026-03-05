@@ -1,9 +1,10 @@
-// // // app/admin/products/create/page.tsx
+// app/(seller)/seller/products/create/page.tsx
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createProduct } from "@/lib/api/admin/products";
+// import { createProduct } from "@/lib/api/admin/products";
+import { apiFetch } from "@/lib/api/client";
 import { uploadImage } from "@/lib/api/admin/upload";
 
 /* ================= TYPES ================= */
@@ -197,55 +198,63 @@ export default function CreateProductPage() {
 
   /* ================= SUBMIT ================= */
 
-  const handleSubmit = async (
-    e: React.FormEvent
-  ) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     const error = validate();
+  
     if (error) {
       alert(error);
       return;
     }
-
+  
     try {
       setLoading(true);
-
-      await createProduct({
-        title,
-        slug,
-        brand,
-        shortDescription,
-        description,
-        category,
-        subCategory,
-        price,
-        originalPrice,
-        discountPercent:
-          originalPrice > 0
-            ? Math.round(
-                ((originalPrice - price) /
-                  originalPrice) *
-                  100
-              )
-            : 0,
-        thumbnail: images[0].url,
-        images,
-        variants,
-        tags: tags
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean),
-        isFeatured,
-        isNewArrival,
-        isBestSeller,
-        seoTitle,
-        seoDescription,
-        isActive: true,
+  
+      await apiFetch("/products/seller/create", {
+        method: "POST",
+        body: JSON.stringify({
+          title,
+          slug,
+          brand,
+          shortDescription,
+          description,
+          category,
+          subCategory,
+          price,
+          originalPrice,
+  
+          discountPercent:
+            originalPrice > 0
+              ? Math.round(
+                  ((originalPrice - price) /
+                    originalPrice) *
+                    100
+                )
+              : 0,
+  
+          thumbnail: images[0].url,
+          images,
+          variants,
+  
+          tags: tags
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean),
+  
+          isFeatured,
+          isNewArrival,
+          isBestSeller,
+  
+          seoTitle,
+          seoDescription,
+        }),
       });
-
-      alert("Product created successfully");
-      router.push("/admin/products");
+  
+      alert("Product submitted for approval");
+  
+      router.push("/seller/products");
+  
     } catch (err: any) {
       alert(err.message || "Create failed");
     } finally {
@@ -601,4 +610,3 @@ export default function CreateProductPage() {
     </div>
   );
 }
-
