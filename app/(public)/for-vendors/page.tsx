@@ -1,124 +1,338 @@
-"use client";
+// 📄 app/(public)/for-vendors/page.tsx
 
-import { useState } from "react";
-import { apiFetch } from "@/lib/api/client";
+import VendorForm from "./VendorForm";
 
-export default function VendorForm() {
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-
-    const payload = {
-      businessName: formData.get("businessName"),
-      email: formData.get("email"),
-      phone: formData.get("phone"),
-      category: formData.get("category"),
-      message: formData.get("message"),
-    };
-
-    try {
-      await apiFetch("/vendors/apply", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-
-      setSuccess(true);
-      e.currentTarget.reset();
-    } catch (err) {
-      console.error("Vendor apply error", err);
-      alert("Application submission failed");
-    }
-
-    setLoading(false);
-  }
+export default function ForVendorsPage() {
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-6 bg-white p-8 rounded-2xl shadow-md"
-    >
-      <Input
-        name="businessName"
-        label="Business Name"
-        required
-      />
+    <div className="bg-gray-50">
 
-      <Input
-        name="email"
-        label="Business Email"
-        type="email"
-        required
-      />
+      {/* HERO */}
 
-      <Input
-        name="phone"
-        label="Phone Number"
-        required
-      />
+      <section className="pt-32 pb-24 bg-white border-b">
+        <div className="max-w-7xl mx-auto px-6 text-center">
 
-      <Input
-        name="category"
-        label="Product Category"
-        required
-      />
+          <h1 className="text-5xl font-bold mb-6">
+            Sell on <span className="text-[#F5A623]">RK Fashion</span>
+          </h1>
 
-      <div>
-        <label className="block text-sm font-medium mb-2">
-          Tell us about your brand
-        </label>
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto mb-10">
+            Join hundreds of fashion brands already selling on RK Fashion.
+            Reach customers across India and grow your business faster.
+          </p>
 
-        <textarea
-          name="message"
-          rows={4}
-          className="w-full border rounded-lg px-4 py-3"
-        />
-      </div>
+          <a
+            href="#apply"
+            className="inline-block bg-black text-white px-8 py-4 rounded-xl font-semibold hover:bg-gray-800 transition"
+          >
+            Start Selling
+          </a>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full py-4 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 transition"
+        </div>
+      </section>
+
+
+      {/* TRUST STATS */}
+
+      <section className="py-16 bg-gray-50 border-b">
+        <div className="max-w-6xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+
+          <Stat title="10k+" desc="Customers" />
+          <Stat title="500+" desc="Products Sold" />
+          <Stat title="100+" desc="Active Sellers" />
+          <Stat title="24/7" desc="Seller Support" />
+
+        </div>
+      </section>
+
+
+      {/* BENEFITS */}
+
+      <section className="py-24 bg-white">
+
+        <div className="max-w-6xl mx-auto px-6">
+
+          <h2 className="text-3xl font-bold text-center mb-14">
+            Why Sell With Us
+          </h2>
+
+          <div className="grid md:grid-cols-3 gap-10">
+
+            <Benefit
+              title="Reach Thousands"
+              desc="Your products reach customers across India instantly through our marketplace."
+            />
+
+            <Benefit
+              title="Easy Seller Dashboard"
+              desc="Manage products, inventory, orders and earnings from a powerful dashboard."
+            />
+
+            <Benefit
+              title="Secure Payments"
+              desc="Receive payments directly to your seller wallet with transparent earnings."
+            />
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* HOW IT WORKS */}
+
+      <section className="py-24 bg-gray-50 border-t">
+
+        <div className="max-w-6xl mx-auto px-6">
+
+          <h2 className="text-3xl font-bold text-center mb-16">
+            How It Works
+          </h2>
+
+          <div className="grid md:grid-cols-3 gap-10 text-center">
+
+            <Step
+              number="1"
+              title="Apply"
+              desc="Submit your seller application with your brand details."
+            />
+
+            <Step
+              number="2"
+              title="Get Approved"
+              desc="Our team reviews your application and approves your store."
+            />
+
+            <Step
+              number="3"
+              title="Start Selling"
+              desc="Add products, manage orders and start earning."
+            />
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* APPLICATION FORM */}
+
+      <section
+        id="apply"
+        className="py-24 bg-white border-t"
       >
-        {loading ? "Submitting..." : "Submit Application"}
-      </button>
 
-      {success && (
-        <p className="text-green-600 text-center mt-4">
-          Application submitted successfully!
-        </p>
-      )}
-    </form>
-  );
-}
+        <div className="max-w-2xl mx-auto px-6">
 
-function Input({
-  label,
-  name,
-  type = "text",
-  required,
-}: {
-  label: string;
-  name: string;
-  type?: string;
-  required?: boolean;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium mb-2">
-        {label}
-      </label>
+          <h2 className="text-3xl font-bold text-center mb-10">
+            Apply to Become a Seller
+          </h2>
 
-      <input
-        name={name}
-        type={type}
-        required={required}
-        className="w-full border rounded-lg px-4 py-3"
-      />
+          <VendorForm />
+
+        </div>
+
+      </section>
+
     </div>
   );
+
 }
+
+
+/* ================= COMPONENTS ================= */
+
+
+function Benefit({
+  title,
+  desc,
+}: {
+  title: string;
+  desc: string;
+}) {
+
+  return (
+
+    <div className="bg-white p-8 rounded-2xl border shadow-sm text-center">
+
+      <h3 className="font-semibold text-xl mb-3">
+        {title}
+      </h3>
+
+      <p className="text-gray-600">
+        {desc}
+      </p>
+
+    </div>
+
+  );
+
+}
+
+
+function Step({
+  number,
+  title,
+  desc,
+}: {
+  number: string;
+  title: string;
+  desc: string;
+}) {
+
+  return (
+
+    <div className="bg-white p-8 rounded-2xl border shadow-sm">
+
+      <div className="w-12 h-12 mx-auto mb-4 flex items-center justify-center rounded-full bg-black text-white font-bold">
+        {number}
+      </div>
+
+      <h3 className="font-semibold text-lg mb-2">
+        {title}
+      </h3>
+
+      <p className="text-gray-600 text-sm">
+        {desc}
+      </p>
+
+    </div>
+
+  );
+
+}
+
+
+function Stat({
+  title,
+  desc,
+}: {
+  title: string;
+  desc: string;
+}) {
+
+  return (
+
+    <div>
+
+      <div className="text-2xl font-bold">
+        {title}
+      </div>
+
+      <div className="text-sm text-gray-500">
+        {desc}
+      </div>
+
+    </div>
+
+  );
+
+}
+
+// 📄 app/(public)/for-vendors/page.tsx
+
+// import VendorForm from "./VendorForm";
+
+// export default function ForVendorsPage() {
+//   return (
+//     <div className="bg-gray-50">
+
+//       {/* HERO */}
+
+//       <section className="pt-32 pb-24 bg-white border-b">
+//         <div className="max-w-6xl mx-auto px-6 text-center">
+
+//           <h1 className="text-5xl font-bold mb-6">
+//             Sell on <span className="text-[#F5A623]">RK Fashion</span>
+//           </h1>
+
+//           <p className="text-gray-600 text-lg max-w-2xl mx-auto mb-10">
+//             Join thousands of fashion brands selling on RK Fashion.
+//             Reach more customers, manage orders easily and grow your business.
+//           </p>
+
+//           <a
+//             href="#apply"
+//             className="inline-block bg-black text-white px-8 py-4 rounded-xl font-semibold hover:bg-gray-800 transition"
+//           >
+//             Start Selling
+//           </a>
+
+//         </div>
+//       </section>
+
+//       {/* BENEFITS */}
+
+//       <section className="py-20">
+//         <div className="max-w-6xl mx-auto px-6">
+
+//           <h2 className="text-3xl font-bold text-center mb-14">
+//             Why Sell With Us
+//           </h2>
+
+//           <div className="grid md:grid-cols-3 gap-10">
+
+//             <Benefit
+//               title="Reach Thousands"
+//               desc="Your products reach customers across India instantly."
+//             />
+
+//             <Benefit
+//               title="Easy Management"
+//               desc="Manage orders, products and inventory from one dashboard."
+//             />
+
+//             <Benefit
+//               title="Secure Payments"
+//               desc="Receive payments directly to your seller wallet securely."
+//             />
+
+//           </div>
+
+//         </div>
+//       </section>
+
+//       {/* APPLICATION */}
+
+//       <section
+//         id="apply"
+//         className="py-24 bg-white border-t"
+//       >
+//         <div className="max-w-2xl mx-auto px-6">
+
+//           <h2 className="text-3xl font-bold text-center mb-10">
+//             Apply to Become a Seller
+//           </h2>
+
+//           <VendorForm />
+
+//         </div>
+//       </section>
+
+//     </div>
+//   );
+// }
+
+// function Benefit({
+//   title,
+//   desc,
+// }: {
+//   title: string;
+//   desc: string;
+// }) {
+//   return (
+//     <div className="bg-white p-8 rounded-2xl border shadow-sm text-center">
+
+//       <h3 className="font-semibold text-xl mb-3">
+//         {title}
+//       </h3>
+
+//       <p className="text-gray-600">
+//         {desc}
+//       </p>
+
+//     </div>
+//   );
+// }

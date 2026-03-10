@@ -97,6 +97,7 @@ export default function AdminLayout({
 
           <nav className="flex-1 px-4 py-6 space-y-2">
             {navItem("/admin", "Dashboard")}
+            {navItem("/admin/approve-store", "Approve Store")}
             {navItem("/admin/products", "Products")}
             {navItem("/admin/orders", "Orders")}
             {navItem("/admin/coupons", "Coupons")}

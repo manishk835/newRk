@@ -30,11 +30,11 @@ export default function AuthLayout({
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+    <main className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <div className="bg-white border rounded-2xl shadow-sm p-8">
+        {/* <div className="bg-white border rounded-2xl shadow-sm p-8"> */}
           {children}
-        </div>
+        {/* </div> */}
 
         <p className="text-xs text-center text-gray-400 mt-6">
           © {new Date().getFullYear()} RK Fashion. All rights reserved.

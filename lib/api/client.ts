@@ -1,5 +1,3 @@
-// lib/api/client.ts
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 /* ================= GENERIC API FETCH ================= */
@@ -9,6 +7,7 @@ export async function apiFetch(
   options: RequestInit = {}
 ) {
   try {
+
     const res = await fetch(`${API_URL}/api${endpoint}`, {
       credentials: "include",
 
@@ -20,27 +19,61 @@ export async function apiFetch(
       ...options,
     });
 
+    /* ================= READ BODY SAFELY ================= */
+
+    let data: any = null;
+
+    try {
+      const text = await res.text();
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      data = null;
+    }
+
     /* ================= ERROR HANDLING ================= */
 
     if (!res.ok) {
-      let errorMessage = `HTTP ${res.status}`;
 
-      try {
-        const data = await res.json();
-        errorMessage = data?.message || errorMessage;
-      } catch {}
+      const message =
+        data?.message || `HTTP ${res.status}`;
 
-      throw new Error(errorMessage);
+      /* business errors → return instead of throw */
+
+      if (
+        message.includes("already submitted") ||
+        message.includes("already applied")
+      ) {
+        return {
+          success: false,
+          message,
+        };
+      }
+
+      /* auth errors */
+
+      if (res.status === 401) {
+        throw new Error("Unauthorized");
+      }
+
+      /* other errors */
+
+      throw new Error(message);
     }
 
-    /* ================= JSON RESPONSE ================= */
+    /* ================= SUCCESS ================= */
 
-    const text = await res.text();
-
-    return text ? JSON.parse(text) : null;
+    return data;
 
   } catch (error: any) {
-    console.error("API ERROR:", error.message);
+
+    const message = error?.message || "Request failed";
+
+    /* network errors */
+
+    if (message === "Failed to fetch") {
+      console.error("Network error:", message);
+    }
+
     throw error;
   }
 }
