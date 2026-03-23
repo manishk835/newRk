@@ -1,4 +1,3 @@
-// app/(public)/cart/page.tsx
 "use client";
 
 import Link from "next/link";
@@ -10,8 +9,12 @@ export default function CartPage() {
   const { state, dispatch } = useCart();
   const router = useRouter();
 
+  /* ================= UNIQUE ID (VARIANT SAFE) ================= */
+  const getItemId = (item: any) =>
+    `${item.product._id}-${item.variant.size}-${item.variant.color}`;
+
   const [selectedItems, setSelectedItems] = useState<string[]>(
-    state.items.map((item) => item.product._id)
+    state.items.map(getItemId)
   );
 
   /* ================= SELECT HANDLERS ================= */
@@ -28,33 +31,30 @@ export default function CartPage() {
     if (selectedItems.length === state.items.length) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(state.items.map((i) => i.product._id));
+      setSelectedItems(state.items.map(getItemId));
     }
   };
 
-  /* ================= SELECTED ITEMS ================= */
+  /* ================= CALCULATIONS ================= */
 
   const selectedCartItems = useMemo(
     () =>
       state.items.filter((item) =>
-        selectedItems.includes(item.product._id)
+        selectedItems.includes(getItemId(item))
       ),
     [state.items, selectedItems]
   );
 
-  /* ================= CALCULATIONS ================= */
-
   const subtotal = selectedCartItems.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
+    (sum, item) =>
+      sum +
+      (item.variant.priceOverride || item.product.price) *
+        item.quantity,
     0
   );
 
-  const FREE_SHIPPING_LIMIT = 999;
-
   const deliveryFee =
-    subtotal >= FREE_SHIPPING_LIMIT || subtotal === 0
-      ? 0
-      : 49;
+    subtotal >= 999 || subtotal === 0 ? 0 : 49;
 
   const total = subtotal + deliveryFee;
 
@@ -63,21 +63,12 @@ export default function CartPage() {
   const handleCheckout = () => {
     if (selectedCartItems.length === 0) return;
 
-    const hasOutOfStock = selectedCartItems.some(
-      (item) => item.product.stock <= 0
-    );
-
-    if (hasOutOfStock) {
-      alert("Some items are out of stock. Please remove them.");
-      return;
-    }
-
     sessionStorage.setItem(
       "selectedCart",
       JSON.stringify(selectedCartItems)
     );
 
-    router.push("/checkout");
+    router.push("checkout");
   };
 
   /* ================= EMPTY CART ================= */
@@ -88,7 +79,6 @@ export default function CartPage() {
         <h2 className="text-2xl font-semibold mb-3">
           Your cart is empty
         </h2>
-
         <Link
           href="/products"
           className="px-8 py-3 bg-black text-white rounded-xl"
@@ -106,9 +96,7 @@ export default function CartPage() {
         {/* ================= LEFT ================= */}
 
         <section className="lg:col-span-2 space-y-6">
-
           <div className="flex justify-between items-center">
-
             <h1 className="text-2xl font-semibold">
               Shopping Bag ({state.items.length})
             </h1>
@@ -121,37 +109,28 @@ export default function CartPage() {
                 ? "Unselect All"
                 : "Select All"}
             </button>
-
           </div>
 
           {state.items.map((item) => {
-
-            const outOfStock = item.product.stock <= 0;
+            const id = getItemId(item);
+            const price =
+              item.variant.priceOverride ||
+              item.product.price;
 
             return (
               <div
-                key={item.product._id}
-                className={`bg-white rounded-2xl p-6 flex gap-6 shadow-sm border ${
-                  outOfStock ? "opacity-60" : ""
-                }`}
+                key={id}
+                className="bg-white rounded-2xl p-6 flex gap-6 shadow-sm border"
               >
-
                 {/* CHECKBOX */}
-
                 <input
                   type="checkbox"
-                  disabled={outOfStock}
-                  checked={selectedItems.includes(
-                    item.product._id
-                  )}
-                  onChange={() =>
-                    toggleSelect(item.product._id)
-                  }
+                  checked={selectedItems.includes(id)}
+                  onChange={() => toggleSelect(id)}
                   className="mt-2 w-5 h-5"
                 />
 
                 {/* IMAGE */}
-
                 <img
                   src={
                     item.product.images?.[0]?.url ||
@@ -163,40 +142,45 @@ export default function CartPage() {
                 />
 
                 {/* DETAILS */}
-
                 <div className="flex-1">
-
                   <h2 className="font-semibold text-base">
                     {item.product.title}
                   </h2>
 
-                  {/* STOCK STATUS */}
+                  {/* VARIANT INFO */}
+                  <p className="text-sm text-gray-500">
+                    Size: {item.variant.size} | Color:{" "}
+                    {item.variant.color}
+                  </p>
 
-                  {outOfStock ? (
-                    <p className="text-sm text-red-600 mt-1">
-                      Out of Stock
-                    </p>
-                  ) : (
-                    <p className="text-sm text-green-600 mt-1">
-                      In Stock
-                    </p>
-                  )}
+                  {/* STOCK */}
+                  <p
+                    className={`text-sm mt-1 ${
+                      item.variant.stock > 0
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    {item.variant.stock > 0
+                      ? `In Stock (${item.variant.stock} left)`
+                      : "Out of Stock"}
+                  </p>
 
                   {/* QTY */}
-
                   <div className="flex items-center gap-5 mt-4">
-
                     <div className="flex items-center border rounded-lg overflow-hidden">
-
                       <button
-                        disabled={item.quantity <= 1}
                         onClick={() =>
                           dispatch({
                             type: "DECREASE_QTY",
-                            payload: item.product._id,
+                            payload: {
+                              productId: item.product._id,
+                              size: item.variant.size,
+                              color: item.variant.color,
+                            },
                           })
                         }
-                        className="px-4 py-2 disabled:opacity-40"
+                        className="px-4 py-2"
                       >
                         −
                       </button>
@@ -206,59 +190,54 @@ export default function CartPage() {
                       </span>
 
                       <button
-                        disabled={
-                          item.quantity >= item.product.stock
-                        }
                         onClick={() =>
                           dispatch({
                             type: "INCREASE_QTY",
-                            payload: item.product._id,
+                            payload: {
+                              productId: item.product._id,
+                              size: item.variant.size,
+                              color: item.variant.color,
+                            },
                           })
                         }
-                        className="px-4 py-2 disabled:opacity-40"
+                        className="px-4 py-2"
                       >
                         +
                       </button>
-
                     </div>
 
                     <button
                       onClick={() =>
                         dispatch({
                           type: "REMOVE_FROM_CART",
-                          payload: item.product._id,
+                          payload: {
+                            productId: item.product._id,
+                            size: item.variant.size,
+                            color: item.variant.color,
+                          },
                         })
                       }
                       className="text-sm text-red-600"
                     >
                       Remove
                     </button>
-
                   </div>
-
                 </div>
 
                 {/* PRICE */}
-
                 <div className="text-right">
-
                   <p className="text-lg font-semibold">
-                    ₹
-                    {item.product.price * item.quantity}
+                    ₹{price * item.quantity}
                   </p>
-
                 </div>
-
               </div>
             );
           })}
-
         </section>
 
         {/* ================= SUMMARY ================= */}
 
         <aside className="bg-white rounded-2xl p-6 h-fit sticky top-28 shadow-sm border">
-
           <h3 className="text-lg font-semibold mb-5">
             Order Summary
           </h3>
@@ -289,17 +268,13 @@ export default function CartPage() {
             onClick={handleCheckout}
             className="w-full bg-black text-white py-3 rounded-xl font-semibold disabled:opacity-50"
           >
-            Proceed to Checkout (
-            {selectedCartItems.length})
+            Proceed to Checkout ({selectedCartItems.length})
           </button>
-
         </aside>
-
       </div>
     </main>
   );
 }
-
 // // app/(public)/cart/page.tsx
 // "use client";
 
@@ -445,10 +420,13 @@ export default function CartPage() {
 //                   {item.product.title}
 //                 </h2>
 
-//                 <p className="text-sm text-green-600 mt-1">
+//                 {/* <p className="text-sm text-green-600 mt-1">
 //                   In Stock
+//                 </p> */}
+//                 <p className={`text-sm mt-1 ${item.product.totalStock > 0 ? "text-green-600" : "text-red-600"
+//                   }`}>
+//                   {item.product.totalStock > 0 ? "In Stock" : "Out of Stock"}
 //                 </p>
-
 //                 {/* QTY */}
 //                 <div className="flex items-center gap-5 mt-4">
 //                   <div className="flex items-center border rounded-lg overflow-hidden">
@@ -456,7 +434,11 @@ export default function CartPage() {
 //                       onClick={() =>
 //                         dispatch({
 //                           type: "DECREASE_QTY",
-//                           payload: item.product._id,
+//                           payload: {
+//                             productId: item.product._id,
+//                             size: item.variant.size,
+//                             color: item.variant.color,
+//                           },
 //                         })
 //                       }
 //                       className="px-4 py-2"

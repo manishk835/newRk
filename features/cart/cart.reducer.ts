@@ -6,6 +6,23 @@ export const initialCartState: CartState = {
   items: [],
 };
 
+/* ================= HELPER ================= */
+
+const isSameItem = (
+  item: any,
+  payload: {
+    productId: string;
+    size: string;
+    color: string;
+  }
+) => {
+  return (
+    item.product._id === payload.productId &&
+    item.variant.size === payload.size &&
+    item.variant.color === payload.color
+  );
+};
+
 /* ================= REDUCER ================= */
 
 export function cartReducer(
@@ -17,13 +34,13 @@ export function cartReducer(
 
     /* ================= ADD TO CART ================= */
     case "ADD_TO_CART": {
-      const { product, variant, quantity } =
-        action.payload;
+      const { product, variant, quantity } = action.payload;
 
       const existingItem = state.items.find(
         (item) =>
           item.product._id === product._id &&
-          item.variant?.sku === variant?.sku
+          item.variant.size === variant.size &&
+          item.variant.color === variant.color
       );
 
       if (existingItem) {
@@ -31,11 +48,14 @@ export function cartReducer(
           ...state,
           items: state.items.map((item) =>
             item.product._id === product._id &&
-            item.variant?.sku === variant?.sku
+            item.variant.size === variant.size &&
+            item.variant.color === variant.color
               ? {
                   ...item,
-                  quantity:
+                  quantity: Math.min(
                     item.quantity + quantity,
+                    variant.stock // 🔥 stock limit
+                  ),
                 }
               : item
           ),
@@ -46,7 +66,11 @@ export function cartReducer(
         ...state,
         items: [
           ...state.items,
-          { product, variant, quantity },
+          {
+            product,
+            variant,
+            quantity: Math.min(quantity, variant.stock),
+          },
         ],
       };
     }
@@ -56,10 +80,13 @@ export function cartReducer(
       return {
         ...state,
         items: state.items.map((item) =>
-          item.product._id === action.payload
+          isSameItem(item, action.payload)
             ? {
                 ...item,
-                quantity: item.quantity + 1,
+                quantity: Math.min(
+                  item.quantity + 1,
+                  item.variant.stock // 🔥 limit
+                ),
               }
             : item
         ),
@@ -72,7 +99,7 @@ export function cartReducer(
         ...state,
         items: state.items
           .map((item) =>
-            item.product._id === action.payload
+            isSameItem(item, action.payload)
               ? {
                   ...item,
                   quantity: item.quantity - 1,
@@ -89,7 +116,7 @@ export function cartReducer(
         ...state,
         items: state.items.filter(
           (item) =>
-            item.product._id !== action.payload
+            !isSameItem(item, action.payload)
         ),
       };
     }
@@ -106,6 +133,7 @@ export function cartReducer(
       return state;
   }
 }
+// // cart.reducer.ts
 // import { CartAction, CartState } from "./cart.types";
 
 // /* ================= INITIAL STATE ================= */
@@ -120,24 +148,30 @@ export function cartReducer(
 //   state: CartState,
 //   action: CartAction
 // ): CartState {
+
 //   switch (action.type) {
 
-//     /* -------- ADD TO CART -------- */
+//     /* ================= ADD TO CART ================= */
 //     case "ADD_TO_CART": {
-//       const { product, quantity } = action.payload;
+//       const { product, variant, quantity } =
+//         action.payload;
 
 //       const existingItem = state.items.find(
-//         (item) => item.product._id === product._id
+//         (item) =>
+//           item.product._id === product._id &&
+//           item.variant?.sku === variant?.sku
 //       );
 
 //       if (existingItem) {
 //         return {
 //           ...state,
 //           items: state.items.map((item) =>
-//             item.product._id === product._id
+//             item.product._id === product._id &&
+//             item.variant?.sku === variant?.sku
 //               ? {
 //                   ...item,
-//                   quantity: item.quantity + quantity,
+//                   quantity:
+//                     item.quantity + quantity,
 //                 }
 //               : item
 //           ),
@@ -148,27 +182,27 @@ export function cartReducer(
 //         ...state,
 //         items: [
 //           ...state.items,
-//           {
-//             product,
-//             quantity,
-//           },
+//           { product, variant, quantity },
 //         ],
 //       };
 //     }
 
-//     /* -------- INCREASE QTY -------- */
+//     /* ================= INCREASE ================= */
 //     case "INCREASE_QTY": {
 //       return {
 //         ...state,
 //         items: state.items.map((item) =>
 //           item.product._id === action.payload
-//             ? { ...item, quantity: item.quantity + 1 }
+//             ? {
+//                 ...item,
+//                 quantity: item.quantity + 1,
+//               }
 //             : item
 //         ),
 //       };
 //     }
 
-//     /* -------- DECREASE QTY -------- */
+//     /* ================= DECREASE ================= */
 //     case "DECREASE_QTY": {
 //       return {
 //         ...state,
@@ -185,7 +219,7 @@ export function cartReducer(
 //       };
 //     }
 
-//     /* -------- REMOVE -------- */
+//     /* ================= REMOVE ================= */
 //     case "REMOVE_FROM_CART": {
 //       return {
 //         ...state,
@@ -196,11 +230,11 @@ export function cartReducer(
 //       };
 //     }
 
-//     /* -------- SET -------- */
+//     /* ================= SET ================= */
 //     case "SET_CART":
 //       return action.payload;
 
-//     /* -------- CLEAR -------- */
+//     /* ================= CLEAR ================= */
 //     case "CLEAR_CART":
 //       return initialCartState;
 

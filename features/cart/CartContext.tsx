@@ -41,7 +41,16 @@ export function CartProvider({
 
       if (storedCart) {
         const parsed: CartState = JSON.parse(storedCart);
-        dispatch({ type: "SET_CART", payload: parsed });
+
+        // 🔥 SAFETY: ensure variant exists (old data crash fix)
+        const safeItems = parsed.items.filter(
+          (item) => item.variant && item.product
+        );
+
+        dispatch({
+          type: "SET_CART",
+          payload: { items: safeItems },
+        });
       }
     } catch (err) {
       console.error("Failed to load cart from storage");
@@ -50,7 +59,11 @@ export function CartProvider({
 
   /* -------- SAVE CART TO LOCAL STORAGE -------- */
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(state));
+    try {
+      localStorage.setItem("cart", JSON.stringify(state));
+    } catch (err) {
+      console.error("Failed to save cart");
+    }
   }, [state]);
 
   return (
@@ -73,3 +86,79 @@ export function useCart() {
 
   return context;
 }
+// // /CartContext.tsx
+// "use client";
+
+// import {
+//   createContext,
+//   useContext,
+//   useEffect,
+//   useReducer,
+// } from "react";
+// import { cartReducer, initialCartState } from "./cart.reducer";
+// import { CartAction, CartState } from "./cart.types";
+
+// /* ================= CONTEXT TYPE ================= */
+
+// type CartContextType = {
+//   state: CartState;
+//   dispatch: React.Dispatch<CartAction>;
+// };
+
+// /* ================= CONTEXT ================= */
+
+// const CartContext = createContext<CartContextType | undefined>(
+//   undefined
+// );
+
+// /* ================= PROVIDER ================= */
+
+// export function CartProvider({
+//   children,
+// }: {
+//   children: React.ReactNode;
+// }) {
+//   const [state, dispatch] = useReducer(
+//     cartReducer,
+//     initialCartState
+//   );
+
+//   /* -------- LOAD CART FROM LOCAL STORAGE -------- */
+//   useEffect(() => {
+//     try {
+//       const storedCart = localStorage.getItem("cart");
+
+//       if (storedCart) {
+//         const parsed: CartState = JSON.parse(storedCart);
+//         dispatch({ type: "SET_CART", payload: parsed });
+//       }
+//     } catch (err) {
+//       console.error("Failed to load cart from storage");
+//     }
+//   }, []);
+
+//   /* -------- SAVE CART TO LOCAL STORAGE -------- */
+//   useEffect(() => {
+//     localStorage.setItem("cart", JSON.stringify(state));
+//   }, [state]);
+
+//   return (
+//     <CartContext.Provider value={{ state, dispatch }}>
+//       {children}
+//     </CartContext.Provider>
+//   );
+// }
+
+// /* ================= HOOK ================= */
+
+// export function useCart() {
+//   const context = useContext(CartContext);
+
+//   if (!context) {
+//     throw new Error(
+//       "useCart must be used inside CartProvider"
+//     );
+//   }
+
+//   return context;
+// }
