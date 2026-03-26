@@ -1,19 +1,29 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function ForgotPasswordPage() {
 
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [phone, setPhone] = useState("");
+  const queryPhone = searchParams.get("phone") || "";
+
+  const [phone, setPhone] = useState(queryPhone);
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const [loading, setLoading] = useState(false);
-  const [cooldown, setCooldown] = useState(0);
+
+  /* ================= AUTO FILL ================= */
+
+  useEffect(() => {
+    if (queryPhone) {
+      setPhone(queryPhone);
+    }
+  }, [queryPhone]);
 
   /* ================= VALIDATION ================= */
 
@@ -51,35 +61,19 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  /* ================= COOLDOWN ================= */
-
-  const startCooldown = () => {
-    setCooldown(30);
-
-    const timer = setInterval(() => {
-      setCooldown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
   /* ================= SUBMIT ================= */
 
   const submit = async (e: React.FormEvent) => {
+
     e.preventDefault();
 
     setError("");
     setSuccess("");
 
-    if (cooldown > 0) return;
-
     if (!validate()) return;
 
     try {
+
       setLoading(true);
 
       const res = await safeFetch(
@@ -102,22 +96,27 @@ export default function ForgotPasswordPage() {
         throw new Error(data?.message || "Failed to send OTP");
       }
 
-      setSuccess("If the number exists, a reset OTP has been sent 📩");
-
-      startCooldown();
+      // ✅ console OTP flow
+      setSuccess("OTP sent (check backend console)");
 
       setTimeout(() => {
         router.push(`/reset-verify?phone=${phone}`);
       }, 1200);
 
     } catch (err: any) {
+
       setError(err.message || "Something went wrong");
+
     } finally {
+
       setLoading(false);
+
     }
+
   };
 
   return (
+
     <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
 
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 relative">
@@ -170,14 +169,10 @@ export default function ForgotPasswordPage() {
 
           {/* BUTTON */}
           <button
-            disabled={loading || cooldown > 0}
+            disabled={loading}
             className="w-full bg-black text-white py-3 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-60"
           >
-            {loading
-              ? "Sending OTP..."
-              : cooldown > 0
-              ? `Wait ${cooldown}s`
-              : "Send Reset OTP"}
+            {loading ? "Sending OTP..." : "Send Reset OTP"}
           </button>
 
         </form>
@@ -185,5 +180,6 @@ export default function ForgotPasswordPage() {
       </div>
 
     </main>
+
   );
 }
