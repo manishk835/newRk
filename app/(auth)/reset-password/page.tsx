@@ -179,7 +179,6 @@ export default function ResetPasswordPage() {
 
 }
 
-// // app/(auth)/reset-password/page.tsx
 // "use client";
 
 // import { useState, useEffect } from "react";
@@ -187,6 +186,7 @@ export default function ResetPasswordPage() {
 // import { useAuth } from "@/app/providers/AuthProvider";
 
 // export default function ResetPasswordPage() {
+
 //   const router = useRouter();
 //   const searchParams = useSearchParams();
 //   const { user, loading: authLoading } = useAuth();
@@ -195,47 +195,70 @@ export default function ResetPasswordPage() {
 
 //   const [password, setPassword] = useState("");
 //   const [confirm, setConfirm] = useState("");
+
 //   const [error, setError] = useState("");
 //   const [success, setSuccess] = useState("");
+
 //   const [loading, setLoading] = useState(false);
 
-//   /* 🔐 Prevent access without phone */
+//   /* ================= REDIRECT ================= */
+
 //   useEffect(() => {
+
 //     if (!phone) {
 //       router.replace("/login");
 //     }
+
 //   }, [phone, router]);
 
-//   /* 🔁 If already logged in → redirect home */
 //   useEffect(() => {
+
 //     if (!authLoading && user) {
 //       router.replace("/");
 //     }
+
 //   }, [user, authLoading, router]);
 
-//   const submit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-//     setError("");
-//     setSuccess("");
+//   /* ================= VALIDATION ================= */
+
+//   const validate = () => {
 
 //     if (password.length < 8) {
 //       setError("Password must be at least 8 characters");
-//       return;
+//       return false;
 //     }
 
 //     if (password !== confirm) {
 //       setError("Passwords do not match");
-//       return;
+//       return false;
 //     }
 
+//     return true;
+
+//   };
+
+//   /* ================= SUBMIT ================= */
+
+//   const submit = async (e: React.FormEvent) => {
+
+//     e.preventDefault();
+
+//     setError("");
+//     setSuccess("");
+
+//     if (!validate()) return;
+
 //     try {
+
 //       setLoading(true);
 
 //       const res = await fetch(
 //         `${process.env.NEXT_PUBLIC_API_URL}/api/auth/reset-password`,
 //         {
 //           method: "POST",
-//           headers: { "Content-Type": "application/json" },
+//           headers: {
+//             "Content-Type": "application/json",
+//           },
 //           body: JSON.stringify({
 //             phone,
 //             password,
@@ -253,37 +276,51 @@ export default function ResetPasswordPage() {
 
 //       setTimeout(() => {
 //         router.replace("/login?reset=success");
-//       }, 1500);
+//       }, 1200);
 
 //     } catch (err: any) {
+
 //       setError(err.message || "Something went wrong");
+
 //     } finally {
+
 //       setLoading(false);
+
 //     }
+
 //   };
 
 //   if (authLoading) return null;
 
 //   return (
-//     <main className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-//       <div className="bg-white border rounded-2xl p-8 shadow-sm w-full max-w-md">
 
-//         <h2 className="text-xl font-bold text-center mb-2">
+//     <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+
+//       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 relative">
+
+//         <button
+//           onClick={() => router.push("/login")}
+//           className="absolute top-4 right-4 text-gray-400 hover:text-black"
+//         >
+//           ✕
+//         </button>
+
+//         <h1 className="text-xl font-semibold text-center mb-2">
 //           Reset Password
-//         </h2>
+//         </h1>
 
 //         <p className="text-sm text-gray-500 text-center mb-6">
 //           Create a new secure password
 //         </p>
 
-//         <form onSubmit={submit} className="space-y-4">
+//         <form onSubmit={submit} className="space-y-5">
 
 //           <input
 //             type="password"
 //             placeholder="New password"
 //             value={password}
 //             onChange={(e) => setPassword(e.target.value)}
-//             className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-black"
+//             className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black"
 //           />
 
 //           <input
@@ -291,11 +328,11 @@ export default function ResetPasswordPage() {
 //             placeholder="Confirm password"
 //             value={confirm}
 //             onChange={(e) => setConfirm(e.target.value)}
-//             className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-black"
+//             className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black"
 //           />
 
 //           {error && (
-//             <p className="text-sm text-red-600 text-center">
+//             <p className="text-sm text-red-500 text-center">
 //               {error}
 //             </p>
 //           )}
@@ -308,13 +345,17 @@ export default function ResetPasswordPage() {
 
 //           <button
 //             disabled={loading}
-//             className="w-full bg-black text-white py-3 rounded-lg font-semibold disabled:opacity-60"
+//             className="w-full bg-black text-white py-3 rounded-lg text-sm font-medium hover:opacity-90 transition disabled:opacity-60"
 //           >
 //             {loading ? "Updating..." : "Update Password"}
 //           </button>
 
 //         </form>
+
 //       </div>
+
 //     </main>
+
 //   );
+
 // }

@@ -75,25 +75,40 @@ export async function registerUser(data: {
  * 1) Array response
  * 2) { products: [] } response
  */
-export async function fetchProducts(): Promise<Product[]> {
-  const res = await fetch(`${BASE_URL}/api/products`, {
+export async function fetchProducts(params?: {
+  category?: string;
+  filter?: "featured" | "new" | "best";
+  limit?: number;
+}): Promise<Product[]> {
+
+  const query = new URLSearchParams();
+
+  if (params?.category && params.category !== "all") {
+    query.set("category", params.category);
+  }
+
+  if (params?.filter) {
+    query.set("filter", params.filter);
+  }
+
+  if (params?.limit) {
+    query.set("limit", String(params.limit));
+  }
+
+  const qs = query.toString() ? `?${query.toString()}` : "";
+
+  const res = await fetch(`${BASE_URL}/api/products${qs}`, {
     cache: "no-store",
   });
 
   const data = await handleResponse<any>(res);
 
-  // If backend returns array
-  if (Array.isArray(data)) {
-    return data;
-  }
-
-  // If backend returns { products: [...] }
-  if (data?.products && Array.isArray(data.products)) {
-    return data.products;
-  }
+  if (Array.isArray(data)) return data;
+  if (data?.products && Array.isArray(data.products)) return data.products;
 
   return [];
 }
+
 
 export async function fetchProductBySlug(
   slug: string

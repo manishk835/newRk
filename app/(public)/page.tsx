@@ -10,32 +10,53 @@ import type { Product } from "@/components/ui/product/product.types";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "RK Fashion House | Premium Everyday Fashion",
+  title: "RK Marketplace | Multi Category Shopping",
   description:
-    "Discover premium fashion for men, women and kids. Trusted marketplace with fast delivery & secure checkout.",
-  openGraph: {
-    title: "RK Fashion House",
-    description:
-      "Premium clothing marketplace for modern families.",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-  },
+    "Shop fashion, medical, electronics and more from verified sellers.",
 };
 
-export default async function HomePage() {
-  let products: Product[] = [];
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string | string[] }>;
+}) {
+
+  const params = await searchParams;
+
+  const rawCategory = params?.category;
+
+  const category =
+    typeof rawCategory === "string"
+      ? rawCategory.toLowerCase()
+      : Array.isArray(rawCategory)
+      ? rawCategory[0].toLowerCase()
+      : "all";
+
+  /* ================= DATA ================= */
+
+  let featured: Product[] = [];
+  let newArrivals: Product[] = [];
+  let bestSellers: Product[] = [];
+  let categoryProducts: Product[] = [];
 
   try {
-    products = await fetchProducts();
+    if (category === "all") {
+      [featured, newArrivals, bestSellers] = await Promise.all([
+        fetchProducts({ filter: "featured", limit: 8 }),
+        fetchProducts({ filter: "new", limit: 8 }),
+        fetchProducts({ filter: "best", limit: 8 }),
+      ]);
+    } else {
+      categoryProducts = await fetchProducts({
+        category,
+        limit: 12,
+      });
+    }
   } catch (error) {
     console.error("Homepage fetch failed:", error);
   }
 
-  const featured = products.filter(p => p?.isFeatured).slice(0, 8);
-  const newArrivals = products.filter(p => p?.isNewArrival).slice(0, 8);
-  const bestSellers = products.filter(p => p?.isBestSeller).slice(0, 8);
+  /* ================= UI ================= */
 
   return (
     <div className="bg-white">
@@ -45,37 +66,29 @@ export default async function HomePage() {
         <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
 
           <div>
-            <h1 className="text-5xl md:text-6xl font-extrabold leading-tight mb-6">
-              Style That Moves <br /> With You
+            <h1 className="text-5xl md:text-6xl font-extrabold mb-6 leading-tight">
+              {category === "all"
+                ? "Discover Everything in One Place"
+                : `${category.toUpperCase()} Marketplace`}
             </h1>
 
-            <p className="text-gray-600 max-w-xl mb-10 text-lg">
-              A trusted fashion marketplace connecting families
-              with quality clothing brands. Fast shipping. Secure checkout.
+            <p className="text-gray-600 mb-10 text-lg max-w-xl">
+              Shop from verified sellers across multiple categories with fast delivery and secure checkout.
             </p>
 
-            <div className="flex gap-5 flex-wrap">
-              <Link
-                href="/products"
-                className="px-10 py-4 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 transition"
-              >
-                Shop Collection
-              </Link>
-
-              <Link
-                href="/new-arrivals"
-                className="px-10 py-4 border border-black rounded-xl font-semibold hover:bg-black hover:text-white transition"
-              >
-                New Arrivals
-              </Link>
-            </div>
+            <Link
+              href={`/products${category !== "all" ? `?category=${category}` : ""}`}
+              className="px-10 py-4 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 transition"
+            >
+              Explore Products
+            </Link>
           </div>
 
           <div className="hidden lg:block">
             <div className="relative h-105 rounded-3xl overflow-hidden shadow-xl">
               <Image
                 src="/hero-fashion.jpg"
-                alt="Fashion Marketplace"
+                alt="Marketplace"
                 fill
                 className="object-cover"
                 priority
@@ -88,44 +101,151 @@ export default async function HomePage() {
 
       <TrustSection />
 
-      <ProductSection
-        title="Featured Picks"
-        products={featured}
-        viewAll="/products?filter=featured"
-        bg="bg-gray-50"
-      />
+      {/* ================= PRODUCTS ================= */}
 
-      <ProductSection
-        title="New This Week"
-        products={newArrivals}
-        viewAll="/products?filter=new"
-
-      />
-
-      <ProductSection
-        title="Top Selling Now"
-        products={bestSellers}
-        viewAll="/products?filter=best"
-        bg="bg-gray-50"
-      />
-      
+      {category === "all" ? (
+        <>
+          <ProductSection title="Featured Picks" products={featured} />
+          <ProductSection title="New This Week" products={newArrivals} />
+          <ProductSection title="Top Selling Now" products={bestSellers} />
+          <CategoryShowcase />
+        </>
+      ) : (
+        <CategorySection category={category} products={categoryProducts} />
+      )}
 
       <VendorCTA />
-
       <FinalCTA />
 
     </div>
   );
 }
 
-/* ========================================================= */
+/* ================= CATEGORY SECTION ================= */
+
+function CategorySection({
+  category,
+  products,
+}: {
+  category: string;
+  products: Product[];
+}) {
+  return (
+    <section className="py-20">
+      <div className="container mx-auto px-6">
+
+        <div className="flex justify-between items-center mb-10">
+          <h2 className="text-3xl font-bold tracking-tight">
+            {category.toUpperCase()} Products
+          </h2>
+
+          <Link
+            href="/"
+            className="text-sm font-medium hover:underline"
+          >
+            ← Back to Home
+          </Link>
+        </div>
+
+        {!products.length ? (
+          <p className="text-gray-500">
+            No products found in this category.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {products.map((product) => (
+              <ProductCard key={product._id} product={product} />
+            ))}
+          </div>
+        )}
+
+      </div>
+    </section>
+  );
+}
+
+/* ================= PRODUCT SECTION ================= */
+
+function ProductSection({
+  title,
+  products,
+}: {
+  title: string;
+  products: Product[];
+}) {
+  if (!products?.length) return null;
+
+  return (
+    <section className="py-20 bg-gray-50">
+      <div className="container mx-auto px-6">
+
+        <div className="flex justify-between items-center mb-10">
+          <h2 className="text-3xl font-bold tracking-tight">
+            {title}
+          </h2>
+
+          <Link
+            href="/products"
+            className="text-sm font-medium hover:underline"
+          >
+            View All →
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {products.map((product) => (
+            <ProductCard key={product._id} product={product} />
+          ))}
+        </div>
+
+      </div>
+    </section>
+  );
+}
+
+/* ================= PRODUCT CARD ================= */
+
+function ProductCard({ product }: { product: Product }) {
+  const imageUrl =
+    product.thumbnail ||
+    product.images?.[0]?.url ||
+    "/placeholder.png";
+
+  return (
+    <div className="group bg-white rounded-xl border p-3 hover:shadow-lg transition">
+
+      <div className="relative h-52 bg-gray-100 rounded-lg overflow-hidden">
+        <Image
+          src={imageUrl}
+          alt={product.title}
+          fill
+          className="object-cover group-hover:scale-105 transition duration-300"
+        />
+      </div>
+
+      <h3 className="mt-3 text-sm font-medium line-clamp-2">
+        {product.title}
+      </h3>
+
+      <p className="mt-2 font-semibold text-lg">
+        ₹{product.price}
+      </p>
+
+      <div className="mt-2">
+        <WishlistButton productId={product._id} />
+      </div>
+    </div>
+  );
+}
+
+/* ================= TRUST ================= */
 
 function TrustSection() {
   const items = [
-    { title: "Secure Payments", icon: "🔒" },
-    { title: "Verified Sellers", icon: "✔️" },
-    { title: "Fast Delivery", icon: "🚚" },
-    { title: "Easy Returns", icon: "↩️" },
+    "Secure Payments",
+    "Verified Sellers",
+    "Fast Delivery",
+    "Easy Returns",
   ];
 
   return (
@@ -133,13 +253,10 @@ function TrustSection() {
       <div className="container mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6">
         {items.map((item) => (
           <div
-            key={item.title}
-            className="bg-white rounded-xl p-6 text-center shadow-sm hover:shadow-md transition"
+            key={item}
+            className="bg-white p-6 text-center rounded-xl shadow-sm"
           >
-            <div className="text-2xl mb-3">{item.icon}</div>
-            <p className="font-semibold text-gray-800">
-              {item.title}
-            </p>
+            {item}
           </div>
         ))}
       </div>
@@ -147,205 +264,226 @@ function TrustSection() {
   );
 }
 
-/* ========================================================= */
-function ProductSection({
-  title,
-  products,
-  viewAll,
-  bg,
-}: {
-  title: string;
-  products: Product[];
-  viewAll: string;
-  bg?: string;
-}) {
-  if (!products?.length) return null;
+/* ================= CATEGORY SHOWCASE ================= */
+
+function CategoryShowcase() {
+  const cats = ["fashion", "medical", "electronics"];
 
   return (
-    <section className={`py-20 ${bg || "bg-gray-50"}`}>
-      <div className="container mx-auto px-6">
-
-        {/* Header */}
-        <div className="flex justify-between items-end mb-12">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              {title}
-            </h2>
-            <div className="w-16 h-1 bg-black mt-3 rounded-full" />
-          </div>
-
+    <section className="py-20">
+      <div className="container mx-auto px-6 grid md:grid-cols-3 gap-6">
+        {cats.map((c) => (
           <Link
-            href={viewAll}
-            className="text-sm font-semibold flex items-center gap-1 group"
+            key={c}
+            href={`/?category=${c}`}
+            className="p-10 border rounded-xl text-center hover:shadow-md transition"
           >
-            View All
-            <span className="group-hover:translate-x-1 transition">
-              →
-            </span>
+            {c.toUpperCase()}
           </Link>
-        </div>
-
-        {/* Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-          {products.map((product) => {
-            const imageUrl =
-              product.thumbnail ||
-              product.images?.[0]?.url ||
-              "/placeholder.png";
-
-            const hasDiscount =
-              product.comparePrice &&
-              product.comparePrice > product.price;
-
-              const comparePrice = product.comparePrice ?? 0;
-
-              const discountPercent =
-                comparePrice > product.price
-                  ? Math.round(
-                      ((comparePrice - product.price) / comparePrice) * 100
-                    )
-                  : 0;
-
-            return (
-              <div
-                key={product._id}
-                className="group relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition duration-300 overflow-hidden"
-              >
-                {/* Discount Badge */}
-                {hasDiscount && (
-                  <div className="absolute top-3 left-3 bg-black text-white text-xs font-medium px-3 py-1 rounded-full z-10">
-                    {discountPercent}% OFF
-                  </div>
-                )}
-
-                {/* Wishlist */}
-                <div className="absolute top-3 right-3 z-10">
-                  <WishlistButton productId={product._id} />
-                </div>
-
-                <Link href={`/product/${product.slug}`} className="block">
-                  
-                  {/* Image */}
-                  <div className="relative h-56 bg-gray-100 overflow-hidden">
-                    <Image
-                      src={imageUrl}
-                      alt={product.title}
-                      fill
-                      className="object-cover group-hover:scale-110 transition duration-500"
-                    />
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-4">
-                    <h3 className="font-medium text-sm md:text-base line-clamp-2 min-h-10">
-                      {product.title}
-                    </h3>
-
-                    <div className="mt-3 flex items-center gap-2">
-                      <p className="font-semibold text-lg">
-                        ₹{product.price}
-                      </p>
-
-                      {hasDiscount && (
-                        <span className="text-sm line-through text-gray-400">
-                          ₹{product.comparePrice}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              </div>
-            );
-          })}
-        </div>
-
+        ))}
       </div>
     </section>
   );
 }
+
+/* ================= CTA ================= */
+
+function VendorCTA() {
+  return (
+    <section className="py-20 text-center">
+      <Link
+        href="/for-vendors"
+        className="bg-black text-white px-8 py-3 rounded-xl hover:bg-gray-800 transition"
+      >
+        Become Seller
+      </Link>
+    </section>
+  );
+}
+
+function FinalCTA() {
+  return (
+    <section className="py-20 text-center bg-black text-white">
+      Explore Marketplace
+    </section>
+  );
+}
+
+// // app/(public)/page.tsx
+
+// import Link from "next/link";
+// import Image from "next/image";
+// import type { Metadata } from "next";
+// import { fetchProducts } from "@/lib/api";
+// import WishlistButton from "@/components/ui/WishlistButton";
+// import type { Product } from "@/components/ui/product/product.types";
+
+// export const revalidate = 60;
+
+// export const metadata: Metadata = {
+//   title: "RK Marketplace | Multi Category Shopping",
+//   description:
+//     "Shop fashion, medical, electronics and more from verified sellers.",
+// };
+
+// export default async function HomePage({
+//   searchParams,
+// }: {
+//   searchParams: { category?: string };
+// }) {
+//   const rawCategory = searchParams?.category;
+
+//   const category =
+//     typeof rawCategory === "string"
+//       ? rawCategory
+//       : Array.isArray(rawCategory)
+//       ? rawCategory[0]
+//       : "all";
+//   let featured: Product[] = [];
+//   let newArrivals: Product[] = [];
+//   let bestSellers: Product[] = [];
+//   let categoryProducts: Product[] = [];
+
+//   try {
+//     if (category === "all") {
+//       [featured, newArrivals, bestSellers] = await Promise.all([
+//         fetchProducts({ filter: "featured", limit: 8 }),
+//         fetchProducts({ filter: "new", limit: 8 }),
+//         fetchProducts({ filter: "best", limit: 8 }),
+//       ]);
+//     } else {
+//       categoryProducts = await fetchProducts({
+//         category,
+//         limit: 12,
+//       });
+//     }
+//   } catch (error) {
+//     console.error("Homepage fetch failed:", error);
+//   }
+
+//   return (
+//     <div className="bg-white">
+
+//       {/* HERO */}
+//       <section className="pt-32 pb-24 bg-linear-to-b from-gray-50 to-white">
+//         <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+
+//           <div>
+//             <h1 className="text-5xl md:text-6xl font-extrabold mb-6">
+//               {category === "all"
+//                 ? "Discover Everything in One Place"
+//                 : `${category.toUpperCase()} Marketplace`}
+//             </h1>
+
+//             <p className="text-gray-600 mb-10 text-lg">
+//               Browse top products from trusted sellers.
+//             </p>
+
+//             <Link
+//               href={`/products?category=${category}`}
+//               className="px-10 py-4 bg-black text-white rounded-xl"
+//             >
+//               Explore
+//             </Link>
+//           </div>
+
+//           <div className="hidden lg:block">
+//             <div className="relative h-105 rounded-3xl overflow-hidden shadow-xl">
+//               <Image
+//                 src="/hero-fashion.jpg"
+//                 alt="Marketplace"
+//                 fill
+//                 className="object-cover"
+//               />
+//             </div>
+//           </div>
+
+//         </div>
+//       </section>
+
+//       <TrustSection />
+
+//       {/* ================= PRODUCTS ================= */}
+
+//       {category === "all" ? (
+//         <>
+//           <ProductSection title="Featured Picks" products={featured} />
+//           <ProductSection title="New This Week" products={newArrivals} />
+//           <ProductSection title="Top Selling Now" products={bestSellers} />
+//         </>
+//       ) : (
+//         <CategorySection
+//           category={category}
+//           products={categoryProducts}
+//         />
+//       )}
+
+//       {category === "all" && <CategoryShowcase />}
+
+//       <VendorCTA />
+//       <FinalCTA />
+
+//     </div>
+//   );
+// }
+
+// /* ================= CATEGORY SECTION ================= */
+
+// function CategorySection({
+//   category,
+//   products,
+// }: {
+//   category: string;
+//   products: Product[];
+// }) {
+//   return (
+//     <section className="py-20">
+//       <div className="container mx-auto px-6">
+
+//         <h2 className="text-3xl font-bold mb-10">
+//           {category.toUpperCase()} Products
+//         </h2>
+
+//         {!products.length ? (
+//           <p className="text-gray-500">
+//             No products found in this category.
+//           </p>
+//         ) : (
+//           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+//             {products.map((product) => (
+//               <ProductCard key={product._id} product={product} />
+//             ))}
+//           </div>
+//         )}
+
+//       </div>
+//     </section>
+//   );
+// }
+
+// /* ================= PRODUCT SECTION ================= */
+
 // function ProductSection({
 //   title,
 //   products,
-//   viewAll,
-//   bg,
 // }: {
 //   title: string;
 //   products: Product[];
-//   viewAll: string;
-//   bg?: string;
 // }) {
 //   if (!products?.length) return null;
 
 //   return (
-//     <section className={`py-24 ${bg || ""}`}>
+//     <section className="py-20 bg-gray-50">
 //       <div className="container mx-auto px-6">
 
-//         <div className="flex justify-between items-center mb-14">
-//           <h2 className="text-3xl font-bold">{title}</h2>
-//           <Link
-//             href={viewAll}
-//             className="text-sm font-semibold hover:underline"
-//           >
-//             View All
-//           </Link>
-//         </div>
+//         <h2 className="text-3xl font-bold mb-10">
+//           {title}
+//         </h2>
 
-//         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-//           {products.map((product) => {
-//             const imageUrl =
-//               product.thumbnail ||
-//               product.images?.[0]?.url ||
-//               "/placeholder.png";
-
-//             const hasDiscount =
-//               product.comparePrice &&
-//               product.comparePrice > product.price;
-
-//             return (
-//               <div key={product._id} className="relative group">
-
-//                 {hasDiscount && (
-//                   <div className="absolute top-3 left-3 bg-black text-white text-xs px-3 py-1 rounded-full z-10">
-//                     Sale
-//                   </div>
-//                 )}
-
-//                 <div className="absolute top-3 right-3 z-10">
-//                   <WishlistButton productId={product._id} />
-//                 </div>
-
-//                 <Link
-//                   href={`/product/${product.slug}`}
-//                   className="block bg-white rounded-2xl border p-4 hover:shadow-lg transition overflow-hidden"
-//                 >
-//                   <div className="relative h-52 bg-gray-100 rounded-lg overflow-hidden">
-//                     <Image
-//                       src={imageUrl}
-//                       alt={product.title}
-//                       fill
-//                       className="object-cover group-hover:scale-105 transition duration-300"
-//                     />
-//                   </div>
-
-//                   <h3 className="mt-4 font-medium line-clamp-2">
-//                     {product.title}
-//                   </h3>
-
-//                   <div className="mt-2 flex items-center gap-2">
-//                     <p className="font-semibold text-lg">
-//                       ₹{product.price}
-//                     </p>
-
-//                     {hasDiscount && (
-//                       <span className="text-sm line-through text-gray-400">
-//                         ₹{product.comparePrice}
-//                       </span>
-//                     )}
-//                   </div>
-//                 </Link>
-//               </div>
-//             );
-//           })}
+//         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+//           {products.map((product) => (
+//             <ProductCard key={product._id} product={product} />
+//           ))}
 //         </div>
 
 //       </div>
@@ -353,52 +491,96 @@ function ProductSection({
 //   );
 // }
 
-/* ========================================================= */
+// /* ================= PRODUCT CARD ================= */
 
-function VendorCTA() {
-  return (
-    <section className="py-28 bg-gray-100">
-      <div className="container mx-auto px-6 text-center max-w-3xl">
-        <h2 className="text-4xl font-bold mb-6">
-          Start Selling With RK Fashion House
-        </h2>
-        <p className="text-gray-600 mb-10 text-lg">
-          Launch your fashion brand online. Manage products,
-          track orders and grow your business with our marketplace tools.
-        </p>
+// function ProductCard({ product }: { product: Product }) {
+//   const imageUrl =
+//     product.thumbnail ||
+//     product.images?.[0]?.url ||
+//     "/placeholder.png";
 
-        <Link
-          href="/for-vendors"
-          className="inline-block px-12 py-4 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 transition"
-        >
-          Become a Seller
-        </Link>
-      </div>
-    </section>
-  );
-}
+//   return (
+//     <div className="group bg-white rounded-xl border p-3 hover:shadow-lg transition">
 
-/* ========================================================= */
+//       <div className="relative h-52 bg-gray-100 rounded-lg overflow-hidden">
+//         <Image
+//           src={imageUrl}
+//           alt={product.title}
+//           fill
+//           className="object-cover group-hover:scale-105 transition"
+//         />
+//       </div>
 
-function FinalCTA() {
-  return (
-    <section className="py-28 bg-black text-white">
-      <div className="container mx-auto px-6 text-center">
-        <h2 className="text-4xl font-bold mb-6">
-          Discover Fashion Without Limits
-        </h2>
+//       <h3 className="mt-3 text-sm font-medium line-clamp-2">
+//         {product.title}
+//       </h3>
 
-        <p className="text-gray-300 mb-10">
-          Modern. Comfortable. Affordable.
-        </p>
+//       <p className="mt-2 font-semibold">
+//         ₹{product.price}
+//       </p>
 
-        <Link
-          href="/products"
-          className="inline-block px-12 py-4 bg-white text-black rounded-xl font-semibold hover:bg-gray-200 transition"
-        >
-          Explore Collection
-        </Link>
-      </div>
-    </section>
-  );
-}
+//       <WishlistButton productId={product._id} />
+//     </div>
+//   );
+// }
+
+// /* ================= TRUST ================= */
+
+// function TrustSection() {
+//   const items = [
+//     "Secure Payments",
+//     "Verified Sellers",
+//     "Fast Delivery",
+//     "Easy Returns",
+//   ];
+
+//   return (
+//     <section className="py-16 bg-gray-50">
+//       <div className="container mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6">
+//         {items.map((item) => (
+//           <div key={item} className="bg-white p-6 text-center rounded-xl">
+//             {item}
+//           </div>
+//         ))}
+//       </div>
+//     </section>
+//   );
+// }
+
+// /* ================= CATEGORY SHOWCASE ================= */
+
+// function CategoryShowcase() {
+//   const cats = ["fashion", "medical", "electronics"];
+
+//   return (
+//     <section className="py-20">
+//       <div className="container mx-auto px-6 grid md:grid-cols-3 gap-6">
+//         {cats.map((c) => (
+//           <Link key={c} href={`/?category=${c}`} className="p-10 border rounded-xl text-center">
+//             {c.toUpperCase()}
+//           </Link>
+//         ))}
+//       </div>
+//     </section>
+//   );
+// }
+
+// /* ================= CTA ================= */
+
+// function VendorCTA() {
+//   return (
+//     <section className="py-20 text-center">
+//       <Link href="/for-vendors" className="bg-black text-white px-8 py-3 rounded">
+//         Become Seller
+//       </Link>
+//     </section>
+//   );
+// }
+
+// function FinalCTA() {
+//   return (
+//     <section className="py-20 text-center bg-black text-white">
+//       Explore Marketplace
+//     </section>
+//   );
+// }
