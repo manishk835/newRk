@@ -9,6 +9,8 @@ type User = {
   email?: string;
   role: string;
   sellerStatus?: string;
+  profileImage?: string; // 🔥 YE ADD KARNA HAI
+
 };
 
 type AuthContextType = {

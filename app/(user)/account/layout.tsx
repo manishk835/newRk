@@ -1,5 +1,3 @@
-// app/(user)/account/layout.tsx
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,6 +7,7 @@ import Link from "next/link";
 type User = {
   name: string;
   phone: string;
+  profileImage?: string;
 };
 
 type NavItem = {
@@ -18,13 +17,12 @@ type NavItem = {
   badge?: boolean;
 };
 
-/* ================= NAV STRUCTURE (PRO LEVEL) ================= */
-
 const navSections: { title: string; items: NavItem[] }[] = [
   {
     title: "Overview",
     items: [
       { href: "/account", label: "Dashboard", icon: "🏠" },
+      { href: "/account/profile", label: "My Profile", icon: "👤" }, // ✅ added
       { href: "/account/orders", label: "My Orders", icon: "📦", badge: true },
       { href: "/account/returns", label: "Returns & Refunds", icon: "↩️" },
     ],
@@ -135,8 +133,18 @@ export default function AccountLayout({
 
             {/* USER */}
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-full bg-linear-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold">
-                {user.name?.[0]}
+              <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
+                {user.profileImage ? (
+                  <img
+                    src={user.profileImage}
+                    alt="profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-black text-white flex items-center justify-center font-semibold">
+                    {user.name?.[0]}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -145,9 +153,8 @@ export default function AccountLayout({
               </div>
             </div>
 
-            {/* NAV SECTIONS */}
+            {/* NAV */}
             <div className="space-y-6">
-
               {navSections.map((section) => (
                 <div key={section.title}>
                   <h3 className="text-xs font-semibold text-gray-400 mb-2 uppercase">
@@ -155,31 +162,34 @@ export default function AccountLayout({
                   </h3>
 
                   <nav className="space-y-1 text-sm">
-                    {section.items.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={`flex items-center justify-between px-3 py-2 rounded-lg transition ${
-                          isActive(item.href)
-                            ? "bg-blue-600 text-white"
-                            : "text-gray-600 hover:bg-gray-100"
-                        }`}
-                      >
-                        <span className="flex items-center gap-2">
-                          {item.icon} {item.label}
-                        </span>
+                    {section.items.map((item) => {
+                      const active = isActive(item.href);
 
-                        {item.badge && (
-                          <span className="text-xs bg-gray-200 px-2 py-0.5 rounded-full">
-                            {orderCount}
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className={`flex items-center justify-between px-3 py-2 rounded-lg transition ${
+                            active
+                              ? "bg-blue-600 text-white"
+                              : "text-gray-600 hover:bg-gray-100"
+                          }`}
+                        >
+                          <span className="flex items-center gap-2">
+                            {item.icon} {item.label}
                           </span>
-                        )}
-                      </Link>
-                    ))}
+
+                          {item.badge && (
+                            <span className="text-xs bg-gray-200 px-2 py-0.5 rounded-full">
+                              {orderCount}
+                            </span>
+                          )}
+                        </Link>
+                      );
+                    })}
                   </nav>
                 </div>
               ))}
-
             </div>
 
             {/* SELLER CTA */}
@@ -194,7 +204,6 @@ export default function AccountLayout({
 
           {/* BOTTOM */}
           <div className="space-y-2 mt-6">
-
             <button
               onClick={() => router.push("/account/security")}
               className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 text-sm text-gray-700 hover:bg-gray-200"
@@ -208,7 +217,6 @@ export default function AccountLayout({
             >
               🚪 Sign Out
             </button>
-
           </div>
 
         </aside>
@@ -232,8 +240,18 @@ export default function AccountLayout({
                   🔔
                 </div>
 
-                <div className="w-9 h-9 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-medium">
-                  {user.name?.[0]}
+                {/* PROFILE IMAGE */}
+                <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-200">
+                  {user.profileImage ? (
+                    <img
+                      src={user.profileImage}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-blue-500 text-white flex items-center justify-center text-sm font-medium">
+                      {user.name?.[0]}
+                    </div>
+                  )}
                 </div>
               </div>
 
