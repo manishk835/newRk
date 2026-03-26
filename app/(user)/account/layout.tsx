@@ -1,6 +1,8 @@
+// app/(user)/account/layout.tsx
+
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 
@@ -9,11 +11,48 @@ type User = {
   phone: string;
 };
 
-const navItems = [
-  { href: "/account", label: "Dashboard", icon: "🏠" },
-  { href: "/account/orders", label: "My Orders", icon: "📦" },
-  { href: "/account/favorites", label: "Wishlist", icon: "❤️" },
-  { href: "/account/address", label: "Saved Address", icon: "📍" },
+type NavItem = {
+  href: string;
+  label: string;
+  icon: string;
+  badge?: boolean;
+};
+
+/* ================= NAV STRUCTURE (PRO LEVEL) ================= */
+
+const navSections: { title: string; items: NavItem[] }[] = [
+  {
+    title: "Overview",
+    items: [
+      { href: "/account", label: "Dashboard", icon: "🏠" },
+      { href: "/account/orders", label: "My Orders", icon: "📦", badge: true },
+      { href: "/account/returns", label: "Returns & Refunds", icon: "↩️" },
+    ],
+  },
+  {
+    title: "Shopping",
+    items: [
+      { href: "/account/favorites", label: "Wishlist", icon: "❤️" },
+      { href: "/account/address", label: "Saved Addresses", icon: "📍" },
+      { href: "/account/coupons", label: "Coupons & Offers", icon: "🏷️" },
+    ],
+  },
+  {
+    title: "Payments",
+    items: [
+      { href: "/account/wallet", label: "Wallet", icon: "💰" },
+      { href: "/account/payments", label: "Payment Methods", icon: "💳" },
+      { href: "/account/transactions", label: "Transactions", icon: "📜" },
+    ],
+  },
+  {
+    title: "Account",
+    items: [
+      { href: "/account/security", label: "Login & Security", icon: "🔐" },
+      { href: "/account/notifications", label: "Notifications", icon: "🔔" },
+      { href: "/account/support", label: "Help & Support", icon: "📞" },
+    ],
+  },
 ];
 
 export default function AccountLayout({
@@ -26,8 +65,6 @@ export default function AccountLayout({
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
   const [orderCount, setOrderCount] = useState<number>(0);
 
   const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -37,12 +74,6 @@ export default function AccountLayout({
       ? pathname === "/account"
       : pathname.startsWith(href);
 
-  const currentTitle = useMemo(() => {
-    const found = navItems.find((item) => isActive(item.href));
-    return found?.label || "My Account";
-  }, [pathname]);
-
-  /* ================= LOAD USER ================= */
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -58,11 +89,10 @@ export default function AccountLayout({
         const data = await res.json();
         setUser(data);
 
-        const orderRes = await fetch(
-          `${BASE_URL}/api/orders/my`,
-          { credentials: "include" }
-        );
-        
+        const orderRes = await fetch(`${BASE_URL}/api/orders/my`, {
+          credentials: "include",
+        });
+
         const orderData = await orderRes.json();
         setOrderCount(orderData.length);
       } catch {
@@ -75,21 +105,6 @@ export default function AccountLayout({
     loadUser();
   }, [router, BASE_URL]);
 
-  /* ================= CLOSE SIDEBAR ON ROUTE CHANGE ================= */
-  useEffect(() => {
-    setSidebarOpen(false);
-    setProfileOpen(false);
-  }, [pathname]);
-
-  /* ================= LOCK SCROLL WHEN SIDEBAR OPEN ================= */
-  useEffect(() => {
-    if (sidebarOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
-  }, [sidebarOpen]);
-
   const logout = async () => {
     await fetch(`${BASE_URL}/api/auth/logout`, {
       method: "POST",
@@ -97,18 +112,12 @@ export default function AccountLayout({
     });
 
     router.push("/");
-    router.refresh();
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-10 space-y-6 animate-pulse">
-        <div className="h-8 bg-gray-200 rounded w-1/4" />
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="h-40 bg-gray-200 rounded-2xl" />
-          <div className="h-40 bg-gray-200 rounded-2xl" />
-          <div className="h-40 bg-gray-200 rounded-2xl" />
-        </div>
+      <div className="min-h-screen bg-gray-100 p-10 animate-pulse">
+        Loading...
       </div>
     );
   }
@@ -116,101 +125,122 @@ export default function AccountLayout({
   if (!user) return null;
 
   return (
-    <main className="pt-20 min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
-
-      {/* ================= TOP BAR ================= */}
-      <div className="bg-white dark:bg-gray-800 border-b px-6 py-4 flex justify-between items-center">
-
-        {/* Mobile Menu */}
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="lg:hidden text-xl"
-        >
-          ☰
-        </button>
-
-        <h1 className="font-semibold text-lg dark:text-white">
-          {currentTitle}
-        </h1>
-
-        {/* Profile */}
-        <div className="relative">
-          <button
-            onClick={() => setProfileOpen(!profileOpen)}
-            className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center"
-          >
-            {user.name.charAt(0).toUpperCase()}
-          </button>
-
-          {profileOpen && (
-            <div className="absolute right-0 mt-3 w-56 bg-white dark:bg-gray-800 shadow-xl border rounded-2xl p-4 text-sm z-50">
-              <p className="font-semibold">{user.name}</p>
-              <p className="text-gray-500 text-xs mb-4">
-                {user.phone}
-              </p>
-
-              <Link
-                href="/account/security"
-                className="block py-2 hover:text-black dark:hover:text-white"
-              >
-                Account Security
-              </Link>
-
-              <button
-                onClick={logout}
-                className="block w-full text-left text-red-600 mt-3"
-              >
-                Sign Out
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ================= MOBILE OVERLAY ================= */}
-      {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-        />
-      )}
-
-      <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-4 gap-8">
+    <main className="pt-16 min-h-screen bg-gray-100">
+      <div className="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-4 gap-6">
 
         {/* ================= SIDEBAR ================= */}
-        <aside
-          className={`fixed lg:static z-50 top-0 left-0 h-full lg:h-auto w-72 lg:w-auto bg-white dark:bg-gray-800 rounded-none lg:rounded-3xl shadow-lg lg:shadow-sm border p-6 transition-transform duration-300
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
-        >
-          <nav className="space-y-2 mt-16 lg:mt-0">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex justify-between items-center px-4 py-3 rounded-xl text-sm font-medium transition ${
-                  isActive(item.href)
-                    ? "bg-black text-white"
-                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
-              >
-                <span>
-                  {item.icon} {item.label}
-                </span>
+        <aside className="bg-white rounded-2xl shadow-sm p-5 flex flex-col justify-between sticky top-20 h-fit">
 
-                {item.href === "/account/orders" && (
-                  <span className="text-xs bg-black text-white px-2 py-1 rounded-full">
-                    {orderCount}
-                  </span>
-                )}
-              </Link>
-            ))}
-          </nav>
+          <div>
+
+            {/* USER */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-full bg-linear-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold">
+                {user.name?.[0]}
+              </div>
+
+              <div>
+                <h2 className="font-semibold text-sm">{user.name}</h2>
+                <p className="text-xs text-gray-500">{user.phone}</p>
+              </div>
+            </div>
+
+            {/* NAV SECTIONS */}
+            <div className="space-y-6">
+
+              {navSections.map((section) => (
+                <div key={section.title}>
+                  <h3 className="text-xs font-semibold text-gray-400 mb-2 uppercase">
+                    {section.title}
+                  </h3>
+
+                  <nav className="space-y-1 text-sm">
+                    {section.items.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`flex items-center justify-between px-3 py-2 rounded-lg transition ${
+                          isActive(item.href)
+                            ? "bg-blue-600 text-white"
+                            : "text-gray-600 hover:bg-gray-100"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          {item.icon} {item.label}
+                        </span>
+
+                        {item.badge && (
+                          <span className="text-xs bg-gray-200 px-2 py-0.5 rounded-full">
+                            {orderCount}
+                          </span>
+                        )}
+                      </Link>
+                    ))}
+                  </nav>
+                </div>
+              ))}
+
+            </div>
+
+            {/* SELLER CTA */}
+            <div className="mt-6 p-3 rounded-xl bg-linear-to-r from-black to-gray-800 text-white text-sm">
+              <p className="font-semibold">🔥 Become a Seller</p>
+              <p className="text-xs opacity-80">
+                Start selling on RK Fashion
+              </p>
+            </div>
+
+          </div>
+
+          {/* BOTTOM */}
+          <div className="space-y-2 mt-6">
+
+            <button
+              onClick={() => router.push("/account/security")}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 text-sm text-gray-700 hover:bg-gray-200"
+            >
+              🔐 Account Security
+            </button>
+
+            <button
+              onClick={logout}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-red-300 text-red-600 text-sm hover:bg-red-50"
+            >
+              🚪 Sign Out
+            </button>
+
+          </div>
+
         </aside>
 
         {/* ================= MAIN ================= */}
         <section className="lg:col-span-3">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border p-8 min-h-125 transition-colors">
+          <div className="bg-white rounded-2xl shadow-sm p-6 min-h-125">
+
+            {/* HEADER */}
+            <div className="flex items-center justify-between mb-6">
+
+              <div>
+                <h1 className="text-xl font-semibold">Dashboard</h1>
+                <p className="text-sm text-gray-500">
+                  Welcome back, {user.name}! 👋
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center">
+                  🔔
+                </div>
+
+                <div className="w-9 h-9 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-medium">
+                  {user.name?.[0]}
+                </div>
+              </div>
+
+            </div>
+
             {children}
+
           </div>
         </section>
 

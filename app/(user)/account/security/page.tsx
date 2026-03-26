@@ -52,7 +52,7 @@ export default function SecurityPage() {
         return;
       }
 
-      setMessage("Password updated successfully");
+      setMessage("Password updated successfully 🎉");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -64,11 +64,11 @@ export default function SecurityPage() {
   };
 
   return (
-    <div className="space-y-10">
+    <div className="max-w-xl space-y-8">
 
       {/* HEADER */}
       <div>
-        <h2 className="text-xl font-semibold dark:text-white">
+        <h2 className="text-xl font-semibold">
           Account Security
         </h2>
         <p className="text-sm text-gray-500">
@@ -79,7 +79,7 @@ export default function SecurityPage() {
       {/* FORM */}
       <form
         onSubmit={handleSubmit}
-        className="bg-white dark:bg-gray-800 border rounded-3xl p-8 space-y-6 shadow-sm"
+        className="bg-white border rounded-2xl p-6 space-y-5 shadow-sm"
       >
 
         {/* CURRENT PASSWORD */}
@@ -90,10 +90,8 @@ export default function SecurityPage() {
           <input
             type="password"
             value={currentPassword}
-            onChange={(e) =>
-              setCurrentPassword(e.target.value)
-            }
-            className="w-full mt-2 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:bg-gray-700"
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            className="w-full mt-2 border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
           />
         </div>
 
@@ -105,10 +103,8 @@ export default function SecurityPage() {
           <input
             type="password"
             value={newPassword}
-            onChange={(e) =>
-              setNewPassword(e.target.value)
-            }
-            className="w-full mt-2 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:bg-gray-700"
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="w-full mt-2 border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
           />
 
           {newPassword && (
@@ -134,18 +130,15 @@ export default function SecurityPage() {
           <input
             type="password"
             value={confirmPassword}
-            onChange={(e) =>
-              setConfirmPassword(e.target.value)
-            }
-            className="w-full mt-2 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:bg-gray-700"
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="w-full mt-2 border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
           />
 
-          {confirmPassword &&
-            newPassword !== confirmPassword && (
-              <p className="text-xs text-red-600 mt-2">
-                Passwords do not match
-              </p>
-            )}
+          {confirmPassword && newPassword !== confirmPassword && (
+            <p className="text-xs text-red-600 mt-2">
+              Passwords do not match
+            </p>
+          )}
         </div>
 
         {/* MESSAGE */}
@@ -165,14 +158,15 @@ export default function SecurityPage() {
         <button
           type="submit"
           disabled={!isValid || loading}
-          className="w-full py-3 bg-black text-white rounded-xl text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
+          className="w-full py-2.5 bg-black text-white rounded-lg text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
         >
           {loading ? "Updating..." : "Update Password"}
         </button>
+
       </form>
 
       {/* SECURITY TIPS */}
-      <div className="bg-gray-50 dark:bg-gray-800 border rounded-2xl p-6 text-sm text-gray-600 dark:text-gray-300">
+      <div className="bg-gray-50 border rounded-xl p-5 text-sm text-gray-600">
         <p className="font-medium mb-2">
           Security Tips
         </p>

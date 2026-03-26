@@ -1,24 +1,27 @@
-// components/header/CategoryMenu.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Category } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-/* ================= FALLBACK ================= */
+/* ================= TYPES ================= */
 
-const MAIN_CATEGORIES = [
-  { name: "Men", slug: "men" },
-  { name: "Women", slug: "women" },
-  { name: "Kids", slug: "kids" },
-  { name: "Footwear", slug: "footwear" },
-];
+interface Category {
+  _id?: string;
+  name: string;
+  slug: string;
+  parent?: string;
+  parentSlug?: string;
+}
+
+/* ================= COMPONENT ================= */
 
 export default function CategoryMenu() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+
+  /* ================= FETCH ================= */
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -28,9 +31,15 @@ export default function CategoryMenu() {
         });
 
         const data = await res.json();
-        setCategories(data || []);
+
+        if (Array.isArray(data)) {
+          setCategories(data);
+        } else {
+          setCategories([]);
+        }
       } catch (err) {
         console.error("Category load failed:", err);
+        setCategories([]);
       } finally {
         setLoading(false);
       }
@@ -39,122 +48,91 @@ export default function CategoryMenu() {
     loadCategories();
   }, []);
 
-  /* ================= GROUP BY PARENT ================= */
+  /* ================= STRUCTURE ================= */
 
-  const grouped = MAIN_CATEGORIES.map((parent) => {
-    const children = categories.filter(
+  const parentCategories = categories.filter(
+    (c) => !c.parent && !c.parentSlug
+  );
+
+  const getSubCategories = (parentSlug: string) => {
+    return categories.filter(
       (c) =>
-        c.parentSlug === parent.slug ||
-        c.parent === parent.slug
+        c.parentSlug === parentSlug ||
+        c.parent === parentSlug
     );
+  };
 
-    return {
-      ...parent,
-      children,
-    };
-  });
+  /* ================= LOADING ================= */
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="grid grid-cols-3 gap-8 min-w-150">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i}>
+            <div className="h-4 w-24 bg-gray-200 mb-3 rounded animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-3 w-20 bg-gray-100 rounded animate-pulse" />
+              <div className="h-3 w-16 bg-gray-100 rounded animate-pulse" />
+              <div className="h-3 w-14 bg-gray-100 rounded animate-pulse" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  /* ================= EMPTY STATE ================= */
+
+  if (!parentCategories.length) {
+    return (
+      <div className="min-w-100 text-sm text-gray-500">
+        No categories found
+      </div>
+    );
+  }
+
+  /* ================= UI ================= */
 
   return (
-    <div className="min-w-55">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-10 min-w-150">
 
-      {grouped.map((group) => (
-        <div key={group.slug} className="mb-3">
+      {parentCategories.map((parent) => {
+        const subCats = getSubCategories(parent.slug);
 
-          {/* PARENT */}
-          <p className="text-xs font-semibold text-gray-400 px-2 mb-1">
-            {group.name}
-          </p>
+        return (
+          <div key={parent.slug} className="min-w-37.5">
 
-          {/* CHILDREN */}
-          <div className="flex flex-col">
-            {(group.children.length
-              ? group.children
-              : [{ name: group.name, slug: group.slug }]
-            ).map((item: any) => (
-              <Link
-                key={item.slug}
-                href={`/category/${group.slug}?type=${item.slug}`}
-                className="px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 transition"
-              >
-                {item.name}
-              </Link>
-            ))}
+            {/* PARENT TITLE */}
+            <Link
+              href={`/?category=${parent.slug}`}
+              className="block font-semibold text-sm mb-3 text-gray-900 hover:text-black transition"
+            >
+              {parent.name}
+            </Link>
+
+            {/* SUB CATEGORIES */}
+            <div className="flex flex-col gap-2">
+              {subCats.length > 0 ? (
+                subCats.map((sub) => (
+                  <Link
+                    key={sub.slug}
+                    href={`/?category=${sub.slug}`}
+                    className="text-sm text-gray-500 hover:text-black transition-colors duration-200"
+                  >
+                    {sub.name}
+                  </Link>
+                ))
+              ) : (
+                <span className="text-xs text-gray-400">
+                  No subcategories
+                </span>
+              )}
+            </div>
+
           </div>
-
-        </div>
-      ))}
+        );
+      })}
 
     </div>
   );
 }
-
-// // components/header/CategoryMenu.tsx
-
-// "use client";
-
-// import { useEffect, useState } from "react";
-// import CategoryItem from "./CategoryItem";
-// import { Category } from "./types";
-
-// const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-// /* ================= FIXED HEADER CATEGORIES ================= */
-// const MAIN_CATEGORIES = [
-//   { name: "Men", slug: "men" },
-//   { name: "Women", slug: "women" },
-//   { name: "Kids", slug: "kids" },
-//   { name: "Footwear", slug: "footwear" },
-// ];
-
-// export default function CategoryMenu() {
-//   const [categories, setCategories] = useState<Category[]>([]);
-//   const [loading, setLoading] = useState(true);
-
-//   useEffect(() => {
-//     const loadCategories = async () => {
-//       try {
-//         const res = await fetch(`${API_URL}/api/categories`, {
-//           cache: "no-store",
-//         });
-//         const data = await res.json();
-//         setCategories(data);
-//       } catch (err) {
-//         console.error("Failed to load categories", err);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     loadCategories();
-//   }, []);
-
-//   if (loading) return null;
-
-//   return (
-//     <div className="flex gap-6">
-//       {MAIN_CATEGORIES.map((parent) => {
-//         /* ================= CHILDREN FROM BACKEND ================= */
-//         const children = categories.filter(
-//           (c) =>
-//             c.parentSlug === parent.slug ||
-//             c.parent === parent.slug // fallback if needed
-//         );
-
-//         return (
-//           <CategoryItem
-//             key={parent.slug}
-//             parent={{
-//               _id: parent.slug, // fake id for UI
-//               name: parent.name,
-//               slug: parent.slug,
-//               parent: null,
-//             }}
-//             allCategories={children}
-//           />
-//         );
-//       })}
-//     </div>
-//   );
-// }
