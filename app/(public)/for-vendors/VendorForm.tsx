@@ -4,24 +4,30 @@ import { useState } from "react";
 import { apiFetch } from "@/lib/api/client";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/ui-utils";
 
-type FormState = {
-  businessName: string;
-  email: string;
-  phone: string;
-  businessType: string;
-  message: string;
-};
+/* ================= CONSTANTS ================= */
+
+const BUSINESS_TYPES = [
+  "Clothing",
+  "Footwear",
+  "Accessories",
+  "Beauty",
+  "Jewelry",
+  "Electronics",
+  "Home Decor",
+];
+
+/* ================= PAGE ================= */
 
 export default function VendorForm() {
   const { user } = useAuth();
   const router = useRouter();
+  const { showToast } = useToast();
 
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
 
-  const [form, setForm] = useState<FormState>({
+  const [form, setForm] = useState({
     businessName: "",
     email: "",
     phone: "",
@@ -29,35 +35,29 @@ export default function VendorForm() {
     message: "",
   });
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  /* ================= HANDLE ================= */
+
+  const handleChange = (e: any) => {
     setForm({
       ...form,
       [e.target.name]: e.target.value,
     });
   };
 
+  /* ================= VALIDATION ================= */
+
   const validate = () => {
-    if (!form.businessName.trim()) return "Business name is required";
-
-    if (!/^\S+@\S+\.\S+$/.test(form.email))
-      return "Valid email required";
-
-    if (!/^[6-9]\d{9}$/.test(form.phone))
-      return "Valid phone number required";
-
-    if (!form.businessType.trim())
-      return "Business type is required";
-
+    if (!form.businessName.trim()) return "Business name required";
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) return "Valid email required";
+    if (!/^[6-9]\d{9}$/.test(form.phone)) return "Valid phone required";
+    if (!form.businessType) return "Select business category";
     return "";
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  /* ================= SUBMIT ================= */
 
-    setError("");
-    setSuccess(false);
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
 
     if (!user) {
       router.push("/login?redirect=/for-vendors");
@@ -70,13 +70,13 @@ export default function VendorForm() {
     }
 
     if (user.sellerStatus === "pending") {
-      setError("Your application is already under review");
+      showToast("Already under review", "error");
       return;
     }
 
     const validation = validate();
     if (validation) {
-      setError(validation);
+      showToast(validation, "error");
       return;
     }
 
@@ -85,10 +85,22 @@ export default function VendorForm() {
 
       await apiFetch("/vendors/apply", {
         method: "POST",
-        body: JSON.stringify(form), // 🔥 full form भेज रहे
+        headers: {
+          "Content-Type": "application/json", // 🔥 IMPORTANT FIX
+        },
+        body: JSON.stringify({
+          businessName: form.businessName.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          businessType: form.businessType,
+          message: form.message.trim(),
+        }),
       });
 
-      setSuccess(true);
+      showToast("Application submitted successfully", "success");
+
+      // 🔥 UX IMPROVEMENT
+      router.push("/"); // redirect after submit
 
       setForm({
         businessName: "",
@@ -99,350 +111,108 @@ export default function VendorForm() {
       });
 
     } catch (err: any) {
-      const message = err?.message || "";
-
-      if (message.toLowerCase().includes("already")) {
-        setSuccess(true);
-      } else {
-        setError("Something went wrong. Please try again.");
-      }
-
+      showToast(err.message || "Submission failed", "error");
     } finally {
       setLoading(false);
     }
   };
 
+  /* ================= UI ================= */
+
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 bg-white border p-8 rounded-2xl shadow-sm"
+      className="space-y-6 bg-white border p-8 rounded-2xl shadow-sm max-w-xl mx-auto"
     >
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 text-sm p-4 rounded-lg">
-          {error}
-        </div>
-      )}
+      <h2 className="text-xl font-bold text-center">
+        Become a Seller
+      </h2>
 
-      <Input label="Business Name" name="businessName" value={form.businessName} onChange={handleChange} />
+      <Input
+        label="Business Name"
+        name="businessName"
+        value={form.businessName}
+        onChange={handleChange}
+      />
 
-      <Input label="Email" name="email" type="email" value={form.email} onChange={handleChange} />
+      <Input
+        label="Email"
+        name="email"
+        type="email"
+        value={form.email}
+        onChange={handleChange}
+      />
 
-      <Input label="Phone Number" name="phone" value={form.phone} onChange={handleChange} />
-
-      <Input label="Business Type" name="businessType" value={form.businessType} onChange={handleChange} />
+      <Input
+        label="Phone Number"
+        name="phone"
+        value={form.phone}
+        onChange={handleChange}
+      />
 
       <div>
-        <label className="block text-sm font-medium mb-2">
-          Tell us about your brand
+        <label className="block mb-2 text-sm font-medium">
+          Business Category
         </label>
-        <textarea
-          name="message"
-          rows={4}
-          value={form.message}
+
+        <select
+          required
+          name="businessType"
+          value={form.businessType}
           onChange={handleChange}
-          className="w-full border rounded-lg px-4 py-3"
-        />
+          className="w-full border px-4 py-3 rounded-lg"
+        >
+          <option value="">Select category</option>
+
+          {BUSINESS_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {type}
+            </option>
+          ))}
+        </select>
       </div>
 
+      <textarea
+        name="message"
+        placeholder="Tell us about your brand..."
+        value={form.message}
+        onChange={handleChange}
+        className="w-full border px-4 py-3 rounded-lg"
+      />
+
       <button
-        type="submit"
         disabled={loading}
-        className="w-full py-4 bg-black text-white rounded-xl font-semibold"
+        className="w-full py-4 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 transition disabled:opacity-50"
       >
         {loading ? "Submitting..." : "Submit Application"}
       </button>
-
-      {success && (
-        <div className="bg-green-50 border text-green-700 p-4 rounded">
-          Application submitted successfully
-        </div>
-      )}
     </form>
   );
 }
 
-function Input({ label, name, type = "text", value, onChange }: any) {
+/* ================= INPUT ================= */
+
+function Input({
+  label,
+  name,
+  value,
+  onChange,
+  type = "text",
+}: any) {
   return (
     <div>
-      <label className="block mb-2">{label}</label>
+      <label className="block mb-2 text-sm font-medium">
+        {label}
+      </label>
+
       <input
-        name={name}
+        required
         type={type}
+        name={name}
         value={value}
         onChange={onChange}
-        required
-        className="w-full border px-4 py-3 rounded"
+        className="w-full border px-4 py-3 rounded-lg"
       />
     </div>
   );
 }
-
-
-// // 📄 app/(public)/for-vendors/VendorForm.tsx
-
- 
-// "use client";
-
-// import { useState } from "react";
-// import { apiFetch } from "@/lib/api/client";
-// import { useAuth } from "@/app/providers/AuthProvider";
-// import { useRouter } from "next/navigation";
-
-// type FormState = {
-//   businessName: string;
-//   email: string;
-//   phone: string;
-//   category: string;
-//   message: string;
-// };
-
-// export default function VendorForm() {
-
-//   const { user } = useAuth();
-//   const router = useRouter();
-
-//   const [loading, setLoading] = useState(false);
-//   const [success, setSuccess] = useState(false);
-//   const [error, setError] = useState("");
-
-//   const [form, setForm] = useState<FormState>({
-//     businessName: "",
-//     email: "",
-//     phone: "",
-//     category: "",
-//     message: "",
-//   });
-
-//   /* ================= HANDLE INPUT ================= */
-
-//   const handleChange = (
-//     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-//   ) => {
-//     setForm({
-//       ...form,
-//       [e.target.name]: e.target.value,
-//     });
-//   };
-
-//   /* ================= VALIDATION ================= */
-
-//   const validate = () => {
-
-//     if (!form.businessName.trim()) return "Business name is required";
-
-//     if (!/^\S+@\S+\.\S+$/.test(form.email))
-//       return "Valid email required";
-
-//     if (!/^[6-9]\d{9}$/.test(form.phone))
-//       return "Valid phone number required";
-
-//     if (!form.category.trim()) return "Product category is required";
-
-//     return "";
-//   };
-
-//   /* ================= SUBMIT ================= */
-
-//   const handleSubmit = async (
-//     e: React.FormEvent<HTMLFormElement>
-//   ) => {
-
-//     e.preventDefault();
-
-//     setError("");
-//     setSuccess(false);
-
-//     // 🔥 LOGIN REQUIRED
-//     if (!user) {
-//       router.push("/login?redirect=/for-vendors");
-//       return;
-//     }
-
-//     // 🔥 ALREADY SELLER
-//     if (user.sellerStatus === "approved") {
-//       router.push("/seller");
-//       return;
-//     }
-
-//     // 🔥 PENDING
-//     if (user.sellerStatus === "pending") {
-//       setError("Your application is already under review");
-//       return;
-//     }
-
-//     const validation = validate();
-
-//     if (validation) {
-//       setError(validation);
-//       return;
-//     }
-
-//     try {
-
-//       setLoading(true);
-
-//       // await apiFetch("/api/vendors/apply", {
-//       //   method: "POST",
-//       //   body: JSON.stringify(form),
-//       // });
-//       await apiFetch("/vendors/apply", {
-//         method: "POST",
-//         credentials: "include",
-//         body: JSON.stringify({
-//           businessName: form.businessName,
-//           phone: form.phone,
-//           businessType: form.category, // 🔥 यही fix है
-//           message: form.message,
-//         }),
-//       });
-
-//       setSuccess(true);
-
-//       setForm({
-//         businessName: "",
-//         email: "",
-//         phone: "",
-//         category: "",
-//         message: "",
-//       });
-
-//     } catch (err: any) {
-
-//       const message = err?.message || "";
-
-//       if (message.includes("already")) {
-//         setSuccess(true);
-//       } else {
-//         setError("Something went wrong. Please try again.");
-//       }
-
-//     } finally {
-//       setLoading(false);
-//     }
-
-//   };
-
-//   return (
-
-//     <form
-//       onSubmit={handleSubmit}
-//       className="space-y-6 bg-white border p-8 rounded-2xl shadow-sm"
-//     >
-
-//       {/* ERROR */}
-//       {error && (
-//         <div className="bg-red-50 border border-red-200 text-red-600 text-sm p-4 rounded-lg">
-//           {error}
-//         </div>
-//       )}
-
-//       {/* INPUTS */}
-
-//       <Input
-//         label="Business Name"
-//         name="businessName"
-//         value={form.businessName}
-//         onChange={handleChange}
-//       />
-
-//       <Input
-//         label="Business Email"
-//         name="email"
-//         type="email"
-//         value={form.email}
-//         onChange={handleChange}
-//       />
-
-//       <Input
-//         label="Phone Number"
-//         name="phone"
-//         value={form.phone}
-//         onChange={handleChange}
-//       />
-
-//       <Input
-//         label="Product Category"
-//         name="category"
-//         value={form.category}
-//         onChange={handleChange}
-//       />
-
-//       {/* MESSAGE */}
-
-//       <div>
-//         <label className="block text-sm font-medium mb-2">
-//           Tell us about your brand
-//         </label>
-
-//         <textarea
-//           name="message"
-//           rows={4}
-//           value={form.message}
-//           onChange={handleChange}
-//           className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black"
-//         />
-//       </div>
-
-//       {/* BUTTON */}
-
-//       <button
-//         type="submit"
-//         disabled={loading}
-//         className="w-full py-4 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 transition"
-//       >
-//         {loading ? "Submitting..." : "Submit Application"}
-//       </button>
-
-//       {/* SUCCESS */}
-
-//       {success && (
-//         <div className="bg-green-50 border border-green-200 text-green-700 text-sm p-5 rounded-xl text-center">
-//           <p className="font-semibold mb-1">
-//             Application received
-//           </p>
-//           <p>
-//             Our team is reviewing your vendor application.
-//             We will contact you soon.
-//           </p>
-//         </div>
-//       )}
-
-//     </form>
-
-//   );
-
-// }
-
-// /* ================= INPUT ================= */
-
-// function Input({
-//   label,
-//   name,
-//   type = "text",
-//   value,
-//   onChange,
-// }: {
-//   label: string;
-//   name: string;
-//   type?: string;
-//   value: string;
-//   onChange: any;
-// }) {
-
-//   return (
-//     <div>
-//       <label className="block text-sm font-medium mb-2">
-//         {label}
-//       </label>
-
-//       <input
-//         name={name}
-//         type={type}
-//         value={value}
-//         onChange={onChange}
-//         required
-//         className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black"
-//       />
-//     </div>
-//   );
-// }
