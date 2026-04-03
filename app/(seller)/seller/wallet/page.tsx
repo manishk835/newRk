@@ -3,12 +3,16 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api/client";
 
+/* ================= TYPES ================= */
+
 type Withdrawal = {
   _id: string;
   amount: number;
   status: "pending" | "approved" | "rejected";
   createdAt: string;
 };
+
+/* ================= PAGE ================= */
 
 export default function SellerWalletPage() {
 
@@ -18,40 +22,35 @@ export default function SellerWalletPage() {
   const [loading, setLoading] = useState(true);
   const [requesting, setRequesting] = useState(false);
 
-  /* ================= LOAD WALLET ================= */
+  /* ================= LOAD ================= */
 
   const loadWallet = async () => {
-
     try {
-
       const seller = await apiFetch("/auth/me");
       const withdrawData = await apiFetch("/withdrawals/my");
 
       setBalance(seller.walletBalance || 0);
       setWithdrawals(Array.isArray(withdrawData) ? withdrawData : []);
-
-    } catch (err) {
-
-      console.error("Wallet load error", err);
-
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
   useEffect(() => {
-
     loadWallet();
-
   }, []);
 
-  /* ================= WITHDRAW REQUEST ================= */
+  /* ================= CALCULATIONS ================= */
+
+  const pendingAmount = withdrawals
+    .filter(w => w.status === "pending")
+    .reduce((sum, w) => sum + w.amount, 0);
+
+  const availableBalance = balance - pendingAmount;
+
+  /* ================= WITHDRAW ================= */
 
   const requestWithdraw = async () => {
-
     const withdrawAmount = Number(amount);
 
     if (!withdrawAmount || withdrawAmount <= 0) {
@@ -59,13 +58,17 @@ export default function SellerWalletPage() {
       return;
     }
 
-    if (withdrawAmount > balance) {
-      alert("Insufficient wallet balance");
+    if (withdrawAmount < 100) {
+      alert("Minimum withdrawal ₹100");
+      return;
+    }
+
+    if (withdrawAmount > availableBalance) {
+      alert("Insufficient available balance");
       return;
     }
 
     try {
-
       setRequesting(true);
 
       await apiFetch("/withdrawals", {
@@ -76,70 +79,64 @@ export default function SellerWalletPage() {
         }),
       });
 
-      alert("Withdrawal request submitted");
-
       setAmount("");
-
       loadWallet();
 
-    } catch (err) {
-
+    } catch {
       alert("Withdraw request failed");
-
     } finally {
-
       setRequesting(false);
-
     }
-
   };
+
+  /* ================= UI ================= */
 
   if (loading) {
     return (
-      <div className="p-10 text-center">
+      <div className="p-10 text-center text-gray-500">
         Loading wallet...
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-6xl mx-auto space-y-8">
 
-      <h1 className="text-3xl font-bold mb-8">
-        Seller Wallet
+      <h1 className="text-2xl font-bold">
+        Wallet & Earnings
       </h1>
 
-      {/* BALANCE */}
+      {/* BALANCE CARDS */}
 
-      <div className="bg-white border rounded-2xl p-8 mb-10 shadow-sm">
+      <div className="grid md:grid-cols-3 gap-6">
 
-        <p className="text-gray-500 text-sm">
-          Available Balance
-        </p>
+        <Card title="Total Balance" value={`₹${balance}`} />
 
-        <h2 className="text-4xl font-bold mt-2 text-green-600">
-          ₹{balance}
-        </h2>
+        <Card title="Pending Withdrawals" value={`₹${pendingAmount}`} />
+
+        <Card
+          title="Available Balance"
+          value={`₹${availableBalance}`}
+          highlight
+        />
 
       </div>
 
       {/* WITHDRAW */}
 
-      <div className="bg-white border rounded-2xl p-6 mb-10">
+      <div className="bg-white border rounded-2xl p-6">
 
         <h3 className="font-semibold mb-4">
           Request Withdrawal
         </h3>
 
-        <div className="flex gap-4">
+        <div className="flex gap-4 flex-wrap">
 
           <input
             type="number"
             placeholder="Enter amount"
             value={amount}
-            onChange={(e) =>
-              setAmount(e.target.value)
-            }
+            onChange={(e) => setAmount(e.target.value)}
             className="border px-4 py-3 rounded-lg flex-1"
           />
 
@@ -153,6 +150,10 @@ export default function SellerWalletPage() {
 
         </div>
 
+        <p className="text-xs text-gray-500 mt-2">
+          Minimum withdrawal ₹100
+        </p>
+
       </div>
 
       {/* HISTORY */}
@@ -165,68 +166,40 @@ export default function SellerWalletPage() {
 
         <table className="w-full text-sm">
 
-          <thead className="bg-gray-50">
-
+          <thead className="bg-gray-50 text-gray-600">
             <tr>
-
-              <th className="p-4 text-left">
-                Amount
-              </th>
-
-              <th className="p-4 text-left">
-                Status
-              </th>
-
-              <th className="p-4 text-left">
-                Date
-              </th>
-
+              <th className="p-4 text-left">Amount</th>
+              <th className="p-4 text-left">Status</th>
+              <th className="p-4 text-left">Date</th>
             </tr>
-
           </thead>
 
           <tbody>
 
             {withdrawals.map((w) => (
+              <tr key={w._id} className="border-t">
 
-              <tr
-                key={w._id}
-                className="border-t"
-              >
-
-                <td className="p-4 font-semibold">
+                <td className="p-4 font-medium">
                   ₹{w.amount}
                 </td>
 
                 <td className="p-4">
-
                   <StatusBadge status={w.status} />
-
                 </td>
 
-                <td className="p-4 text-gray-500">
-
-                  {new Date(
-                    w.createdAt
-                  ).toLocaleDateString()}
-
+                <td className="p-4 text-gray-500 text-xs">
+                  {new Date(w.createdAt).toLocaleString()}
                 </td>
 
               </tr>
-
             ))}
 
             {withdrawals.length === 0 && (
-
               <tr>
-                <td
-                  colSpan={3}
-                  className="text-center p-8 text-gray-500"
-                >
-                  No withdrawal requests
+                <td colSpan={3} className="p-8 text-center text-gray-500">
+                  No withdrawals yet
                 </td>
               </tr>
-
             )}
 
           </tbody>
@@ -239,16 +212,35 @@ export default function SellerWalletPage() {
   );
 }
 
-/* ================= STATUS BADGE ================= */
+/* ================= CARD ================= */
 
-function StatusBadge({
-  status,
-}: {
-  status: string;
-}) {
+function Card({
+  title,
+  value,
+  highlight,
+}: any) {
+  return (
+    <div className="bg-white border rounded-2xl p-6 shadow-sm">
+      <p className="text-sm text-gray-500">
+        {title}
+      </p>
 
-  let style =
-    "bg-gray-100 text-gray-600";
+      <p
+        className={`text-2xl font-bold mt-2 ${
+          highlight ? "text-green-600" : ""
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+/* ================= STATUS ================= */
+
+function StatusBadge({ status }: any) {
+
+  let style = "bg-gray-100 text-gray-600";
 
   if (status === "approved")
     style = "bg-green-100 text-green-700";
@@ -260,9 +252,7 @@ function StatusBadge({
     style = "bg-red-100 text-red-700";
 
   return (
-    <span
-      className={`px-3 py-1 text-xs rounded-full ${style}`}
-    >
+    <span className={`px-3 py-1 text-xs rounded-full ${style}`}>
       {status}
     </span>
   );
