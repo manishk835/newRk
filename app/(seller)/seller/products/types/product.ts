@@ -1,30 +1,33 @@
 export type Variant = {
-    size: string;
-    color: string;
-    price: number;
-    stock: number;
-    sku: string;
-    attributes: Record<string, string>;
-  };
-  
-  export type ProductState = {
-    name: string;
-    description: string;
-    category: string;
-    subCategory: string;
-    images: string[];
-    variants: Variant[];
-    features?: string;
-  };
+  name: string;
+  attributes?: Record<string, any>;
+  stock?: number;
+  sku?: string;
+  priceOverride?: number;
+};
 
-  export type Product = {
-  _id: string;
+export type Product = {
+  _id?: string;
+
   name: string;
   category: string;
+  subCategory?: string;
+
   price: number;
-  stock: number;
-  status: "active" | "draft";
-  images: string[];
-  variants: Variant[];
-  isApproved: boolean;
+  description?: string;
+  features?: string;
+
+  attributes?: Record<string, any>;
+
+  images?: {
+    url: string;
+    public_id?: string;
+  }[];
+
+  thumbnail?: string;
+
+  variants?: Variant[];
+
+  isApproved?: boolean;
+  isActive?: boolean;
 };

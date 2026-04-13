@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useProduct } from "../context/ProductContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -10,22 +9,27 @@ type Attr = {
   values: string[];
 };
 
-export default function VariantGenerator() {
-  const { setProduct } = useProduct();
+type Props = {
+  product: any;
+  setProduct: (data: any) => void;
+};
+
+export default function VariantGenerator({ product, setProduct }: Props) {
 
   const [attributes, setAttributes] = useState<Attr[]>([
     { name: "Size", values: [] },
     { name: "Color", values: [] },
   ]);
 
-  const [input, setInput] = useState<{ [key: string]: string }>({});
+  const [input, setInput] = useState<{ [key: number]: string }>({});
 
-  /* ADD VALUE */
+  /* ================= ADD VALUE ================= */
   const addValue = (attrIndex: number) => {
-    const value = input[attrIndex];
+    const value = input[attrIndex]?.trim();
     if (!value) return;
 
     const updated = [...attributes];
+
     if (!updated[attrIndex].values.includes(value)) {
       updated[attrIndex].values.push(value);
     }
@@ -34,7 +38,7 @@ export default function VariantGenerator() {
     setInput({ ...input, [attrIndex]: "" });
   };
 
-  /* REMOVE VALUE */
+  /* ================= REMOVE VALUE ================= */
   const removeValue = (attrIndex: number, value: string) => {
     const updated = [...attributes];
     updated[attrIndex].values = updated[attrIndex].values.filter(
@@ -43,42 +47,69 @@ export default function VariantGenerator() {
     setAttributes(updated);
   };
 
-  /* GENERATE VARIANTS */
-  const generateVariants = () => {
-    if (attributes.length < 1) return;
+  /* ================= COMBINATION GENERATOR ================= */
+  const generateCombinations = (attrs: Attr[]) => {
+    if (!attrs.length) return [];
 
-    const [first, second] = attributes;
+    let result: any[] = [{}];
 
-    let combos: any[] = [];
+    attrs.forEach((attr) => {
+      const temp: any[] = [];
 
-    if (second) {
-      first.values.forEach((a) => {
-        second.values.forEach((b) => {
-          combos.push({
-            size: a,
-            color: b,
-            price: 0,
-            stock: 0,
-            sku: `${a}-${b}`,
+      result.forEach((res) => {
+        attr.values.forEach((val) => {
+          temp.push({
+            ...res,
+            [attr.name.toLowerCase()]: val,
           });
         });
       });
-    } else {
-      first.values.forEach((a) => {
-        combos.push({
-          size: a,
-          color: "",
-          price: 0,
-          stock: 0,
-          sku: a,
-        });
-      });
+
+      result = temp;
+    });
+
+    return result;
+  };
+
+  /* ================= GENERATE VARIANTS ================= */
+  const generateVariants = () => {
+    const validAttrs = attributes.filter((a) => a.values.length > 0);
+
+    if (validAttrs.length === 0) {
+      alert("Add at least one attribute");
+      return;
     }
 
-    setProduct((prev) => ({
+    const combos = generateCombinations(validAttrs);
+
+    const variants = combos.map((combo: any, i: number) => {
+      const name = Object.values(combo).join(" / ");
+
+      return {
+        name,
+        attributes: combo,
+        stock: 0,
+        sku: name.replace(/\s+/g, "-").toUpperCase(),
+        priceOverride: 0,
+      };
+    });
+
+    setProduct((prev: any) => ({
       ...prev,
-      variants: combos,
+      variants,
     }));
+  };
+
+  /* ================= ADD NEW ATTRIBUTE ================= */
+  const addAttribute = () => {
+    setAttributes([...attributes, { name: "", values: [] }]);
+  };
+
+  /* ================= UPDATE ATTRIBUTE NAME ================= */
+  const updateAttrName = (index: number, value: string) => {
+    const updated = [...attributes];
+    updated[index].name = value;
+    setAttributes(updated);
   };
 
   return (
@@ -89,12 +120,17 @@ export default function VariantGenerator() {
       {attributes.map((attr, index) => (
         <div key={index} className="space-y-2">
 
-          <p className="text-sm font-medium">{attr.name}</p>
+          {/* ATTRIBUTE NAME */}
+          <Input
+            placeholder="Attribute Name (e.g. Size, Color)"
+            value={attr.name}
+            onChange={(e) => updateAttrName(index, e.target.value)}
+          />
 
           {/* INPUT */}
           <div className="flex gap-2">
             <Input
-              placeholder={`Add ${attr.name}`}
+              placeholder={`Add value`}
               value={input[index] || ""}
               onChange={(e) =>
                 setInput({ ...input, [index]: e.target.value })
@@ -105,7 +141,7 @@ export default function VariantGenerator() {
             </Button>
           </div>
 
-          {/* CHIPS */}
+          {/* VALUES */}
           <div className="flex gap-2 flex-wrap">
             {attr.values.map((v) => (
               <span
@@ -126,7 +162,12 @@ export default function VariantGenerator() {
         </div>
       ))}
 
-      {/* GENERATE BUTTON */}
+      {/* ADD ATTRIBUTE */}
+      <Button variant="outline" onClick={addAttribute}>
+        + Add Attribute
+      </Button>
+
+      {/* GENERATE */}
       <Button className="w-full" onClick={generateVariants}>
         Generate Variants
       </Button>

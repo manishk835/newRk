@@ -267,6 +267,9 @@ export async function fetchAllProducts(
     maxPrice?: string;
     page?: string;
     filter?: string;
+
+    category?: string; // ✅ NEW
+    limit?: number;    // ✅ NEW
   }
 ): Promise<{
   products: Product[];
@@ -288,7 +291,11 @@ export async function fetchAllProducts(
   if (params?.page) query.set("page", params.page);
   if (params?.filter) query.set("filter", params.filter);
 
-  const qs = query.toString() ? `?${query}` : "";
+  // ✅ NEW ADDITIONS
+  if (params?.category) query.set("category", params.category);
+  if (params?.limit) query.set("limit", String(params.limit));
+
+  const qs = query.toString() ? `?${query.toString()}` : "";
 
   try {
     const res = await fetch(
@@ -321,6 +328,7 @@ export async function fetchAllProducts(
 
   } catch (error) {
     console.error("fetchAllProducts error:", error);
+
     return {
       products: [],
       filters: {},

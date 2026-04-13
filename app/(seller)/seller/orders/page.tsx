@@ -26,9 +26,28 @@ type Order = {
   items: OrderItem[];
 };
 
+/* ================= STATUS COLORS ================= */
+
+const statusColors: Record<string, string> = {
+  Delivered: "bg-green-100 text-green-700",
+  Shipped: "bg-blue-100 text-blue-700",
+  Packed: "bg-purple-100 text-purple-700",
+  Confirmed: "bg-indigo-100 text-indigo-700",
+  Pending: "bg-yellow-100 text-yellow-700",
+  Cancelled: "bg-red-100 text-red-700",
+};
+
+const paymentColors: Record<string, string> = {
+  Paid: "text-green-600",
+  Pending: "text-yellow-600",
+  Failed: "text-red-600",
+  COD: "text-blue-600",
+};
+
 /* ================= PAGE ================= */
 
 export default function SellerOrdersPage() {
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [filtered, setFiltered] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +65,8 @@ export default function SellerOrdersPage() {
       const list = Array.isArray(data) ? data : [];
       setOrders(list);
       setFiltered(list);
+    } catch {
+      alert("Failed to load orders");
     } finally {
       setLoading(false);
     }
@@ -62,9 +83,7 @@ export default function SellerOrdersPage() {
 
     if (search) {
       data = data.filter((o) =>
-        o.customer?.name
-          ?.toLowerCase()
-          .includes(search.toLowerCase())
+        o.customer?.name?.toLowerCase().includes(search.toLowerCase())
       );
     }
 
@@ -77,7 +96,7 @@ export default function SellerOrdersPage() {
     setFiltered(data);
   }, [search, statusFilter, orders]);
 
-  /* ================= STATUS UPDATE ================= */
+  /* ================= UPDATE STATUS ================= */
 
   const updateStatus = async (id: string, status: string) => {
     try {
@@ -95,30 +114,9 @@ export default function SellerOrdersPage() {
       );
 
     } catch {
-      alert("Failed to update status");
+      alert("Status update failed");
     } finally {
       setUpdatingId(null);
-    }
-  };
-
-  /* ================= STATUS COLOR ================= */
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Delivered":
-        return "bg-green-100 text-green-700";
-      case "Shipped":
-        return "bg-blue-100 text-blue-700";
-      case "Packed":
-        return "bg-purple-100 text-purple-700";
-      case "Confirmed":
-        return "bg-indigo-100 text-indigo-700";
-      case "Pending":
-        return "bg-yellow-100 text-yellow-700";
-      case "Cancelled":
-        return "bg-red-100 text-red-700";
-      default:
-        return "bg-gray-100 text-gray-700";
     }
   };
 
@@ -128,9 +126,16 @@ export default function SellerOrdersPage() {
     <div className="max-w-7xl mx-auto space-y-6">
 
       {/* HEADER */}
-      <h1 className="text-2xl font-bold">
-        Orders
-      </h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Orders</h1>
+
+        <button
+          onClick={loadOrders}
+          className="border px-4 py-2 rounded-lg text-sm"
+        >
+          Refresh
+        </button>
+      </div>
 
       {/* FILTERS */}
       <div className="flex gap-3 flex-wrap">
@@ -153,14 +158,8 @@ export default function SellerOrdersPage() {
           <option value="packed">Packed</option>
           <option value="shipped">Shipped</option>
           <option value="delivered">Delivered</option>
+          <option value="cancelled">Cancelled</option>
         </select>
-
-        <button
-          onClick={loadOrders}
-          className="border px-4 py-2 rounded-lg text-sm"
-        >
-          Refresh
-        </button>
 
       </div>
 
@@ -169,7 +168,7 @@ export default function SellerOrdersPage() {
 
         {loading ? (
           <div className="p-10 text-center text-gray-500">
-            Loading...
+            Loading orders...
           </div>
         ) : filtered.length === 0 ? (
           <div className="p-10 text-center text-gray-500">
@@ -182,6 +181,7 @@ export default function SellerOrdersPage() {
               <tr>
                 <th className="p-4 text-left">Customer</th>
                 <th className="p-4 text-left">Items</th>
+                <th className="p-4 text-left">Payment</th>
                 <th className="p-4 text-left">Earnings</th>
                 <th className="p-4 text-left">Status</th>
                 <th className="p-4 text-left">Update</th>
@@ -214,6 +214,13 @@ export default function SellerOrdersPage() {
                     ))}
                   </td>
 
+                  {/* PAYMENT */}
+                  <td className="p-4">
+                    <span className={paymentColors[order.paymentStatus] || ""}>
+                      {order.paymentStatus}
+                    </span>
+                  </td>
+
                   {/* EARNINGS */}
                   <td className="p-4 text-green-600 font-semibold">
                     ₹{order.sellerTotal}
@@ -221,14 +228,13 @@ export default function SellerOrdersPage() {
 
                   {/* STATUS */}
                   <td className="p-4">
-                    <span className={`px-3 py-1 text-xs rounded-full ${getStatusColor(order.status)}`}>
+                    <span className={`px-3 py-1 text-xs rounded-full ${statusColors[order.status] || "bg-gray-100"}`}>
                       {order.status}
                     </span>
                   </td>
 
                   {/* UPDATE */}
                   <td className="p-4">
-
                     <select
                       value={order.status}
                       disabled={updatingId === order._id}
@@ -244,7 +250,6 @@ export default function SellerOrdersPage() {
                       <option>Delivered</option>
                       <option>Cancelled</option>
                     </select>
-
                   </td>
 
                   {/* DATE */}

@@ -91,7 +91,7 @@ export default function Header() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-black text-white flex items-center justify-center text-sm">
+                    <div className="w-full h-full bg-[#F5A623] text-white flex items-center justify-center text-sm">
                       {user.name?.[0]}
                     </div>
                   )}

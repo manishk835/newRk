@@ -3,14 +3,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Trash2 } from "lucide-react";
 import { apiFetch } from "@/lib/api/client";
-import { useProduct } from "../context/ProductContext";
 
-export default function ImageUploader() {
-  const { product, setProduct } = useProduct();
+type Props = {
+  product: any;
+  setProduct: (data: any) => void;
+};
 
+export default function ImageUploader({ product, setProduct }: Props) {
   const images = product.images || [];
 
-  /* HANDLE UPLOAD */
+  /* ================= UPLOAD ================= */
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
@@ -27,23 +29,25 @@ export default function ImageUploader() {
         body: formData,
       });
 
-      const urls = res.images;
+      // backend should return [{ url, public_id }]
+      const uploaded = res.images || [];
 
-      setProduct((prev) => ({
+      setProduct((prev: any) => ({
         ...prev,
-        images: [...prev.images, ...urls].slice(0, 6),
+        images: [...(prev.images || []), ...uploaded].slice(0, 6),
       }));
+
     } catch (err) {
       console.error(err);
       alert("Upload failed");
     }
   };
 
-  /* REMOVE IMAGE */
+  /* ================= REMOVE ================= */
   const removeImage = (index: number) => {
-    const updated = images.filter((_, i) => i !== index);
+    const updated = images.filter((_: any, i: number) => i !== index);
 
-    setProduct((prev) => ({
+    setProduct((prev: any) => ({
       ...prev,
       images: updated,
     }));
@@ -56,14 +60,16 @@ export default function ImageUploader() {
       </CardHeader>
 
       <CardContent className="space-y-4">
+
         <div className="grid grid-cols-3 gap-4">
-          {images.map((img, i) => (
+
+          {images.map((img: any, i: number) => (
             <div
               key={i}
               className="relative w-full h-32 border rounded-lg overflow-hidden"
             >
               <img
-                src={img}
+                src={img.url || img} // 🔥 supports both string + object
                 alt="product"
                 className="w-full h-full object-cover"
               />
@@ -95,11 +101,13 @@ export default function ImageUploader() {
               />
             </label>
           )}
+
         </div>
 
         <p className="text-xs text-gray-500">
           Upload up to 6 images. First image will be thumbnail.
         </p>
+
       </CardContent>
     </Card>
   );

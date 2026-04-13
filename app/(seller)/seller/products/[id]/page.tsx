@@ -1,251 +1,116 @@
-//  app/products/[id]/page.tsx
-
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { useProduct } from "../context/ProductContext";
 import ProductForm from "../components/ProductForm";
 import { getProductById } from "../services/product.service";
 
 export default function EditProductPage() {
   const { id } = useParams();
-  const { setProduct } = useProduct();
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const load = async () => {
-      const res = await getProductById(id as string);
-  
-      const p = res.product;
-  
-      setProduct({
-        name: p.name,
-        description: p.description,
-        category: p.category,
-        subCategory: p.subCategory,
-        images: p.images || [],
-        variants: p.variants || [],
-        features: p.features || "",
-      });
+    if (!id) return;
+
+    const loadProduct = async () => {
+      try {
+        const res = await getProductById(id as string);
+
+        const p = res.product;
+
+        // normalize data (important)
+        setProduct({
+          _id: p._id,
+          name: p.title || p.name,
+          description: p.description || "",
+          category: p.category || "",
+          subCategory: p.subCategory || "",
+          price: p.price || 0,
+          images: p.images || [],
+          variants: p.variants || [],
+          features: p.features || "",
+
+          // dynamic (safe fallback)
+          size: p.size || "",
+          color: p.color || "",
+
+          weight: p.weight || "",
+          unit: p.unit || "",
+          expiry: p.expiry || "",
+        });
+
+      } catch (err) {
+        console.error(err);
+        alert("Failed to load product");
+      } finally {
+        setLoading(false);
+      }
     };
-  
-    load();
-  }, [id, setProduct]);
+
+    loadProduct();
+  }, [id]);
+
+  if (loading) {
+    return <div className="p-6">Loading...</div>;
+  }
+
+  if (!product) {
+    return <div className="p-6">Product not found</div>;
+  }
 
   return (
-    <div className="p-6">
+    <div className="min-h-screen bg-gray-50 p-6">
       <h1 className="text-2xl font-semibold mb-4">
         Edit Product
       </h1>
 
-      <ProductForm />
+      <ProductForm initialData={product} isEdit />
     </div>
   );
 }
 
-// // 👉 app/product/[slug]/page.tsx
+// //  app/products/[id]/page.tsx
+
 // "use client";
 
-// import { useEffect, useState } from "react";
-// import { useRouter, useParams } from "next/navigation";
-// import { apiFetch } from "@/lib/api/client";
-
-// type ProductForm = {
-//   title: string;
-//   price: number;
-//   description: string;
-//   totalStock: number;
-// };
+// import { useEffect } from "react";
+// import { useParams } from "next/navigation";
+// import { useProduct } from "../context/ProductContext";
+// import ProductForm from "../components/ProductForm";
+// import { getProductById } from "../services/product.service";
 
 // export default function EditProductPage() {
-//   const router = useRouter();
-//   const params = useParams();
-
-//   const productId = params.id as string;
-
-//   const [loading, setLoading] = useState(true);
-//   const [saving, setSaving] = useState(false);
-//   const [error, setError] = useState("");
-
-//   const [form, setForm] = useState<ProductForm>({
-//     title: "",
-//     price: 0,
-//     description: "",
-//     totalStock: 0,
-//   });
-
-//   /* ================= LOAD PRODUCT ================= */
+//   const { id } = useParams();
+//   const { setProduct } = useProduct();
 
 //   useEffect(() => {
-//     const loadProduct = async () => {
-//       try {
-//         const data = await apiFetch(`/products/id/${productId}`);
-
-//         setForm({
-//           title: data.title || "",
-//           price: data.price || 0,
-//           description: data.description || "",
-//           totalStock: data.totalStock || 0,
-//         });
-
-//       } catch (err: any) {
-//         console.error("Load product error", err);
-//         setError("Failed to load product");
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     if (productId) loadProduct();
-//   }, [productId]);
-
-//   /* ================= HANDLE CHANGE ================= */
-
-//   const handleChange = (
-//     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-//   ) => {
-
-//     const { name, value } = e.target;
-
-//     setForm(prev => ({
-//       ...prev,
-//       [name]:
-//         name === "price" || name === "totalStock"
-//           ? Number(value)
-//           : value,
-//     }));
-//   };
-
-//   /* ================= UPDATE PRODUCT ================= */
-
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-
-//     try {
-//       setSaving(true);
-//       setError("");
-
-//       await apiFetch(`/seller/products/${productId}`, {
-//         method: "PUT",
-//         body: JSON.stringify(form),
+//     const load = async () => {
+//       const res = await getProductById(id as string);
+  
+//       const p = res.product;
+  
+//       setProduct({
+//         name: p.name,
+//         description: p.description,
+//         category: p.category,
+//         subCategory: p.subCategory,
+//         images: p.images || [],
+//         variants: p.variants || [],
+//         features: p.features || "",
 //       });
-
-//       alert("Product updated. Waiting for admin approval.");
-
-//       router.push("/seller/products");
-
-//     } catch (err: any) {
-//       console.error(err);
-//       setError(err.message || "Update failed");
-//     } finally {
-//       setSaving(false);
-//     }
-//   };
-
-//   /* ================= UI ================= */
-
-//   if (loading) {
-//     return (
-//       <div className="p-10 text-center">
-//         Loading product...
-//       </div>
-//     );
-//   }
+//     };
+  
+//     load();
+//   }, [id, setProduct]);
 
 //   return (
-//     <div className="max-w-3xl mx-auto">
-
-//       <h1 className="text-3xl font-bold mb-8">
+//     <div className="p-6">
+//       <h1 className="text-2xl font-semibold mb-4">
 //         Edit Product
 //       </h1>
 
-//       {error && (
-//         <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm">
-//           {error}
-//         </div>
-//       )}
-
-//       <form
-//         onSubmit={handleSubmit}
-//         className="space-y-6 bg-white p-8 rounded-xl border shadow-sm"
-//       >
-
-//         {/* TITLE */}
-
-//         <div>
-//           <label className="block text-sm mb-2 font-medium">
-//             Product Title
-//           </label>
-
-//           <input
-//             name="title"
-//             value={form.title}
-//             onChange={handleChange}
-//             className="w-full border px-4 py-3 rounded-lg"
-//             required
-//           />
-//         </div>
-
-//         {/* PRICE */}
-
-//         <div>
-//           <label className="block text-sm mb-2 font-medium">
-//             Price
-//           </label>
-
-//           <input
-//             type="number"
-//             name="price"
-//             value={form.price}
-//             onChange={handleChange}
-//             className="w-full border px-4 py-3 rounded-lg"
-//             required
-//           />
-//         </div>
-
-//         {/* STOCK */}
-
-//         <div>
-//           <label className="block text-sm mb-2 font-medium">
-//             Stock
-//           </label>
-
-//           <input
-//             type="number"
-//             name="totalStock"
-//             value={form.totalStock}
-//             onChange={handleChange}
-//             className="w-full border px-4 py-3 rounded-lg"
-//             required
-//           />
-//         </div>
-
-//         {/* DESCRIPTION */}
-
-//         <div>
-//           <label className="block text-sm mb-2 font-medium">
-//             Description
-//           </label>
-
-//           <textarea
-//             name="description"
-//             value={form.description}
-//             onChange={handleChange}
-//             rows={4}
-//             className="w-full border px-4 py-3 rounded-lg"
-//           />
-//         </div>
-
-//         {/* BUTTON */}
-
-//         <button
-//           disabled={saving}
-//           className="w-full bg-black text-white py-4 rounded-lg hover:bg-gray-900 transition"
-//         >
-//           {saving ? "Updating..." : "Update Product"}
-//         </button>
-
-//       </form>
+//       <ProductForm />
 //     </div>
 //   );
 // }

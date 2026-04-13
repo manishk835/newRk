@@ -189,7 +189,7 @@ export default function CheckoutPage() {
 
   const subtotal = selectedCart.reduce(
     (sum: number, i: any) =>
-      sum + i.product.price * i.quantity,
+      sum + (i.variant?.priceOverride || i.product.price) * i.quantity,
     0
   );
 
@@ -212,6 +212,7 @@ export default function CheckoutPage() {
           items: selectedCart.map((i: any) => ({
             productId: i.product._id,
             quantity: i.quantity,
+            variantId: i.variant?._id,
           })),
           paymentMethod,
         }),
@@ -245,7 +246,11 @@ export default function CheckoutPage() {
       const rpData = await rpRes.json();
 
       if (!rpRes.ok) throw new Error(rpData.message);
-
+      
+      if (!window.Razorpay) {
+        setError("Payment failed to load");
+        return;
+      }
       const razor = new window.Razorpay({
         key: rpData.key,
         amount: rpData.amount,
@@ -316,20 +321,20 @@ export default function CheckoutPage() {
 
   const handleOrder = async () => {
     // STOCK VALIDATION (frontend)
-    const outOfStockItem = selectedCart.find(
-      (item: any) => item.product.totalStock <= 0
-    );
 
-    if (outOfStockItem) {
-      setError(`${outOfStockItem.product.title} is out of stock`);
+    const invalidItem = selectedCart.find((item: any) => {
+      const stock = item.variant?.stock ?? item.product.totalStock;
+      return item.quantity > stock;
+    });
+    
+    if (invalidItem) {
+      setError(`Only ${invalidItem.variant?.stock} items available for ${invalidItem.product.title}`);
       return;
     }
-    const invalidQty = selectedCart.find(
-      (item: any) => item.quantity > item.product.stock
-    );
-    
-    if (invalidQty) {
-      setError(`Only ${invalidQty.product.stock} items available for ${invalidQty.product.title}`);
+
+
+    if (invalidItem) {
+      setError(`Only ${invalidItem.product.stock} items available for ${invalidItem.product.title}`);
       return;
     }
     if (!selectedAddress) {
@@ -400,8 +405,8 @@ export default function CheckoutPage() {
               <label
                 key={addr._id}
                 className={`border rounded-xl p-4 flex gap-4 cursor-pointer mb-3 ${selectedAddress?._id === addr._id
-                    ? "border-black bg-gray-50"
-                    : "border-gray-200"
+                  ? "border-black bg-gray-50"
+                  : "border-gray-200"
                   }`}
               >
 
@@ -489,7 +494,7 @@ export default function CheckoutPage() {
               </span>
 
               <span>
-                ₹{item.product.price * item.quantity}
+                ₹{(item.variant?.priceOverride || item.product.price) * item.quantity}
               </span>
 
             </div>

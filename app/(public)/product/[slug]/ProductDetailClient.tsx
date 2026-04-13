@@ -111,10 +111,9 @@ export default function ProductDetailClient({
   /* =====================================================
      ADD TO CART
   ====================================================== */
-
   const handleAddToCart = () => {
     if (!selectedVariant || !isInStock) return;
-
+  
     dispatch({
       type: "ADD_TO_CART",
       payload: {
@@ -123,6 +122,8 @@ export default function ProductDetailClient({
         quantity: qty,
       },
     });
+  
+    alert("Added to cart ✅"); // simple feedback (later toast karenge)
   };
 
   /* =====================================================

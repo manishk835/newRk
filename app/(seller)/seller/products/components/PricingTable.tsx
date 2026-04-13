@@ -2,15 +2,24 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useProduct } from "../context/ProductContext";
-import { Variant } from "../types/product";
 
-export default function PricingTable() {
-  const { product, setProduct } = useProduct();
+type Variant = {
+  name: string;
+  attributes?: Record<string, any>;
+  stock?: number;
+  sku?: string;
+  priceOverride?: number;
+};
 
+type Props = {
+  product: any;
+  setProduct: (data: any) => void;
+};
+
+export default function PricingTable({ product, setProduct }: Props) {
   const variants: Variant[] = product.variants || [];
 
-  /* UPDATE VARIANT */
+  /* ================= UPDATE VARIANT ================= */
   const updateVariant = (
     index: number,
     field: keyof Variant,
@@ -23,10 +32,21 @@ export default function PricingTable() {
       [field]: value,
     };
 
-    setProduct((prev) => ({
+    setProduct((prev: any) => ({
       ...prev,
       variants: updated,
     }));
+  };
+
+  /* ================= VARIANT LABEL ================= */
+  const getVariantLabel = (v: Variant) => {
+    if (v.name) return v.name;
+
+    if (v.attributes) {
+      return Object.values(v.attributes).join(" / ");
+    }
+
+    return "Variant";
   };
 
   return (
@@ -48,18 +68,18 @@ export default function PricingTable() {
             key={i}
             className="grid grid-cols-4 gap-3 border p-3 rounded-lg"
           >
-            {/* VARIANT */}
+            {/* VARIANT NAME */}
             <div className="text-sm flex items-center font-medium">
-              {v.size} / {v.color}
+              {getVariantLabel(v)}
             </div>
 
-            {/* PRICE */}
+            {/* PRICE OVERRIDE */}
             <Input
               type="number"
               placeholder="Price"
-              value={v.price}
+              value={v.priceOverride || ""}
               onChange={(e) =>
-                updateVariant(i, "price", Number(e.target.value))
+                updateVariant(i, "priceOverride", Number(e.target.value))
               }
             />
 
@@ -67,7 +87,7 @@ export default function PricingTable() {
             <Input
               type="number"
               placeholder="Stock"
-              value={v.stock}
+              value={v.stock || ""}
               onChange={(e) =>
                 updateVariant(i, "stock", Number(e.target.value))
               }
@@ -76,7 +96,7 @@ export default function PricingTable() {
             {/* SKU */}
             <Input
               placeholder="SKU"
-              value={v.sku}
+              value={v.sku || ""}
               onChange={(e) =>
                 updateVariant(i, "sku", e.target.value)
               }

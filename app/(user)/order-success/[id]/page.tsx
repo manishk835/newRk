@@ -55,7 +55,7 @@ export default function OrderSuccessPage() {
         const data = await res.json();
 
         // 🔥 IMPORTANT: backend sends { success, order }
-        setOrder(data.order);
+        setOrder(data?.order || null);
       } catch (error) {
         console.error("Order fetch error:", error);
         setOrder(null);
@@ -70,8 +70,8 @@ export default function OrderSuccessPage() {
   /* ================= LOADING ================= */
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-lg">
-        Loading order details...
+      <div className="min-h-screen flex items-center justify-center text-gray-600">
+        Fetching your order...
       </div>
     );
   }
@@ -100,14 +100,18 @@ export default function OrderSuccessPage() {
 
           {/* SUCCESS ICON */}
           <div className="flex justify-center mb-8">
-            <div className="bg-green-100 text-green-600 w-24 h-24 flex items-center justify-center rounded-full text-5xl shadow-inner">
+            <div className={`w-24 h-24 flex items-center justify-center rounded-full text-5xl shadow-inner ${order.paymentStatus === "Failed"
+              ? "bg-red-100 text-red-600"
+              : "bg-green-100 text-green-600"
+              }`}>
               ✓
             </div>
           </div>
 
-          {/* TITLE */}
           <h1 className="text-3xl md:text-4xl font-bold text-center mb-4">
-            Order Placed Successfully 🎉
+            {order.paymentStatus === "Failed"
+              ? "Payment Failed ❌"
+              : "Order Placed Successfully 🎉"}
           </h1>
 
           <p className="text-center text-gray-600 mb-10">
@@ -144,10 +148,9 @@ export default function OrderSuccessPage() {
             <div className="flex justify-between">
               <span>Payment Status</span>
               <span
-                className={`font-semibold ${
-                  statusColors[order.paymentStatus] ||
+                className={`font-semibold ${statusColors[order.paymentStatus] ||
                   "text-gray-600"
-                }`}
+                  }`}
               >
                 {order.paymentStatus}
               </span>
@@ -171,7 +174,7 @@ export default function OrderSuccessPage() {
             </Link>
 
             <Link
-              href="/"
+              href="/products"
               className="px-8 py-3 border rounded-xl font-medium text-center hover:bg-gray-100 transition"
             >
               Continue Shopping

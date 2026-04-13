@@ -12,7 +12,7 @@ export default function ProductTable({ products }: Props) {
   const [search, setSearch] = useState("");
 
   const filtered = products.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
+    p.name?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -59,24 +59,51 @@ export default function ProductTable({ products }: Props) {
               return (
                 <tr key={p._id} className="border-t hover:bg-gray-50">
 
+                  {/* PRODUCT */}
                   <td className="p-3 flex items-center gap-3">
                     <img
-                      src={p.images?.[0] || "/placeholder.png"}
+                      src={
+                        p.images?.[0]?.url ||
+                        p.thumbnail ||
+                        "/placeholder.png"
+                      }
                       className="w-10 h-10 rounded object-cover"
                     />
-                    {p.name}
+                    <div>
+                      <p className="font-medium">{p.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {p.subCategory || ""}
+                      </p>
+                    </div>
                   </td>
 
-                  <td className="p-3 text-center">{p.category}</td>
-
-                  <td className="p-3 text-center">
-                    ₹{p.variants?.[0]?.price ?? 0}
+                  {/* CATEGORY */}
+                  <td className="p-3 text-center capitalize">
+                    {p.category}
                   </td>
 
-                  <td className="p-3 text-center">{totalStock}</td>
-
+                  {/* PRICE */}
                   <td className="p-3 text-center">
-                    <span className="px-2 py-1 text-xs bg-green-100 rounded">
+                    ₹
+                    {p.price ||
+                      p.variants?.[0]?.priceOverride ||
+                      0}
+                  </td>
+
+                  {/* STOCK */}
+                  <td className="p-3 text-center">
+                    {totalStock}
+                  </td>
+
+                  {/* STATUS */}
+                  <td className="p-3 text-center">
+                    <span
+                      className={`px-2 py-1 text-xs rounded ${
+                        p.isApproved
+                          ? "bg-green-100 text-green-700"
+                          : "bg-yellow-100 text-yellow-700"
+                      }`}
+                    >
                       {p.isApproved ? "Active" : "Pending"}
                     </span>
                   </td>
@@ -84,6 +111,7 @@ export default function ProductTable({ products }: Props) {
                 </tr>
               );
             })}
+
           </tbody>
 
         </table>
