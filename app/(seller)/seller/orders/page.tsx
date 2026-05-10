@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { apiFetch } from "@/lib/api/client";
 
 /* ================= TYPES ================= */
@@ -28,16 +29,33 @@ type Order = {
 
 /* ================= STATUS COLORS ================= */
 
-const statusColors: Record<string, string> = {
-  Delivered: "bg-green-100 text-green-700",
-  Shipped: "bg-blue-100 text-blue-700",
-  Packed: "bg-purple-100 text-purple-700",
-  Confirmed: "bg-indigo-100 text-indigo-700",
-  Pending: "bg-yellow-100 text-yellow-700",
-  Cancelled: "bg-red-100 text-red-700",
+const statusColors: Record<
+  string,
+  string
+> = {
+  Delivered:
+    "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300",
+
+  Shipped:
+    "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300",
+
+  Packed:
+    "bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300",
+
+  Confirmed:
+    "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300",
+
+  Pending:
+    "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-300",
+
+  Cancelled:
+    "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300",
 };
 
-const paymentColors: Record<string, string> = {
+const paymentColors: Record<
+  string,
+  string
+> = {
   Paid: "text-green-600",
   Pending: "text-yellow-600",
   Failed: "text-red-600",
@@ -48,27 +66,54 @@ const paymentColors: Record<string, string> = {
 
 export default function SellerOrdersPage() {
 
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [filtered, setFiltered] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [orders, setOrders] =
+    useState<Order[]>([]);
 
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [filtered, setFiltered] =
+    useState<Order[]>([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [updatingId, setUpdatingId] =
+    useState<string | null>(null);
+
+  const [search, setSearch] =
+    useState("");
+
+  const [statusFilter, setStatusFilter] =
+    useState("all");
 
   /* ================= LOAD ================= */
 
   const loadOrders = async () => {
     try {
+
       setLoading(true);
-      const data = await apiFetch("/seller/orders");
-      const list = Array.isArray(data) ? data : [];
+
+      const data =
+        await apiFetch(
+          "/seller/orders"
+        );
+
+      const list = Array.isArray(data)
+        ? data
+        : [];
+
       setOrders(list);
+
       setFiltered(list);
+
     } catch {
-      alert("Failed to load orders");
+
+      alert(
+        "Failed to load orders"
+      );
+
     } finally {
+
       setLoading(false);
+
     }
   };
 
@@ -79,44 +124,79 @@ export default function SellerOrdersPage() {
   /* ================= FILTER ================= */
 
   useEffect(() => {
+
     let data = [...orders];
 
     if (search) {
+
       data = data.filter((o) =>
-        o.customer?.name?.toLowerCase().includes(search.toLowerCase())
+        o.customer?.name
+          ?.toLowerCase()
+          .includes(
+            search.toLowerCase()
+          )
       );
     }
 
     if (statusFilter !== "all") {
+
       data = data.filter(
-        (o) => o.status.toLowerCase() === statusFilter
+        (o) =>
+          o.status.toLowerCase() ===
+          statusFilter
       );
     }
 
     setFiltered(data);
-  }, [search, statusFilter, orders]);
+
+  }, [
+    search,
+    statusFilter,
+    orders,
+  ]);
 
   /* ================= UPDATE STATUS ================= */
 
-  const updateStatus = async (id: string, status: string) => {
+  const updateStatus = async (
+    id: string,
+    status: string
+  ) => {
     try {
+
       setUpdatingId(id);
 
-      await apiFetch(`/seller/orders/${id}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({ status }),
-      });
+      await apiFetch(
+        `/seller/orders/${id}/status`,
+        {
+          method: "PATCH",
+
+          body: JSON.stringify({
+            status,
+          }),
+        }
+      );
 
       setOrders((prev) =>
         prev.map((o) =>
-          o._id === id ? { ...o, status } : o
+          o._id === id
+            ? {
+                ...o,
+                status,
+              }
+            : o
         )
       );
 
     } catch {
-      alert("Status update failed");
+
+      alert(
+        "Status update failed"
+      );
+
     } finally {
+
       setUpdatingId(null);
+
     }
   };
 
@@ -127,14 +207,18 @@ export default function SellerOrdersPage() {
 
       {/* HEADER */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Orders</h1>
+
+        <h1 className="text-2xl font-bold text-black dark:text-white">
+          Orders
+        </h1>
 
         <button
           onClick={loadOrders}
-          className="border px-4 py-2 rounded-lg text-sm"
+          className="border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-black dark:text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-zinc-800 transition"
         >
           Refresh
         </button>
+
       </div>
 
       {/* FILTERS */}
@@ -143,127 +227,287 @@ export default function SellerOrdersPage() {
         <input
           placeholder="Search customer..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="border px-3 py-2 rounded-lg text-sm"
+          onChange={(e) =>
+            setSearch(
+              e.target.value
+            )
+          }
+          className="border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-black dark:text-white px-3 py-2 rounded-lg text-sm outline-none"
         />
 
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="border px-3 py-2 rounded-lg text-sm"
+          onChange={(e) =>
+            setStatusFilter(
+              e.target.value
+            )
+          }
+          className="border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-black dark:text-white px-3 py-2 rounded-lg text-sm outline-none"
         >
-          <option value="all">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="packed">Packed</option>
-          <option value="shipped">Shipped</option>
-          <option value="delivered">Delivered</option>
-          <option value="cancelled">Cancelled</option>
+
+          <option value="all">
+            All Status
+          </option>
+
+          <option value="pending">
+            Pending
+          </option>
+
+          <option value="confirmed">
+            Confirmed
+          </option>
+
+          <option value="packed">
+            Packed
+          </option>
+
+          <option value="shipped">
+            Shipped
+          </option>
+
+          <option value="delivered">
+            Delivered
+          </option>
+
+          <option value="cancelled">
+            Cancelled
+          </option>
+
         </select>
 
       </div>
 
       {/* TABLE */}
-      <div className="bg-white border rounded-2xl overflow-hidden">
+      <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl overflow-hidden transition-colors duration-300">
 
         {loading ? (
-          <div className="p-10 text-center text-gray-500">
+
+          <div className="p-10 text-center text-gray-500 dark:text-gray-400">
             Loading orders...
           </div>
-        ) : filtered.length === 0 ? (
-          <div className="p-10 text-center text-gray-500">
+
+        ) : filtered.length ===
+          0 ? (
+
+          <div className="p-10 text-center text-gray-500 dark:text-gray-400">
             No orders found
           </div>
+
         ) : (
-          <table className="w-full text-sm">
 
-            <thead className="bg-gray-50 text-gray-600">
-              <tr>
-                <th className="p-4 text-left">Customer</th>
-                <th className="p-4 text-left">Items</th>
-                <th className="p-4 text-left">Payment</th>
-                <th className="p-4 text-left">Earnings</th>
-                <th className="p-4 text-left">Status</th>
-                <th className="p-4 text-left">Update</th>
-                <th className="p-4 text-left">Date</th>
-              </tr>
-            </thead>
+          <div className="overflow-x-auto">
 
-            <tbody>
+            <table className="w-full text-sm">
 
-              {filtered.map((order) => (
+              <thead className="bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-300">
 
-                <tr key={order._id} className="border-t">
+                <tr>
 
-                  {/* CUSTOMER */}
-                  <td className="p-4">
-                    <div className="font-medium">
-                      {order.customer?.name}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {order.customer?.phone}
-                    </div>
-                  </td>
+                  <th className="p-4 text-left">
+                    Customer
+                  </th>
 
-                  {/* ITEMS */}
-                  <td className="p-4 space-y-1">
-                    {order.items.map((i, idx) => (
-                      <div key={idx}>
-                        {i.title} × {i.quantity}
-                      </div>
-                    ))}
-                  </td>
+                  <th className="p-4 text-left">
+                    Items
+                  </th>
 
-                  {/* PAYMENT */}
-                  <td className="p-4">
-                    <span className={paymentColors[order.paymentStatus] || ""}>
-                      {order.paymentStatus}
-                    </span>
-                  </td>
+                  <th className="p-4 text-left">
+                    Payment
+                  </th>
 
-                  {/* EARNINGS */}
-                  <td className="p-4 text-green-600 font-semibold">
-                    ₹{order.sellerTotal}
-                  </td>
+                  <th className="p-4 text-left">
+                    Earnings
+                  </th>
 
-                  {/* STATUS */}
-                  <td className="p-4">
-                    <span className={`px-3 py-1 text-xs rounded-full ${statusColors[order.status] || "bg-gray-100"}`}>
-                      {order.status}
-                    </span>
-                  </td>
+                  <th className="p-4 text-left">
+                    Status
+                  </th>
 
-                  {/* UPDATE */}
-                  <td className="p-4">
-                    <select
-                      value={order.status}
-                      disabled={updatingId === order._id}
-                      onChange={(e) =>
-                        updateStatus(order._id, e.target.value)
-                      }
-                      className="border px-2 py-1 text-sm rounded"
-                    >
-                      <option>Pending</option>
-                      <option>Confirmed</option>
-                      <option>Packed</option>
-                      <option>Shipped</option>
-                      <option>Delivered</option>
-                      <option>Cancelled</option>
-                    </select>
-                  </td>
+                  <th className="p-4 text-left">
+                    Update
+                  </th>
 
-                  {/* DATE */}
-                  <td className="p-4 text-xs text-gray-500">
-                    {new Date(order.createdAt).toLocaleString()}
-                  </td>
+                  <th className="p-4 text-left">
+                    Date
+                  </th>
 
                 </tr>
 
-              ))}
+              </thead>
 
-            </tbody>
+              <tbody>
 
-          </table>
+                {filtered.map(
+                  (order) => (
+
+                    <tr
+                      key={order._id}
+                      className="border-t border-gray-200 dark:border-zinc-800"
+                    >
+
+                      {/* CUSTOMER */}
+                      <td className="p-4">
+
+                        <div className="font-medium text-black dark:text-white">
+                          {
+                            order
+                              .customer
+                              ?.name
+                          }
+                        </div>
+
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {
+                            order
+                              .customer
+                              ?.phone
+                          }
+                        </div>
+
+                      </td>
+
+                      {/* ITEMS */}
+                      <td className="p-4 space-y-1">
+
+                        {order.items.map(
+                          (
+                            i,
+                            idx
+                          ) => (
+
+                            <div
+                              key={idx}
+                              className="text-black dark:text-white"
+                            >
+                              {
+                                i.title
+                              }{" "}
+                              ×{" "}
+                              {
+                                i.quantity
+                              }
+                            </div>
+
+                          )
+                        )}
+
+                      </td>
+
+                      {/* PAYMENT */}
+                      <td className="p-4">
+
+                        <span
+                          className={
+                            paymentColors[
+                              order
+                                .paymentStatus
+                            ] || ""
+                          }
+                        >
+                          {
+                            order.paymentStatus
+                          }
+                        </span>
+
+                      </td>
+
+                      {/* EARNINGS */}
+                      <td className="p-4 text-green-600 font-semibold">
+                        ₹
+                        {
+                          order.sellerTotal
+                        }
+                      </td>
+
+                      {/* STATUS */}
+                      <td className="p-4">
+
+                        <span
+                          className={`px-3 py-1 text-xs rounded-full ${
+                            statusColors[
+                              order.status
+                            ] ||
+                            "bg-gray-100 dark:bg-zinc-800"
+                          }`}
+                        >
+                          {
+                            order.status
+                          }
+                        </span>
+
+                      </td>
+
+                      {/* UPDATE */}
+                      <td className="p-4">
+
+                        <select
+                          value={
+                            order.status
+                          }
+                          disabled={
+                            updatingId ===
+                            order._id
+                          }
+                          onChange={(
+                            e
+                          ) =>
+                            updateStatus(
+                              order._id,
+                              e.target
+                                .value
+                            )
+                          }
+                          className="border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-black dark:text-white px-2 py-1 text-sm rounded outline-none"
+                        >
+
+                          <option>
+                            Pending
+                          </option>
+
+                          <option>
+                            Confirmed
+                          </option>
+
+                          <option>
+                            Packed
+                          </option>
+
+                          <option>
+                            Shipped
+                          </option>
+
+                          <option>
+                            Delivered
+                          </option>
+
+                          <option>
+                            Cancelled
+                          </option>
+
+                        </select>
+
+                      </td>
+
+                      {/* DATE */}
+                      <td className="p-4 text-xs text-gray-500 dark:text-gray-400">
+
+                        {new Date(
+                          order.createdAt
+                        ).toLocaleString()}
+
+                      </td>
+
+                    </tr>
+
+                  )
+                )}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
         )}
 
       </div>

@@ -8,6 +8,8 @@ type User = {
   role: string;
   sellerStatus?: string;
   name?: string;
+  
+
 };
 
 export default function useSellerAuth() {

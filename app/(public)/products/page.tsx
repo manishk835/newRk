@@ -102,28 +102,38 @@ export default async function ProductsPage({
   /* ================= TITLE ================= */
 
   let pageTitle = "All Products";
+
   if (sp.filter === "featured") pageTitle = "Featured Products";
   if (sp.filter === "new") pageTitle = "New Arrivals";
   if (sp.filter === "best") pageTitle = "Best Sellers";
   if (sp.brand) pageTitle = `${sp.brand} Products`;
 
   return (
-    <div className="pt-24 bg-gray-50 min-h-screen">
+    <div className="pt-24 bg-gray-50 dark:bg-black min-h-screen transition-colors duration-300">
 
       {/* HEADER */}
-      <section className="border-b bg-white">
+      <section className="border-b border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 transition-colors duration-300">
+
         <div className="container mx-auto px-6 py-10">
-          <h1 className="text-3xl font-bold">{pageTitle}</h1>
+
+          <h1 className="text-3xl font-bold text-black dark:text-white">
+            {pageTitle}
+          </h1>
+
         </div>
       </section>
 
       {/* CONTENT */}
       <section className="container mx-auto px-6 py-16">
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
 
           {/* FILTERS */}
-          <aside className="hidden lg:block border rounded-xl p-6 sticky top-28 bg-white">
-            <h3 className="font-semibold mb-4">Filters</h3>
+          <aside className="hidden lg:block border border-gray-200 dark:border-zinc-800 rounded-xl p-6 sticky top-28 bg-white dark:bg-zinc-900 transition-colors duration-300">
+
+            <h3 className="font-semibold text-black dark:text-white mb-4">
+              Filters
+            </h3>
 
             <SubCategoryFilter subCategories={filters.subCategories} />
             <SizeFilter sizes={filters.sizes} />
@@ -131,6 +141,7 @@ export default async function ProductsPage({
             <BrandFilter brands={filters.brands} />
             <RatingFilter ratings={filters.ratings} />
             <PriceFilter priceRange={filters.priceRange} />
+
           </aside>
 
           {/* PRODUCTS */}
@@ -138,7 +149,8 @@ export default async function ProductsPage({
 
             {/* TOP */}
             <div className="flex justify-between mb-6">
-              <p className="text-sm">
+
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 {products.length} / {total} products
               </p>
 
@@ -146,6 +158,7 @@ export default async function ProductsPage({
                 <ClearFilters />
                 <CategorySort />
               </div>
+
             </div>
 
             <StickyActiveFilters />
@@ -164,9 +177,11 @@ export default async function ProductsPage({
 
             {/* GRID */}
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-6">
+
               {products.map((p) => (
                 <ProductCard key={p._id} product={p} />
               ))}
+
             </div>
 
             {/* PAGINATION */}
@@ -189,7 +204,11 @@ export default async function ProductsPage({
 function EmptyState() {
   return (
     <div className="text-center py-20">
-      <h3 className="text-lg font-semibold">No products found</h3>
+
+      <h3 className="text-lg font-semibold text-black dark:text-white">
+        No products found
+      </h3>
+
     </div>
   );
 }
@@ -209,16 +228,20 @@ function Pagination({
 }) {
 
   const totalPages = Math.ceil(totalItems / perPage);
+
   if (totalPages <= 1) return null;
 
   const createQuery = (page: number) => {
     const params = new URLSearchParams(searchParams);
+
     params.set("page", String(page));
+
     return `?${params.toString()}`;
   };
 
   return (
     <div className="mt-10 flex justify-center gap-2">
+
       {Array.from({ length: totalPages }).map((_, i) => {
         const page = i + 1;
 
@@ -226,14 +249,17 @@ function Pagination({
           <a
             key={page}
             href={createQuery(page)}
-            className={`px-3 py-1 border rounded ${
-              page === currentPage ? "bg-black text-white" : ""
+            className={`px-3 py-1 border rounded transition ${
+              page === currentPage
+                ? "bg-black dark:bg-white text-white dark:text-black border-black dark:border-white"
+                : "bg-white dark:bg-zinc-900 text-black dark:text-white border-gray-300 dark:border-zinc-700 hover:bg-gray-100 dark:hover:bg-zinc-800"
             }`}
           >
             {page}
           </a>
         );
       })}
+
     </div>
   );
 }

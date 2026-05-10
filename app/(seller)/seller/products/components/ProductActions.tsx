@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+
 import {
   Card,
   CardContent,
@@ -8,16 +9,23 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+/* ================= TYPES ================= */
+
 type Props = {
   onSubmit: () => void;
+
   loading: boolean;
+
   isEdit?: boolean;
+
   product?: {
     name?: string;
     category?: string;
     price?: number;
   };
 };
+
+/* ================= COMPONENT ================= */
 
 export default function ProductActions({
   onSubmit,
@@ -27,54 +35,103 @@ export default function ProductActions({
 }: Props) {
 
   const isReady =
-    product?.name && product?.category && product?.price;
+    product?.name &&
+    product?.category &&
+    product?.price;
+
+  /* ================= SAVE DRAFT ================= */
 
   const handleSaveDraft = () => {
-    localStorage.setItem("draft_product", JSON.stringify(product));
+
+    localStorage.setItem(
+      "draft_product",
+      JSON.stringify(product)
+    );
+
     alert("💾 Draft Saved");
   };
 
   return (
-    <Card>
+    <Card className="border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm transition-colors duration-300">
+
       <CardHeader>
-        <CardTitle>Actions</CardTitle>
+
+        <CardTitle className="text-black dark:text-white">
+          Actions
+        </CardTitle>
+
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-5">
 
         {/* STATUS */}
-        <div className="text-sm">
-          <p className="text-gray-500">Status</p>
-          <p className="font-medium">
-            {isReady ? "Ready to publish" : "Incomplete"}
+        <div className="bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-800 rounded-xl p-4">
+
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+            Product Status
           </p>
+
+          <div className="flex items-center gap-2">
+
+            <div
+              className={`w-2.5 h-2.5 rounded-full ${
+                isReady
+                  ? "bg-green-500"
+                  : "bg-yellow-500"
+              }`}
+            />
+
+            <p
+              className={`text-sm font-medium ${
+                isReady
+                  ? "text-green-600"
+                  : "text-yellow-600"
+              }`}
+            >
+              {isReady
+                ? "Ready to publish"
+                : "Incomplete"}
+            </p>
+
+          </div>
+
         </div>
 
         {/* SAVE DRAFT */}
         <Button
           variant="outline"
-          className="w-full"
+          className="w-full border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 transition"
           onClick={handleSaveDraft}
         >
-          Save Draft
+          💾 Save Draft
         </Button>
 
         {/* SUBMIT */}
         <Button
           onClick={onSubmit}
-          className="w-full bg-black text-white"
-          disabled={loading || !isReady}
+          disabled={
+            loading || !isReady
+          }
+          className="w-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 transition disabled:opacity-50"
         >
+
           {loading
             ? isEdit
               ? "Updating..."
               : "Publishing..."
             : isEdit
-              ? "Update Product"
-              : "Publish Product"}
+            ? "Update Product"
+            : "Publish Product"}
+
         </Button>
 
+        {/* INFO */}
+        <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+          Make sure all required product details are filled before publishing.
+        </p>
+
       </CardContent>
+
     </Card>
   );
 }

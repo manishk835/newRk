@@ -4,24 +4,25 @@ import VendorForm from "./VendorForm";
 
 export default function ForVendorsPage() {
   return (
-    <div className="bg-gray-50">
+    <div className="bg-gray-50 dark:bg-black transition-colors duration-300">
 
       {/* HERO */}
-      <section className="pt-32 pb-24 bg-white border-b">
+      <section className="pt-32 pb-24 bg-white dark:bg-zinc-950 border-b border-gray-200 dark:border-zinc-800 transition-colors duration-300">
+
         <div className="max-w-7xl mx-auto px-6 text-center">
 
-          <h1 className="text-5xl font-bold mb-6">
+          <h1 className="text-5xl font-bold mb-6 text-black dark:text-white">
             Sell on <span className="text-[#F5A623]">RK Fashion</span>
           </h1>
 
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto mb-10">
+          <p className="text-gray-600 dark:text-gray-400 text-lg max-w-2xl mx-auto mb-10">
             Join hundreds of fashion brands already selling on RK Fashion.
             Reach customers across India and grow your business faster.
           </p>
 
           <a
             href="#apply"
-            className="inline-block bg-black text-white px-8 py-4 rounded-xl font-semibold hover:bg-gray-800 transition"
+            className="inline-block bg-black dark:bg-white text-white dark:text-black px-8 py-4 rounded-xl font-semibold hover:bg-gray-800 dark:hover:bg-gray-200 transition"
           >
             Start Selling
           </a>
@@ -30,75 +31,92 @@ export default function ForVendorsPage() {
       </section>
 
       {/* TRUST STATS */}
-      <section className="py-16 bg-gray-50 border-b">
+      <section className="py-16 bg-gray-50 dark:bg-black border-b border-gray-200 dark:border-zinc-800 transition-colors duration-300">
+
         <div className="max-w-6xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+
           <Stat title="10k+" desc="Customers" />
           <Stat title="500+" desc="Products Sold" />
           <Stat title="100+" desc="Active Sellers" />
           <Stat title="24/7" desc="Seller Support" />
+
         </div>
       </section>
 
       {/* BENEFITS */}
-      <section className="py-24 bg-white">
+      <section className="py-24 bg-white dark:bg-zinc-950 transition-colors duration-300">
+
         <div className="max-w-6xl mx-auto px-6">
 
-          <h2 className="text-3xl font-bold text-center mb-14">
+          <h2 className="text-3xl font-bold text-center text-black dark:text-white mb-14">
             Why Sell With Us
           </h2>
 
           <div className="grid md:grid-cols-3 gap-10">
+
             <Benefit
               title="Reach Thousands"
               desc="Your products reach customers across India instantly through our marketplace."
             />
+
             <Benefit
               title="Easy Seller Dashboard"
               desc="Manage products, inventory, orders and earnings from a powerful dashboard."
             />
+
             <Benefit
               title="Secure Payments"
               desc="Receive payments directly to your seller wallet with transparent earnings."
             />
+
           </div>
 
         </div>
       </section>
 
       {/* HOW IT WORKS */}
-      <section className="py-24 bg-gray-50 border-t">
+      <section className="py-24 bg-gray-50 dark:bg-black border-t border-gray-200 dark:border-zinc-800 transition-colors duration-300">
+
         <div className="max-w-6xl mx-auto px-6">
 
-          <h2 className="text-3xl font-bold text-center mb-16">
+          <h2 className="text-3xl font-bold text-center text-black dark:text-white mb-16">
             How It Works
           </h2>
 
           <div className="grid md:grid-cols-3 gap-10 text-center">
+
             <Step
               number="1"
               title="Apply"
               desc="Submit your seller application with your brand details."
             />
+
             <Step
               number="2"
               title="Get Approved"
               desc="Our team reviews your application and approves your store."
             />
+
             <Step
               number="3"
               title="Start Selling"
               desc="Add products, manage orders and start earning."
             />
+
           </div>
 
         </div>
       </section>
 
       {/* APPLICATION FORM */}
-      <section id="apply" className="py-24 bg-white border-t">
+      <section
+        id="apply"
+        className="py-24 bg-white dark:bg-zinc-950 border-t border-gray-200 dark:border-zinc-800 transition-colors duration-300"
+      >
+
         <div className="max-w-2xl mx-auto px-6">
 
-          <h2 className="text-3xl font-bold text-center mb-10">
+          <h2 className="text-3xl font-bold text-center text-black dark:text-white mb-10">
             Apply to Become a Seller
           </h2>
 
@@ -121,9 +139,16 @@ function Benefit({
   desc: string;
 }) {
   return (
-    <div className="bg-white p-8 rounded-2xl border shadow-sm text-center">
-      <h3 className="font-semibold text-xl mb-3">{title}</h3>
-      <p className="text-gray-600">{desc}</p>
+    <div className="bg-white dark:bg-zinc-900 p-8 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm text-center transition-colors duration-300">
+
+      <h3 className="font-semibold text-xl text-black dark:text-white mb-3">
+        {title}
+      </h3>
+
+      <p className="text-gray-600 dark:text-gray-400">
+        {desc}
+      </p>
+
     </div>
   );
 }
@@ -138,12 +163,20 @@ function Step({
   desc: string;
 }) {
   return (
-    <div className="bg-white p-8 rounded-2xl border shadow-sm">
-      <div className="w-12 h-12 mx-auto mb-4 flex items-center justify-center rounded-full bg-black text-white font-bold">
+    <div className="bg-white dark:bg-zinc-900 p-8 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm transition-colors duration-300">
+
+      <div className="w-12 h-12 mx-auto mb-4 flex items-center justify-center rounded-full bg-black dark:bg-white text-white dark:text-black font-bold">
         {number}
       </div>
-      <h3 className="font-semibold text-lg mb-2">{title}</h3>
-      <p className="text-gray-600 text-sm">{desc}</p>
+
+      <h3 className="font-semibold text-lg text-black dark:text-white mb-2">
+        {title}
+      </h3>
+
+      <p className="text-gray-600 dark:text-gray-400 text-sm">
+        {desc}
+      </p>
+
     </div>
   );
 }
@@ -157,8 +190,13 @@ function Stat({
 }) {
   return (
     <div>
-      <div className="text-2xl font-bold">{title}</div>
-      <div className="text-sm text-gray-500">{desc}</div>
+      <div className="text-2xl font-bold text-black dark:text-white">
+        {title}
+      </div>
+
+      <div className="text-sm text-gray-500 dark:text-gray-400">
+        {desc}
+      </div>
     </div>
   );
 }

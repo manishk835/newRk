@@ -1,376 +1,632 @@
 // app/(admin)/admin/coupons/page.tsx
+
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import { apiFetch } from "@/lib/api/client";
+
+import {
+  useToast,
+  ConfirmModal,
+} from "@/components/ui/ui-utils";
+
+/* ================= TYPES ================= */
 
 type Coupon = {
   _id: string;
+
   code: string;
+
   description?: string;
+
   discount: number;
+
   expiresAt: string;
+
   isNewUser?: boolean;
+
   isMember?: boolean;
 };
 
+/* ================= PAGE ================= */
+
 export default function CouponsPage() {
-  const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  /* FORM STATE */
-  const [form, setForm] = useState({
-    code: "",
-    description: "",
-    discount: "",
-    expiresAt: "",
-    isNewUser: false,
-    isMember: false,
-  });
+  const { showToast } =
+    useToast();
 
-  /* ================= LOAD COUPONS ================= */
+  const [coupons, setCoupons] =
+    useState<Coupon[]>([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [
+    submitLoading,
+    setSubmitLoading,
+  ] = useState(false);
+
+  const [
+    deleteLoading,
+    setDeleteLoading,
+  ] = useState<
+    string | null
+  >(null);
+
+  const [
+    confirmOpen,
+    setConfirmOpen,
+  ] = useState(false);
+
+  const [
+    selectedId,
+    setSelectedId,
+  ] = useState<
+    string | null
+  >(null);
+
+  /* FORM */
+  const [form, setForm] =
+    useState({
+      code: "",
+      description: "",
+      discount: "",
+      expiresAt: "",
+      isNewUser: false,
+      isMember: false,
+    });
+
+  /* ================= LOAD ================= */
 
   useEffect(() => {
     loadCoupons();
   }, []);
 
-  const loadCoupons = async () => {
-    try {
-      // const res = await apiFetch("/admin/coupons");
-      const res = await apiFetch("/coupons");
-      setCoupons(Array.isArray(res) ? res : []);
-    } catch (err) {
-      console.error("Failed to load coupons");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loadCoupons =
+    async () => {
+      try {
 
-  /* ================= HANDLE CHANGE ================= */
+        setLoading(true);
+
+        const res =
+          await apiFetch(
+            "/coupons"
+          );
+
+        setCoupons(
+          Array.isArray(
+            res
+          )
+            ? res
+            : []
+        );
+
+      } catch {
+
+        showToast(
+          "Failed to load coupons",
+          "error"
+        );
+
+      } finally {
+
+        setLoading(false);
+
+      }
+    };
+
+  /* ================= CHANGE ================= */
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const { name, value, type, checked } = e.target;
 
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    const {
+      name,
+      value,
+      type,
+      checked,
+    } = e.target;
+
+    setForm(
+      (prev) => ({
+        ...prev,
+        [name]:
+          type ===
+          "checkbox"
+            ? checked
+            : value,
+      })
+    );
   };
 
-  /* ================= ADD COUPON ================= */
+  /* ================= SUBMIT ================= */
 
-  const handleSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
+  const handleSubmit =
+    async (
+      e: React.FormEvent<HTMLFormElement>
+    ) => {
+
+      e.preventDefault();
+
+      try {
+
+        setSubmitLoading(
+          true
+        );
+
+        await apiFetch(
+          "/coupons",
+          {
+            method:
+              "POST",
+
+            body: JSON.stringify(
+              {
+                ...form,
+                discount:
+                  Number(
+                    form.discount
+                  ),
+              }
+            ),
+          }
+        );
+
+        setForm({
+          code: "",
+          description:
+            "",
+          discount: "",
+          expiresAt:
+            "",
+          isNewUser:
+            false,
+          isMember:
+            false,
+        });
+
+        showToast(
+          "Coupon created",
+          "success"
+        );
+
+        loadCoupons();
+
+      } catch {
+
+        showToast(
+          "Failed to create coupon",
+          "error"
+        );
+
+      } finally {
+
+        setSubmitLoading(
+          false
+        );
+
+      }
+    };
+
+  /* ================= DELETE ================= */
+
+  const openDelete = (
+    id: string
   ) => {
-    e.preventDefault();
 
-    try {
-      // await apiFetch("/admin/coupons", {
-        await apiFetch("/coupons", {
-        method: "POST",
-        body: JSON.stringify({
-          ...form,
-          discount: Number(form.discount),
-        }),
-      });
+    setSelectedId(id);
 
-      setForm({
-        code: "",
-        description: "",
-        discount: "",
-        expiresAt: "",
-        isNewUser: false,
-        isMember: false,
-      });
-
-      loadCoupons();
-    } catch (err) {
-      alert("Failed to create coupon");
-    }
+    setConfirmOpen(true);
   };
 
-  /* ================= DELETE COUPON ================= */
+  const deleteCoupon =
+    async () => {
 
-  const deleteCoupon = async (id: string) => {
-    if (!confirm("Delete this coupon?")) return;
+      if (!selectedId)
+        return;
 
-    try {
-      // await apiFetch(`/admin/coupons/${id}`, {
-        await apiFetch(`/coupons/${id}`, {
-        method: "DELETE",
-      });
+      try {
 
-      setCoupons((prev) =>
-        prev.filter((c) => c._id !== id)
-      );
-    } catch (err) {
-      alert("Failed to delete");
-    }
-  };
+        setDeleteLoading(
+          selectedId
+        );
+
+        await apiFetch(
+          `/coupons/${selectedId}`,
+          {
+            method:
+              "DELETE",
+          }
+        );
+
+        setCoupons(
+          (prev) =>
+            prev.filter(
+              (c) =>
+                c._id !==
+                selectedId
+            )
+        );
+
+        showToast(
+          "Coupon deleted",
+          "success"
+        );
+
+      } catch {
+
+        showToast(
+          "Delete failed",
+          "error"
+        );
+
+      } finally {
+
+        setDeleteLoading(
+          null
+        );
+
+        setSelectedId(
+          null
+        );
+
+        setConfirmOpen(
+          false
+        );
+
+      }
+    };
+
+  /* ================= UI ================= */
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">
-        Coupons Management
-      </h1>
+    <div className="max-w-7xl mx-auto space-y-8">
 
-      {/* ================= ADD COUPON ================= */}
+      {/* HEADER */}
+      <div>
 
-      <div className="bg-white border rounded-2xl p-6 mb-10">
-        <h2 className="text-lg font-semibold mb-6">
+        <h1 className="text-3xl font-bold text-black dark:text-white">
+          Coupons Management
+        </h1>
+
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          Create and manage discount coupons
+        </p>
+
+      </div>
+
+      {/* FORM */}
+      <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm transition-colors duration-300">
+
+        <h2 className="text-lg font-semibold text-black dark:text-white mb-6">
           Add Coupon
         </h2>
 
         <form
-          onSubmit={handleSubmit}
+          onSubmit={
+            handleSubmit
+          }
           className="grid md:grid-cols-2 gap-4"
         >
+
+          {/* CODE */}
           <input
             name="code"
             placeholder="Coupon Code"
             value={form.code}
-            onChange={handleChange}
+            onChange={
+              handleChange
+            }
             required
-            className="border rounded-lg px-4 py-3"
+            className="border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-white rounded-xl px-4 py-3 outline-none"
           />
 
+          {/* DISCOUNT */}
           <input
             name="discount"
             placeholder="Discount (%)"
             type="number"
-            value={form.discount}
-            onChange={handleChange}
+            value={
+              form.discount
+            }
+            onChange={
+              handleChange
+            }
             required
-            className="border rounded-lg px-4 py-3"
+            className="border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-white rounded-xl px-4 py-3 outline-none"
           />
 
+          {/* DESCRIPTION */}
           <input
             name="description"
             placeholder="Coupon Description"
-            value={form.description}
-            onChange={handleChange}
-            className="border rounded-lg px-4 py-3 md:col-span-2"
+            value={
+              form.description
+            }
+            onChange={
+              handleChange
+            }
+            className="border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-white rounded-xl px-4 py-3 outline-none md:col-span-2"
           />
 
+          {/* DATE */}
           <input
             name="expiresAt"
             type="date"
-            value={form.expiresAt}
-            onChange={handleChange}
+            value={
+              form.expiresAt
+            }
+            onChange={
+              handleChange
+            }
             required
-            className="border rounded-lg px-4 py-3"
+            className="border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-white rounded-xl px-4 py-3 outline-none"
           />
 
-          <div className="flex items-center gap-6">
-            <label className="flex items-center gap-2 text-sm">
+          {/* CHECKBOXES */}
+          <div className="flex flex-wrap items-center gap-6 px-1">
+
+            <label className="flex items-center gap-2 text-sm text-black dark:text-white">
+
               <input
                 type="checkbox"
                 name="isNewUser"
-                checked={form.isNewUser}
-                onChange={handleChange}
+                checked={
+                  form.isNewUser
+                }
+                onChange={
+                  handleChange
+                }
               />
+
               For New User
+
             </label>
 
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-sm text-black dark:text-white">
+
               <input
                 type="checkbox"
                 name="isMember"
-                checked={form.isMember}
-                onChange={handleChange}
+                checked={
+                  form.isMember
+                }
+                onChange={
+                  handleChange
+                }
               />
+
               For Member
+
             </label>
+
           </div>
 
+          {/* BUTTON */}
           <button
             type="submit"
-            className="bg-black text-white rounded-lg px-6 py-3 md:col-span-2"
+            disabled={
+              submitLoading
+            }
+            className="bg-black dark:bg-white text-white dark:text-black rounded-xl px-6 py-3 font-medium hover:opacity-90 transition md:col-span-2 disabled:opacity-60"
           >
-            Add Coupon
+
+            {submitLoading
+              ? "Creating..."
+              : "Add Coupon"}
+
           </button>
+
         </form>
+
       </div>
 
-      {/* ================= LIST COUPONS ================= */}
+      {/* LIST */}
+      <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm transition-colors duration-300">
 
-      <div className="bg-white border rounded-2xl overflow-hidden">
-        <h2 className="text-lg font-semibold p-6 border-b">
-          List Coupons
-        </h2>
+        <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
+
+          <h2 className="text-lg font-semibold text-black dark:text-white">
+            All Coupons
+          </h2>
+
+        </div>
 
         {loading ? (
-          <div className="p-6">Loading...</div>
-        ) : coupons.length === 0 ? (
-          <div className="p-6">No coupons found.</div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left">
-              <tr>
-                <th className="p-4">Code</th>
-                <th className="p-4">Description</th>
-                <th className="p-4">Discount</th>
-                <th className="p-4">Expires At</th>
-                <th className="p-4">New User</th>
-                <th className="p-4">Member</th>
-                <th className="p-4 text-right">
-                  Action
-                </th>
-              </tr>
-            </thead>
 
-            <tbody>
-              {coupons.map((c) => (
-                <tr
-                  key={c._id}
-                  className="border-t hover:bg-gray-50"
-                >
-                  <td className="p-4 font-medium">
-                    {c.code}
-                  </td>
-                  <td className="p-4">
-                    {c.description}
-                  </td>
-                  <td className="p-4">
-                    {c.discount}%
-                  </td>
-                  <td className="p-4">
-                    {new Date(
-                      c.expiresAt
-                    ).toLocaleDateString()}
-                  </td>
-                  <td className="p-4">
-                    {c.isNewUser ? "Yes" : "No"}
-                  </td>
-                  <td className="p-4">
-                    {c.isMember ? "Yes" : "No"}
-                  </td>
-                  <td className="p-4 text-right">
-                    <button
-                      onClick={() =>
-                        deleteCoupon(c._id)
-                      }
-                      className="text-red-600 text-xs"
-                    >
-                      Delete
-                    </button>
-                  </td>
+          <div className="p-6 space-y-4">
+
+            {[...Array(5)].map(
+              (_, i) => (
+
+                <div
+                  key={i}
+                  className="h-12 bg-gray-200 dark:bg-zinc-800 rounded animate-pulse"
+                />
+
+              )
+            )}
+
+          </div>
+
+        ) : coupons.length ===
+          0 ? (
+
+          <div className="p-10 text-center text-gray-500 dark:text-gray-400">
+            No coupons found
+          </div>
+
+        ) : (
+
+          <div className="overflow-x-auto">
+
+            <table className="w-full text-sm">
+
+              {/* HEAD */}
+              <thead className="bg-gray-100 dark:bg-zinc-800 text-left text-gray-700 dark:text-gray-300">
+
+                <tr>
+
+                  <th className="p-4">
+                    Code
+                  </th>
+
+                  <th className="p-4">
+                    Description
+                  </th>
+
+                  <th className="p-4">
+                    Discount
+                  </th>
+
+                  <th className="p-4">
+                    Expires
+                  </th>
+
+                  <th className="p-4">
+                    New User
+                  </th>
+
+                  <th className="p-4">
+                    Member
+                  </th>
+
+                  <th className="p-4 text-right">
+                    Action
+                  </th>
+
                 </tr>
-              ))}
-            </tbody>
-          </table>
+
+              </thead>
+
+              {/* BODY */}
+              <tbody>
+
+                {coupons.map(
+                  (c) => (
+
+                    <tr
+                      key={c._id}
+                      className="border-t border-gray-200 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800/40 transition"
+                    >
+
+                      <td className="p-4 font-semibold text-black dark:text-white">
+                        {c.code}
+                      </td>
+
+                      <td className="p-4 text-gray-600 dark:text-gray-300">
+                        {c.description ||
+                          "-"}
+                      </td>
+
+                      <td className="p-4 text-black dark:text-white">
+                        {
+                          c.discount
+                        }
+                        %
+                      </td>
+
+                      <td className="p-4 text-gray-600 dark:text-gray-300">
+                        {new Date(
+                          c.expiresAt
+                        ).toLocaleDateString()}
+                      </td>
+
+                      <td className="p-4">
+
+                        <span
+                          className={`px-3 py-1 text-xs rounded-full ${
+                            c.isNewUser
+                              ? "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300"
+                              : "bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-gray-400"
+                          }`}
+                        >
+
+                          {c.isNewUser
+                            ? "Yes"
+                            : "No"}
+
+                        </span>
+
+                      </td>
+
+                      <td className="p-4">
+
+                        <span
+                          className={`px-3 py-1 text-xs rounded-full ${
+                            c.isMember
+                              ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300"
+                              : "bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-gray-400"
+                          }`}
+                        >
+
+                          {c.isMember
+                            ? "Yes"
+                            : "No"}
+
+                        </span>
+
+                      </td>
+
+                      <td className="p-4 text-right">
+
+                        <button
+                          onClick={() =>
+                            openDelete(
+                              c._id
+                            )
+                          }
+                          disabled={
+                            deleteLoading ===
+                            c._id
+                          }
+                          className="text-red-600 dark:text-red-400 text-xs font-medium hover:underline disabled:opacity-50"
+                        >
+
+                          {deleteLoading ===
+                          c._id
+                            ? "Deleting..."
+                            : "Delete"}
+
+                        </button>
+
+                      </td>
+
+                    </tr>
+
+                  )
+                )}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
         )}
+
       </div>
+
+      {/* MODAL */}
+      <ConfirmModal
+        open={confirmOpen}
+        title="Delete coupon?"
+        description="This action cannot be undone"
+        onConfirm={
+          deleteCoupon
+        }
+        onCancel={() =>
+          setConfirmOpen(
+            false
+          )
+        }
+      />
+
     </div>
   );
 }
-
-// "use client";
-
-// import { useEffect, useState } from "react";
-
-// /* ================= TYPES ================= */
-
-// type Coupon = {
-//   _id: string;
-//   code: string;
-//   discountPercent: number;
-//   isActive: boolean;
-//   expiryDate?: string;
-// };
-
-// /* ================= PAGE ================= */
-
-// export default function AdminCouponsPage() {
-//   const [coupons, setCoupons] = useState<Coupon[]>([]);
-//   const [loading, setLoading] = useState(true);
-
-//   useEffect(() => {
-//     const fetchCoupons = async () => {
-//       try {
-//         const res = await fetch(
-//           `${process.env.NEXT_PUBLIC_API_URL}/api/admin/coupons`,
-//           {
-//             credentials: "include", // 🔥 cookie send karega
-//             cache: "no-store",
-//           }
-//         );
-
-//         if (res.status === 401 || res.status === 403) {
-//           window.location.href = "/admin/login";
-//           return;
-//         }
-
-//         if (!res.ok) throw new Error();
-
-//         const data = await res.json();
-//         setCoupons(data || []);
-//       } catch (err) {
-//         console.error("Coupons fetch error:", err);
-//         setCoupons([]);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchCoupons();
-//   }, []);
-
-//   if (loading) {
-//     return (
-//       <div className="container mx-auto px-6 pt-10">
-//         Loading coupons...
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="container mx-auto px-6 pt-10 pb-16 max-w-4xl">
-//       <h1 className="text-2xl font-bold mb-6">
-//         Coupons
-//       </h1>
-
-//       {coupons.length === 0 ? (
-//         <p className="text-gray-600">
-//           No coupons created
-//         </p>
-//       ) : (
-//         <div className="space-y-4">
-//           {coupons.map((c) => (
-//             <div
-//               key={c._id}
-//               className="border rounded-xl p-5 bg-white flex justify-between items-center"
-//             >
-//               <div>
-//                 <p className="font-semibold">
-//                   {c.code}
-//                 </p>
-//                 <p className="text-sm text-gray-600">
-//                   {c.discountPercent}% off
-//                 </p>
-//                 {c.expiryDate && (
-//                   <p className="text-xs text-gray-500">
-//                     Expires:{" "}
-//                     {new Date(c.expiryDate).toLocaleDateString("en-IN")}
-//                   </p>
-//                 )}
-//               </div>
-
-//               <span
-//                 className={`text-xs px-3 py-1 rounded-full ${
-//                   c.isActive
-//                     ? "bg-green-100 text-green-700"
-//                     : "bg-gray-200 text-gray-600"
-//                 }`}
-//               >
-//                 {c.isActive ? "Active" : "Inactive"}
-//               </span>
-//             </div>
-//           ))}
-//         </div>
-//       )}
-//     </div>
-//   );
-// }

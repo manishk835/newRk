@@ -1,252 +1,521 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
+
 import ImageUploader from "./ImageUploader";
+
 import VariantGenerator from "./VariantGenerator";
+
 import PricingTable from "./PricingTable";
+
 import ProductActions from "./ProductActions";
-import { createProduct, updateProduct } from "../services/product.service";
+
+import {
+  createProduct,
+  updateProduct,
+} from "../services/product.service";
+
+/* ================= TYPES ================= */
 
 type Product = {
   _id?: string;
+
   name: string;
+
   category: string;
+
   subCategory?: string;
+
   price: number;
+
   description?: string;
+
   features?: string;
 
-  // dynamic
+  images?: any[];
+
+  variants?: any[];
+
+  // fashion
   size?: string;
+
   color?: string;
 
+  // grocery
   weight?: string;
+
   unit?: string;
+
   expiry?: string;
 };
 
 type Props = {
   initialData?: Product;
+
   isEdit?: boolean;
 };
 
-export default function ProductForm({ initialData, isEdit }: Props) {
-  const [product, setProduct] = useState<Product>({
-    name: "",
-    category: "",
-    price: 0,
-    description: "",
-    features: "",
-  });
+/* ================= PAGE ================= */
 
-  const [loading, setLoading] = useState(false);
+export default function ProductForm({
+  initialData,
+  isEdit,
+}: Props) {
+
+  const [product, setProduct] =
+    useState<Product>({
+      name: "",
+      category: "",
+      price: 0,
+      description: "",
+      features: "",
+      images: [],
+      variants: [],
+    });
+
+  const [loading, setLoading] =
+    useState(false);
+
+  /* ================= LOAD ================= */
 
   useEffect(() => {
+
     if (initialData) {
       setProduct(initialData);
     }
+
   }, [initialData]);
 
-  // ================= AI =================
+  /* ================= AI ================= */
+
   const generateAI = async () => {
     try {
-      const res = await fetch("/api/ai/generate-description", {
-        method: "POST",
-        body: JSON.stringify({
-          name: product.name,
-          category: product.category,
-          features: product.features,
-        }),
-      });
 
-      const data = await res.json();
+      const res = await fetch(
+        "/api/ai/generate-description",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            name: product.name,
+            category:
+              product.category,
+            features:
+              product.features,
+          }),
+        }
+      );
+
+      const data =
+        await res.json();
 
       setProduct((prev) => ({
         ...prev,
-        description: data.description,
+        description:
+          data.description,
       }));
-    } catch (err) {
+
+    } catch {
+
       alert("AI failed");
+
     }
   };
 
-  // ================= SUBMIT =================
+  /* ================= SUBMIT ================= */
+
   const handleSubmit = async () => {
     try {
+
       setLoading(true);
 
-      if (isEdit && product._id) {
-        await updateProduct(product._id, product);
-        alert("Product updated");
+      if (
+        isEdit &&
+        product._id
+      ) {
+
+        await updateProduct(
+          product._id,
+          product
+        );
+
+        alert(
+          "Product updated"
+        );
+
       } else {
-        await createProduct(product);
-        alert("Product created");
+
+        await createProduct(
+          product
+        );
+
+        alert(
+          "Product created"
+        );
+
       }
+
     } catch (err) {
+
       console.error(err);
-      alert("Error saving product");
+
+      alert(
+        "Error saving product"
+      );
+
     } finally {
+
       setLoading(false);
+
     }
   };
 
-  // ================= UI =================
+  /* ================= UI ================= */
+
   return (
-    <div className="grid grid-cols-12 gap-6">
+    <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+
       {/* LEFT */}
-      <div className="col-span-8 space-y-6">
+      <div className="xl:col-span-8 space-y-6">
 
         {/* BASIC INFO */}
-        <Card>
+        <Card className="border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm transition-colors duration-300">
+
           <CardHeader>
-            <CardTitle>Basic Info</CardTitle>
+
+            <CardTitle className="text-black dark:text-white">
+              Basic Info
+            </CardTitle>
+
           </CardHeader>
 
           <CardContent className="space-y-4">
 
-            <input
-              placeholder="Product Name"
-              value={product.name}
-              onChange={(e) =>
-                setProduct({ ...product, name: e.target.value })
-              }
-              className="w-full border p-2 rounded"
-            />
+            {/* PRODUCT NAME */}
+            <div>
 
-            <select
-              value={product.category}
-              onChange={(e) =>
-                setProduct({ ...product, category: e.target.value })
-              }
-              className="w-full border p-2 rounded"
-            >
-              <option value="">Select Category</option>
-              <option value="fashion">Fashion</option>
-              <option value="grocery">Grocery</option>
-            </select>
+              <label className="text-sm text-gray-600 dark:text-gray-400 mb-1 block">
+                Product Name
+              </label>
 
-            <input
-              type="number"
-              placeholder="Price"
-              value={product.price}
-              onChange={(e) =>
-                setProduct({ ...product, price: Number(e.target.value) })
-              }
-              className="w-full border p-2 rounded"
-            />
+              <input
+                placeholder="Enter product name"
+                value={product.name}
+                onChange={(e) =>
+                  setProduct({
+                    ...product,
+                    name:
+                      e.target.value,
+                  })
+                }
+                className="w-full border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-white px-4 py-3 rounded-xl outline-none"
+              />
+
+            </div>
+
+            {/* CATEGORY */}
+            <div>
+
+              <label className="text-sm text-gray-600 dark:text-gray-400 mb-1 block">
+                Category
+              </label>
+
+              <select
+                value={
+                  product.category
+                }
+                onChange={(e) =>
+                  setProduct({
+                    ...product,
+                    category:
+                      e.target.value,
+                  })
+                }
+                className="w-full border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-white px-4 py-3 rounded-xl outline-none"
+              >
+
+                <option value="">
+                  Select Category
+                </option>
+
+                <option value="fashion">
+                  Fashion
+                </option>
+
+                <option value="grocery">
+                  Grocery
+                </option>
+
+              </select>
+
+            </div>
+
+            {/* PRICE */}
+            <div>
+
+              <label className="text-sm text-gray-600 dark:text-gray-400 mb-1 block">
+                Base Price
+              </label>
+
+              <input
+                type="number"
+                placeholder="Enter price"
+                value={
+                  product.price
+                }
+                onChange={(e) =>
+                  setProduct({
+                    ...product,
+                    price: Number(
+                      e.target.value
+                    ),
+                  })
+                }
+                className="w-full border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-white px-4 py-3 rounded-xl outline-none"
+              />
+
+            </div>
 
             {/* FEATURES */}
-            <input
-              placeholder="Key features"
-              value={product.features}
-              onChange={(e) =>
-                setProduct({ ...product, features: e.target.value })
-              }
-              className="w-full border p-2 rounded"
-            />
+            <div>
+
+              <label className="text-sm text-gray-600 dark:text-gray-400 mb-1 block">
+                Features
+              </label>
+
+              <input
+                placeholder="Cotton, oversized, breathable..."
+                value={
+                  product.features
+                }
+                onChange={(e) =>
+                  setProduct({
+                    ...product,
+                    features:
+                      e.target.value,
+                  })
+                }
+                className="w-full border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-white px-4 py-3 rounded-xl outline-none"
+              />
+
+            </div>
 
             {/* DESCRIPTION */}
-            <textarea
-              placeholder="Description"
-              value={product.description}
-              onChange={(e) =>
-                setProduct({ ...product, description: e.target.value })
-              }
-              className="w-full border p-2 rounded"
-            />
+            <div>
 
-            <Button type="button" variant="outline" onClick={generateAI}>
+              <label className="text-sm text-gray-600 dark:text-gray-400 mb-1 block">
+                Description
+              </label>
+
+              <textarea
+                placeholder="Write product description..."
+                value={
+                  product.description
+                }
+                onChange={(e) =>
+                  setProduct({
+                    ...product,
+                    description:
+                      e.target.value,
+                  })
+                }
+                rows={5}
+                className="w-full border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-white px-4 py-3 rounded-xl outline-none resize-none"
+              />
+
+            </div>
+
+            {/* AI */}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={generateAI}
+              className="border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 transition"
+            >
               ✨ Generate AI Description
             </Button>
 
           </CardContent>
+
         </Card>
 
-        {/* ================= DYNAMIC FIELDS ================= */}
+        {/* ================= DYNAMIC ================= */}
 
-        {product.category === "fashion" && (
-          <Card>
+        {product.category ===
+          "fashion" && (
+
+          <Card className="border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm transition-colors duration-300">
+
             <CardHeader>
-              <CardTitle>Fashion Details</CardTitle>
+
+              <CardTitle className="text-black dark:text-white">
+                Fashion Details
+              </CardTitle>
+
             </CardHeader>
 
             <CardContent className="space-y-4">
+
               <input
                 placeholder="Size (M, L, XL)"
-                value={product.size || ""}
-                onChange={(e) =>
-                  setProduct({ ...product, size: e.target.value })
+                value={
+                  product.size ||
+                  ""
                 }
-                className="w-full border p-2 rounded"
+                onChange={(e) =>
+                  setProduct({
+                    ...product,
+                    size:
+                      e.target.value,
+                  })
+                }
+                className="w-full border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-white px-4 py-3 rounded-xl outline-none"
               />
 
               <input
                 placeholder="Color"
-                value={product.color || ""}
-                onChange={(e) =>
-                  setProduct({ ...product, color: e.target.value })
+                value={
+                  product.color ||
+                  ""
                 }
-                className="w-full border p-2 rounded"
+                onChange={(e) =>
+                  setProduct({
+                    ...product,
+                    color:
+                      e.target.value,
+                  })
+                }
+                className="w-full border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-white px-4 py-3 rounded-xl outline-none"
               />
+
             </CardContent>
+
           </Card>
+
         )}
 
-        {product.category === "grocery" && (
-          <Card>
+        {product.category ===
+          "grocery" && (
+
+          <Card className="border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm transition-colors duration-300">
+
             <CardHeader>
-              <CardTitle>Grocery Details</CardTitle>
+
+              <CardTitle className="text-black dark:text-white">
+                Grocery Details
+              </CardTitle>
+
             </CardHeader>
 
             <CardContent className="space-y-4">
+
               <input
                 placeholder="Weight"
-                value={product.weight || ""}
-                onChange={(e) =>
-                  setProduct({ ...product, weight: e.target.value })
+                value={
+                  product.weight ||
+                  ""
                 }
-                className="w-full border p-2 rounded"
+                onChange={(e) =>
+                  setProduct({
+                    ...product,
+                    weight:
+                      e.target.value,
+                  })
+                }
+                className="w-full border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-white px-4 py-3 rounded-xl outline-none"
               />
 
               <input
                 placeholder="Unit (kg, g, L)"
-                value={product.unit || ""}
-                onChange={(e) =>
-                  setProduct({ ...product, unit: e.target.value })
+                value={
+                  product.unit ||
+                  ""
                 }
-                className="w-full border p-2 rounded"
+                onChange={(e) =>
+                  setProduct({
+                    ...product,
+                    unit:
+                      e.target.value,
+                  })
+                }
+                className="w-full border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-white px-4 py-3 rounded-xl outline-none"
               />
 
               <input
                 type="date"
-                value={product.expiry || ""}
-                onChange={(e) =>
-                  setProduct({ ...product, expiry: e.target.value })
+                value={
+                  product.expiry ||
+                  ""
                 }
-                className="w-full border p-2 rounded"
+                onChange={(e) =>
+                  setProduct({
+                    ...product,
+                    expiry:
+                      e.target.value,
+                  })
+                }
+                className="w-full border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-white px-4 py-3 rounded-xl outline-none"
               />
+
             </CardContent>
+
           </Card>
+
         )}
 
-        {/* ================= COMMON ================= */}
-        <ImageUploader product={product} setProduct={setProduct} />
-        <VariantGenerator product={product} setProduct={setProduct} />
-        <PricingTable product={product} setProduct={setProduct} />
+        {/* COMMON */}
+        <ImageUploader
+          product={product}
+          setProduct={setProduct}
+        />
+
+        <VariantGenerator
+          product={product}
+          setProduct={setProduct}
+        />
+
+        <PricingTable
+          product={product}
+          setProduct={setProduct}
+        />
 
       </div>
 
       {/* RIGHT */}
-      <div className="col-span-4">
-        <ProductActions
-          onSubmit={handleSubmit}
-          loading={loading}
-          isEdit={isEdit}
-          product={product}
-        />
+      <div className="xl:col-span-4">
+
+        <div className="sticky top-24">
+
+          <ProductActions
+            onSubmit={
+              handleSubmit
+            }
+            loading={loading}
+            isEdit={isEdit}
+            product={product}
+          />
+
+        </div>
+
       </div>
+
     </div>
   );
 }

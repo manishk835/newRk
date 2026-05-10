@@ -1,4 +1,4 @@
-// // app/(seller)/seller/page.tsx
+// app/(seller)/seller/page.tsx
 
 "use client";
 
@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api/client";
+
 import {
   Package,
   ShoppingCart,
@@ -30,38 +31,64 @@ type DashboardStats = {
 /* ================= PAGE ================= */
 
 export default function SellerDashboard() {
+
   const router = useRouter();
 
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [stats, setStats] =
+    useState<DashboardStats | null>(null);
+
+  const [loading, setLoading] =
+    useState(true);
 
   useEffect(() => {
+
     const loadDashboard = async () => {
       try {
-        const data = await apiFetch("/seller/dashboard");
+
+        const data = await apiFetch(
+          "/seller/dashboard"
+        );
+
         setStats(data);
+
       } catch (err: any) {
-        if (err?.status === 401) router.replace("/login");
-        if (err?.status === 403) router.replace("/for-vendors");
+
+        if (err?.status === 401) {
+          router.replace("/login");
+        }
+
+        if (err?.status === 403) {
+          router.replace("/for-vendors");
+        }
+
       } finally {
+
         setLoading(false);
+
       }
     };
 
     loadDashboard();
+
   }, [router]);
+
+  /* ================= LOADING ================= */
 
   if (loading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center text-gray-500">
+      <div className="min-h-[60vh] flex items-center justify-center text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-black transition-colors duration-300">
+
         Loading dashboard...
+
       </div>
     );
   }
 
+  /* ================= ERROR ================= */
+
   if (!stats) {
     return (
-      <div className="text-center mt-20">
+      <div className="text-center mt-20 text-black dark:text-white">
         Failed to load dashboard
       </div>
     );
@@ -72,16 +99,18 @@ export default function SellerDashboard() {
 
       {/* HEADER */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">
+
+        <h1 className="text-2xl font-bold text-black dark:text-white">
           Dashboard Overview
         </h1>
 
         <Link
           href="/seller/products/create"
-          className="bg-black text-white px-4 py-2 rounded-lg text-sm"
+          className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-lg text-sm hover:opacity-90 transition"
         >
           + Add Product
         </Link>
+
       </div>
 
       {/* KPI */}
@@ -129,7 +158,9 @@ export default function SellerDashboard() {
           icon={AlertTriangle}
           title="Low Stock"
           value={stats.lowStockProducts}
-          danger={stats.lowStockProducts > 0}
+          danger={
+            stats.lowStockProducts > 0
+          }
         />
 
       </div>
@@ -158,42 +189,64 @@ export default function SellerDashboard() {
       </div>
 
       {/* RECENT ORDERS */}
-      <div className="bg-white border rounded-2xl p-6">
-        <h2 className="font-semibold mb-4">
+      <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl p-6 transition-colors duration-300">
+
+        <h2 className="font-semibold text-black dark:text-white mb-4">
           Recent Orders
         </h2>
 
         {stats.recentOrders?.length ? (
+
           <div className="space-y-3">
-            {stats.recentOrders.map((order: any) => (
-              <div
-                key={order._id}
-                className="flex justify-between border-b pb-2 text-sm"
-              >
-                <span>#{order._id.slice(-6)}</span>
-                <span>₹{order.total}</span>
-                <span className="text-gray-500">
-                  {order.status}
-                </span>
-              </div>
-            ))}
+
+            {stats.recentOrders.map(
+              (order: any) => (
+
+                <div
+                  key={order._id}
+                  className="flex justify-between border-b border-gray-200 dark:border-zinc-800 pb-2 text-sm"
+                >
+
+                  <span className="text-black dark:text-white">
+                    #{order._id.slice(-6)}
+                  </span>
+
+                  <span className="text-black dark:text-white">
+                    ₹{order.total}
+                  </span>
+
+                  <span className="text-gray-500 dark:text-gray-400">
+                    {order.status}
+                  </span>
+
+                </div>
+
+              )
+            )}
+
           </div>
+
         ) : (
-          <p className="text-sm text-gray-500">
+
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             No recent orders
           </p>
+
         )}
+
       </div>
 
-      {/* ANALYTICS PLACEHOLDER */}
-      <div className="bg-white border rounded-2xl p-6">
-        <h2 className="font-semibold mb-4">
+      {/* ANALYTICS */}
+      <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl p-6 transition-colors duration-300">
+
+        <h2 className="font-semibold text-black dark:text-white mb-4">
           Sales Analytics
         </h2>
 
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           Charts (weekly/monthly) will be added here
         </p>
+
       </div>
 
     </div>
@@ -209,26 +262,37 @@ function StatCard({
   highlight,
   danger,
 }: any) {
-  return (
-    <div className="bg-white border rounded-2xl p-5 flex items-center gap-4 shadow-sm">
 
-      <div className="bg-gray-100 p-3 rounded-xl">
-        <Icon size={18} />
+  return (
+    <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl p-5 flex items-center gap-4 shadow-sm transition-colors duration-300">
+
+      <div className="bg-gray-100 dark:bg-zinc-800 p-3 rounded-xl">
+
+        <Icon
+          size={18}
+          className="text-black dark:text-white"
+        />
+
       </div>
 
       <div>
-        <p className="text-sm text-gray-500">{title}</p>
+
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {title}
+        </p>
+
         <p
           className={`text-xl font-bold ${
             highlight
               ? "text-green-600"
               : danger
               ? "text-red-600"
-              : ""
+              : "text-black dark:text-white"
           }`}
         >
           {value}
         </p>
+
       </div>
 
     </div>
@@ -237,19 +301,26 @@ function StatCard({
 
 /* ================= ACTION CARD ================= */
 
-function ActionCard({ title, desc, link }: any) {
+function ActionCard({
+  title,
+  desc,
+  link,
+}: any) {
+
   return (
     <Link
       href={link}
-      className="bg-white border rounded-2xl p-6 hover:shadow-md transition block"
+      className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl p-6 hover:shadow-md transition block"
     >
-      <h3 className="font-semibold mb-2">
+
+      <h3 className="font-semibold text-black dark:text-white mb-2">
         {title}
       </h3>
 
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-gray-600 dark:text-gray-400">
         {desc}
       </p>
+
     </Link>
   );
 }

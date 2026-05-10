@@ -79,6 +79,7 @@ export default async function CategoryPage({
   const sp = (await searchParams) || {};
 
   let products: Product[] = [];
+
   let filters: any = {
     brands: [],
     subCategories: [],
@@ -99,16 +100,16 @@ export default async function CategoryPage({
   }
 
   return (
-    <main className="pt-24 bg-white min-h-screen">
+    <main className="pt-24 bg-white dark:bg-black min-h-screen transition-colors duration-300">
 
       <section className="container mx-auto px-6 py-16">
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
 
           {/* ================= LEFT FILTERS (DESKTOP) ================= */}
-          <aside className="hidden lg:block border border-gray-300 rounded-xl p-6 h-fit sticky top-28">
+          <aside className="hidden lg:block bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-800 rounded-xl p-6 h-fit sticky top-28 transition-colors duration-300">
 
-            <h3 className="text-lg font-semibold mb-6">
+            <h3 className="text-lg font-semibold text-black dark:text-white mb-6">
               Filters
             </h3>
 
@@ -126,7 +127,8 @@ export default async function CategoryPage({
 
             {/* ===== TOP BAR ===== */}
             <div className="flex items-center justify-between mb-4">
-              <p className="text-sm text-gray-600">
+
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Showing <b>{products.length}</b> products
               </p>
 
@@ -134,6 +136,7 @@ export default async function CategoryPage({
                 <ClearFilters />
                 <CategorySort />
               </div>
+
             </div>
 
             {/* ===== ACTIVE FILTER CHIPS ===== */}
@@ -141,7 +144,7 @@ export default async function CategoryPage({
 
             {/* ===== PRODUCT GRID ===== */}
             {products.length === 0 ? (
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 No products found
               </p>
             ) : (

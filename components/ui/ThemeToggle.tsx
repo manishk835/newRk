@@ -10,9 +10,9 @@ export default function ThemeToggle() {
       onClick={() =>
         setTheme(theme === "dark" ? "light" : "dark")
       }
-      className="px-3 py-2 text-sm rounded-lg border"
+      className="px-4 py-2 rounded-lg border"
     >
-      {theme === "dark" ? "☀ Light" : "🌙 Dark"}
+      {theme === "dark" ? "☀️ Light" : "🌙 Dark"}
     </button>
   );
 }

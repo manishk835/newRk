@@ -48,9 +48,16 @@ export default function VendorForm() {
 
   const validate = () => {
     if (!form.businessName.trim()) return "Business name required";
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) return "Valid email required";
-    if (!/^[6-9]\d{9}$/.test(form.phone)) return "Valid phone required";
-    if (!form.businessType) return "Select business category";
+
+    if (!/^\S+@\S+\.\S+$/.test(form.email))
+      return "Valid email required";
+
+    if (!/^[6-9]\d{9}$/.test(form.phone))
+      return "Valid phone required";
+
+    if (!form.businessType)
+      return "Select business category";
+
     return "";
   };
 
@@ -75,6 +82,7 @@ export default function VendorForm() {
     }
 
     const validation = validate();
+
     if (validation) {
       showToast(validation, "error");
       return;
@@ -86,8 +94,9 @@ export default function VendorForm() {
       await apiFetch("/vendors/apply", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json", // 🔥 IMPORTANT FIX
+          "Content-Type": "application/json",
         },
+
         body: JSON.stringify({
           businessName: form.businessName.trim(),
           email: form.email.trim(),
@@ -97,10 +106,12 @@ export default function VendorForm() {
         }),
       });
 
-      showToast("Application submitted successfully", "success");
+      showToast(
+        "Application submitted successfully",
+        "success"
+      );
 
-      // 🔥 UX IMPROVEMENT
-      router.push("/"); // redirect after submit
+      router.push("/");
 
       setForm({
         businessName: "",
@@ -111,7 +122,10 @@ export default function VendorForm() {
       });
 
     } catch (err: any) {
-      showToast(err.message || "Submission failed", "error");
+      showToast(
+        err.message || "Submission failed",
+        "error"
+      );
     } finally {
       setLoading(false);
     }
@@ -122,9 +136,10 @@ export default function VendorForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 bg-white border p-8 rounded-2xl shadow-sm max-w-xl mx-auto"
+      className="space-y-6 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 p-8 rounded-2xl shadow-sm max-w-xl mx-auto transition-colors duration-300"
     >
-      <h2 className="text-xl font-bold text-center">
+
+      <h2 className="text-xl font-bold text-center text-black dark:text-white">
         Become a Seller
       </h2>
 
@@ -151,7 +166,7 @@ export default function VendorForm() {
       />
 
       <div>
-        <label className="block mb-2 text-sm font-medium">
+        <label className="block mb-2 text-sm font-medium text-black dark:text-white">
           Business Category
         </label>
 
@@ -160,8 +175,9 @@ export default function VendorForm() {
           name="businessType"
           value={form.businessType}
           onChange={handleChange}
-          className="w-full border px-4 py-3 rounded-lg"
+          className="w-full border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-white px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#F5A623] transition"
         >
+
           <option value="">Select category</option>
 
           {BUSINESS_TYPES.map((type) => (
@@ -169,6 +185,7 @@ export default function VendorForm() {
               {type}
             </option>
           ))}
+
         </select>
       </div>
 
@@ -177,15 +194,16 @@ export default function VendorForm() {
         placeholder="Tell us about your brand..."
         value={form.message}
         onChange={handleChange}
-        className="w-full border px-4 py-3 rounded-lg"
+        className="w-full border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#F5A623] transition"
       />
 
       <button
         disabled={loading}
-        className="w-full py-4 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 transition disabled:opacity-50"
+        className="w-full py-4 bg-black dark:bg-white text-white dark:text-black rounded-xl font-semibold hover:bg-gray-800 dark:hover:bg-gray-200 transition disabled:opacity-50"
       >
         {loading ? "Submitting..." : "Submit Application"}
       </button>
+
     </form>
   );
 }
@@ -201,7 +219,8 @@ function Input({
 }: any) {
   return (
     <div>
-      <label className="block mb-2 text-sm font-medium">
+
+      <label className="block mb-2 text-sm font-medium text-black dark:text-white">
         {label}
       </label>
 
@@ -211,8 +230,9 @@ function Input({
         name={name}
         value={value}
         onChange={onChange}
-        className="w-full border px-4 py-3 rounded-lg"
+        className="w-full border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#F5A623] transition"
       />
+
     </div>
   );
 }

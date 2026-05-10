@@ -13,7 +13,9 @@ type SearchPageProps = {
 export default async function SearchPage({
   searchParams,
 }: SearchPageProps) {
+
   const { q } = await searchParams;
+
   const query = q?.trim() || "";
 
   const products: Product[] = query
@@ -21,42 +23,58 @@ export default async function SearchPage({
     : [];
 
   return (
-    <div className="container mx-auto px-4 pt-28 pb-12">
-      <h1 className="text-2xl font-bold mb-4">
+    <div className="container mx-auto px-4 pt-28 pb-12 min-h-screen bg-white dark:bg-black transition-colors duration-300">
+
+      <h1 className="text-2xl font-bold text-black dark:text-white mb-4">
         Search Results
       </h1>
 
       {!query ? (
-        <p className="text-gray-600">
+
+        <p className="text-gray-600 dark:text-gray-400">
           Please enter a search term.
         </p>
+
       ) : products.length === 0 ? (
-        <p className="text-gray-600">
+
+        <p className="text-gray-600 dark:text-gray-400">
           No results found for{" "}
-          <b>"{query}"</b>
+          <b className="text-black dark:text-white">
+            "{query}"
+          </b>
         </p>
+
       ) : (
         <>
-          <p className="mb-4 text-gray-600">
+
+          <p className="mb-4 text-gray-600 dark:text-gray-400">
             Showing{" "}
-            <b>{products.length}</b> results
-            for <b>"{query}"</b>
+            <b className="text-black dark:text-white">
+              {products.length}
+            </b>{" "}
+            results for{" "}
+            <b className="text-black dark:text-white">
+              "{query}"
+            </b>
           </p>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+
             {products.map((product) => (
               <ProductCard
                 key={product._id}
                 product={product}
               />
             ))}
+
           </div>
+
         </>
       )}
+
     </div>
   );
 }
-
 
 // // app/search/page.tsx
 
