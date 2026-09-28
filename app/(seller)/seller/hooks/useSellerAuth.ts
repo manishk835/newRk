@@ -1,57 +1,105 @@
+// app/(seller)/seller/hooks/useSellerAuth.ts
+
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import {
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
+
+import {
+  useRouter,
+  usePathname,
+} from "next/navigation";
+
 import { apiFetch } from "@/lib/api/client";
 
+/* ================= USER TYPE ================= */
+
 type User = {
+  _id?: string;
+  name?: string;
+  phone?: string;
+  email?: string;
   role: string;
   sellerStatus?: string;
-  name?: string;
-  
-
+  profileImage?: string;
 };
+
+/* ================= SELLER AUTH ================= */
 
 export default function useSellerAuth() {
   const router = useRouter();
+
   const pathname = usePathname();
 
-  const [checkingAuth, setCheckingAuth] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
+  const [checkingAuth, setCheckingAuth] =
+    useState(true);
 
-  const isLoginPage = pathname === "/login";
+  const [user, setUser] =
+    useState<User | null>(null);
 
-  const checkAuth = useCallback(async () => {
-    if (isLoginPage) {
-      setCheckingAuth(false);
-      return;
-    }
+  const isLoginPage =
+    pathname === "/login";
 
-    try {
-      const res = await apiFetch("/auth/me");
-      const u: User = res.user || res.admin || res;
+  /* ================= CHECK AUTH ================= */
 
-      if (!u) {
+  const checkAuth = useCallback(
+    async () => {
+      if (isLoginPage) {
+        setCheckingAuth(false);
+        return;
+      }
+
+      try {
+        const res =
+          await apiFetch("/auth/me");
+
+        const u: User =
+          res.user ||
+          res.admin ||
+          res;
+
+        if (!u) {
+          router.replace("/login");
+          return;
+        }
+
+        if (
+          u.sellerStatus !== "approved"
+        ) {
+          router.replace(
+            "/for-vendors"
+          );
+          return;
+        }
+
+        setUser(u);
+
+      } catch {
         router.replace("/login");
-        return;
-      }
 
-      if (u.sellerStatus !== "approved") {
-        router.replace("/for-vendors");
-        return;
+      } finally {
+        setCheckingAuth(false);
       }
+    },
+    [
+      router,
+      isLoginPage,
+    ]
+  );
 
-      setUser(u);
-    } catch {
-      router.replace("/login");
-    } finally {
-      setCheckingAuth(false);
-    }
-  }, [router, isLoginPage]);
+  /* ================= EFFECT ================= */
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  return { user, checkingAuth };
+  /* ================= RETURN ================= */
+
+  return {
+    user,
+    checkingAuth,
+  };
 }

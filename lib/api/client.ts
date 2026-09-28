@@ -1,3 +1,5 @@
+
+// lib/api/client.ts
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 /* ================= GENERIC API FETCH ================= */

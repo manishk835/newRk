@@ -1,0 +1,31 @@
+<svg width="800" height="300" viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F2B705"/>
+      <stop offset="100%" style="stop-color:#D98E04"/>
+    </linearGradient>
+    <linearGradient id="blackGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a1a"/>
+      <stop offset="100%" style="stop-color:#000000"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background (transparent, no rect) -->
+
+  <!-- Monogram Icon -->
+  <g transform="translate(60,55)">
+    <circle cx="90" cy="90" r="88" fill="none" stroke="url(#goldGrad)" stroke-width="3"/>
+    <circle cx="90" cy="90" r="78" fill="none" stroke="#1a1a1a" stroke-width="1.5" opacity="0.5"/>
+    <text x="90" y="112" font-family="Georgia, 'Times New Roman', serif" font-size="72" font-weight="700" text-anchor="middle" fill="url(#blackGrad)">R</text>
+    <text x="128" y="112" font-family="Georgia, 'Times New Roman', serif" font-size="72" font-weight="700" text-anchor="middle" fill="url(#goldGrad)">K</text>
+    <!-- small needle/thread accent to signal fashion -->
+    <path d="M40,150 Q90,175 140,150" stroke="url(#goldGrad)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- Wordmark -->
+  <g transform="translate(260,120)">
+    <text x="0" y="0" font-family="Georgia, 'Times New Roman', serif" font-size="58" font-weight="700" fill="#111111">RK</text>
+    <text x="78" y="0" font-family="Georgia, 'Times New Roman', serif" font-size="58" font-weight="700" fill="url(#goldGrad)">Fashion</text>
+    <text x="2" y="34" font-family="Arial, sans-serif" font-size="16" letter-spacing="8" fill="#555555">STYLE • ELEGANCE • TREND</text>
+  </g>
+</svg>

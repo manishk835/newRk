@@ -1,3 +1,5 @@
+// components/layout/header/CategoryMenu.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";

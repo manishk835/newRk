@@ -1,4 +1,4 @@
-// app/(admin)/admin/page.tsx
+  // app/(admin)/admin/page.tsx
 "use client";
 
 import {
@@ -397,7 +397,7 @@ export default function AdminDashboardPage() {
 
         </div>
 
-      </div>
+      </div>s 
 
     </div>
   );
@@ -470,3 +470,6 @@ function QuickCard({
     </div>
   );
 }
+
+
+
