@@ -61,7 +61,7 @@ export default function Header() {
         <header className="fixed top-0 w-full z-50 bg-[#F8F8F8] dark:bg-black">
           <div className="container mx-auto px-6">
             <div className="flex items-center justify-between h-16">
-              <Link
+              {/* <Link
                 href="/"
                 className="text-2xl font-extrabold text-black dark:text-white"
               >
@@ -69,6 +69,16 @@ export default function Header() {
                 <span className="text-[#F5A623]">
                   Fashion
                 </span>
+              </Link> */}
+              <Link
+                href="/"
+                className="flex items-center"
+              >
+                <img
+                  src="/images/rk_fashion_logo.svg"
+                  alt="RK Fashion"
+                  className="h-10 w-auto object-contain"
+                />
               </Link>
             </div>
           </div>
@@ -200,7 +210,7 @@ function HeaderContent() {
         >
 
           {/* ================= LOGO ================= */}
-
+{/* 
           <Link
             href="/"
             className="text-2xl font-extrabold text-black dark:text-white"
@@ -209,8 +219,18 @@ function HeaderContent() {
             <span className="text-[#F5A623]">
               Fashion
             </span>
-          </Link>
+          </Link> */}
 
+          <Link
+            href="/"
+            className="flex items-center"
+          >
+            <img
+              src="/images/rk_fashion_logo.svg"
+              alt="RK Fashion"
+              className="h-20 w-auto object-contain"
+            />
+          </Link>
           {/* ================= SEARCH ================= */}
 
           <div className="flex-1 mx-10 hidden md:block">
