@@ -77,7 +77,7 @@ export default function Header() {
                 <img
                   src="/images/rk_fashion_logo.svg"
                   alt="RK Fashion"
-                  className="h-10 w-auto object-contain"
+                  className="h-20 w-auto object-contain"
                 />
               </Link>
             </div>
