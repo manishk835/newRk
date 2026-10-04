@@ -328,33 +328,80 @@ export default function CheckoutPage() {
 
         order_id: rpData.id,
 
+        // handler: async function (response: any) {
+
+        //   await fetch(
+        //     `${process.env.NEXT_PUBLIC_API_URL}/api/orders/razorpay/verify`,
+        //     {
+        //       method: "POST",
+
+        //       headers: {
+        //         "Content-Type": "application/json",
+        //       },
+
+        //       credentials: "include",
+
+        //       body: JSON.stringify({
+        //         ...response,
+        //         orderId,
+        //       }),
+        //     }
+        //   );
+
+        //   clearOrderedItems();
+
+        //   router.push(
+        //     `/account/order-success/${orderId}`
+        //   );
+        // },
+
         handler: async function (response: any) {
-
-          await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/orders/razorpay/verify`,
-            {
-              method: "POST",
-
-              headers: {
-                "Content-Type": "application/json",
-              },
-
-              credentials: "include",
-
-              body: JSON.stringify({
-                ...response,
-                orderId,
-              }),
+          try {
+            setError("");
+        
+            const verifyRes = await fetch(
+              `${process.env.NEXT_PUBLIC_API_URL}/api/orders/razorpay/verify`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                  ...response,
+                  orderId,
+                }),
+              }
+            );
+        
+            const verifyData = await verifyRes.json().catch(() => ({}));
+        
+            if (!verifyRes.ok) {
+              throw new Error(
+                verifyData?.message || "Payment verification failed"
+              );
             }
-          );
-
-          clearOrderedItems();
-
-          router.push(
-            `/account/order-success/${orderId}`
-          );
+        
+            // Only clear the cart after backend verification succeeds
+            clearOrderedItems();
+        
+            router.push(`/account/order-success/${orderId}`);
+          } catch (err: any) {
+            setError(
+              err?.message ||
+                "Payment verification failed. Please check your order status."
+            );
+          }
         },
 
+        modal: {
+          ondismiss: function () {
+            setError(
+              "Payment was cancelled. Your order may still be pending."
+            );
+          },
+        },
+          
         prefill: {
           name: selectedAddress?.name,
           contact: selectedAddress?.phone,
